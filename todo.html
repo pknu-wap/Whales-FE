@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Todo List (과제 1번)</title>
+    <!-- Tailwind (빠른 스타일용) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React 18 + Babel (브라우저에서 JSX 실행; 학습/연습용) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  </head>
+  <body class="min-h-screen bg-gray-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useEffect, useMemo, useRef, useState } = React;
+
+      function uid() {
+        if (crypto && crypto.randomUUID) return crypto.randomUUID();
+        return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      const FILTERS = [
+        { key: "all", label: "전체" },
+        { key: "active", label: "미완료" },
+        { key: "completed", label: "완료" },
+      ];
+
+      function TodoApp() {
+        const [todos, setTodos] = useState(() => {
+          try {
+            const raw = localStorage.getItem("todo-app:v1");
+            return raw ? JSON.parse(raw) : [];
+          } catch { return []; }
+        });
+        const [filter, setFilter] = useState("all");
+        const [text, setText] = useState("");
+        const inputRef = useRef(null);
+
+        useEffect(() => {
+          localStorage.setItem("todo-app:v1", JSON.stringify(todos));
+        }, [todos]);
+
+        const filtered = useMemo(() => {
+          if (filter === "active") return todos.filter(t => !t.done);
+          if (filter === "completed") return todos.filter(t => t.done);
+          return todos;
+        }, [filter, todos]);
+
+        const remaining = useMemo(() => todos.filter(t => !t.done).length, [todos]);
+
+        function addTodo() {
+          const v = text.trim();
+          if (!v) return;
+          setTodos(prev => [{ id: uid(), text: v, done: false, editing:false }, ...prev]);
+          setText(""); inputRef.current?.focus();
+        }
+        const toggle = id => setTodos(p => p.map(t => t.id===id? {...t,done:!t.done}:t));
+        const remove = id => setTodos(p => p.filter(t => t.id!==id));
+        const startEdit = id => setTodos(p => p.map(t => t.id===id? {...t,editing:true,draft:t.text}:t));
+        const changeDraft = (id,v) => setTodos(p=>p.map(t=>t.id===id? {...t,draft:v}:t));
+        const saveEdit = id => setTodos(p=>p.map(t=>t.id===id? {...t,text:(t.draft??t.text).trim()||t.text,editing:false,draft:undefined}:t));
+        const cancelEdit = id => setTodos(p=>p.map(t=>t.id===id? {...t,editing:false,draft:undefined}:t));
+        const clearCompleted = () => setTodos(p=>p.filter(t=>!t.done));
+
+        return (
+          <div className="min-h-screen w-full bg-gray-50 flex items-start justify-center p-6">
+            <div className="w-full max-w-xl">
+              <header className="flex items-center justify-between mb-4">
+                <h1 className="text-3xl font-bold">📝 Todo List</h1>
+                <span className="text-sm text-gray-600">남은 작업: <b>{remaining}</b></span>
+              </header>
+
+              <div className="flex gap-2 mb-4">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  placeholder="할 일을 입력하고 Enter"
+                  value={text}
+                  onChange={e=>setText(e.target.value)}
+                  onKeyDown={e=>{ if(e.key==="Enter") addTodo(); }}
+                  className="flex-1 rounded-2xl border border-gray-300 bg-white px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <button onClick={addTodo}
+                  className="rounded-2xl px-5 py-3 bg-indigo-600 text-white font-medium shadow hover:bg-indigo-700">
+                  추가
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 mb-3">
+                {FILTERS.map(f=>(
+                  <button key={f.key} onClick={()=>setFilter(f.key)}
+                    className={`rounded-full px-3 py-1 text-sm border ${
+                      filter===f.key ? "bg-indigo-600 text-white border-indigo-600"
+                                      : "bg-white text-gray-700 border-gray-300"
+                    }`}>
+                    {f.label}
+                  </button>
+                ))}
+                <div className="ml-auto" />
+                <button onClick={clearCompleted}
+                  className="rounded-full px-3 py-1 text-sm border bg-white text-gray-700 border-gray-300 hover:bg-gray-100">
+                  완료 삭제
+                </button>
+              </div>
+
+              <ul className="space-y-2">
+                {filtered.length===0 && (
+                  <li className="text-center text-gray-500 py-10 border rounded-2xl bg-white">할 일이 없어요. ✨</li>
+                )}
+                {filtered.map(t=>(
+                  <li key={t.id} className="bg-white border rounded-2xl p-3 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <input id={`cb-${t.id}`} type="checkbox" checked={t.done}
+                        onChange={()=>toggle(t.id)} className="h-5 w-5 rounded border-gray-300"/>
+                      {!t.editing ? (
+                        <label htmlFor={`cb-${t.id}`}
+                          className={`flex-1 ${t.done ? "line-through text-gray-400" : "text-gray-800"}`}>
+                          {t.text}
+                        </label>
+                      ) : (
+                        <input value={t.draft ?? t.text}
+                          onChange={e=>changeDraft(t.id, e.target.value)}
+                          onKeyDown={e=>{ if(e.key==="Enter") saveEdit(t.id); if(e.key==="Escape") cancelEdit(t.id); }}
+                          className="flex-1 rounded-xl border border-gray-300 px-3 py-2" autoFocus />
+                      )}
+                      {!t.editing ? (
+                        <div className="flex gap-1">
+                          <button onClick={()=>startEdit(t.id)} className="px-3 py-2 text-sm rounded-xl border bg-white hover:bg-gray-100">수정</button>
+                          <button onClick={()=>remove(t.id)} className="px-3 py-2 text-sm rounded-xl border bg-white text-red-600 hover:bg-gray-100">삭제</button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-1">
+                          <button onClick={()=>saveEdit(t.id)} className="px-3 py-2 text-sm rounded-xl border bg-white hover:bg-gray-100">저장(Enter)</button>
+                          <button onClick={()=>cancelEdit(t.id)} className="px-3 py-2 text-sm rounded-xl border bg-white hover:bg-gray-100">취소(Esc)</button>
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+
+              <footer className="mt-6 text-xs text-gray-500 text-center">과제 1번: React Todo – 저장·필터·수정 완비</footer>
+            </div>
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<TodoApp />);
+    </script>
+  </body>
+</html>
