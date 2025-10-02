@@ -1,15 +1,21 @@
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AppFooter, AppHeader } from "./components/common"
+import Main from "./components/pages/main/Main";
+import MyPage from "./components/pages/mypage/MyPage";
 
 
-function App() {
+function App() { 
   
 
   return (
-    <div className="page">
+    <BrowserRouter>
       <AppHeader />
-      <div className="container"></div>
+      <Routes>
+        <Route path="/" element={<Main />} />
+        <Route path="/mypage" element={<MyPage />} />
+      </Routes>
       <AppFooter />
-    </div>
+    </BrowserRouter>
   );
 }
 
