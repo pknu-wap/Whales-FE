@@ -136,7 +136,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* 아래 코드를 사용하면 위에 내용이 짤린다 */
+  /* justify-content: center; */
 
   margin: auto;
 
