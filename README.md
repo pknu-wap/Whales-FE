@@ -3,6 +3,7 @@
 https://ui.shadcn.com/docs/components/separator
 https://ui.shadcn.com/docs/components/skeleton
 https://ui.shadcn.com/docs/components/button
+https://ui.shadcn.com/docs/components/input
 ---
 # Whales-FE
 2025-2 WAP 웹 6팀
