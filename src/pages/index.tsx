@@ -1,6 +1,6 @@
-import { AppFooter, AppHeader, AppSidebar } from './components/common';
-import { SkeletonHotTopic } from "./components/skeleton";
-import { Skeleton } from "./components/ui";
+import { AppSidebar } from '../components/common';
+import { SkeletonHotTopic } from "../components/skeleton";
+import { Skeleton } from "../components/ui";
 
 // import { ThemeProvider } from './components/theme-provider';
 
@@ -9,10 +9,12 @@ function App() {
   return (
     // 아래에 주입 클래스는 다크모드가 가능하므로 꺼 놓았다
     // <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-    <div className="page">
-      <AppHeader />
-      <div className="container">
+    
         <main className="w-full h-full min-h-[720px] flex p-6 gap-6">
+          {/* 여기 내용은 밑에 버튼 픽스해서 하는 것이라 건너뛴다 */}
+          <div>
+
+          </div>
           {/* 카테고리 사이드바 */}
           <AppSidebar />
           {/* 토픽 콘텐츠 */}
@@ -65,9 +67,7 @@ function App() {
             </div>
           </section>
         </main>
-      </div>
-      <AppFooter />
-    </div>
+      
     // </ThemeProvider>
   );
 }
