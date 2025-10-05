@@ -1,22 +1,10 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { AppFooter, AppHeader } from "./components/common"
-import Main from "./components/pages/main/Main";
-import MyPage from "./components/pages/mypage/MyPage";
+// src/App.tsx
+import React from "react";
+import Login from "./Login";
 
+const App: React.FC = () => {
+  return <Login />;
+};
 
-function App() { 
-  
+export default App;
 
-  return (
-    <BrowserRouter>
-      <AppHeader />
-      <Routes>
-        <Route path="/" element={<Main />} />
-        <Route path="/mypage" element={<MyPage />} />
-      </Routes>
-      <AppFooter />
-    </BrowserRouter>
-  );
-}
-
-export default App
