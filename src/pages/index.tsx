@@ -1,74 +1,146 @@
-import { AppSidebar } from '../components/common';
-import { SkeletonHotTopic } from "../components/skeleton";
-import { Skeleton } from "../components/ui";
+import React, { useState, useEffect } from 'react';
+// 1. import 경로를 수정합니다. (src/ 경로를 포함)
+import { AppSidebar, TopicCard } from '@/components/common';
+import { Flame, Sparkles } from 'lucide-react';
 
-// import { ThemeProvider } from './components/theme-provider';
-
+// Topic 인터페이스 (id 포함)
+interface Topic {
+  id: string;
+  title: string;
+  content: string;
+  author: string;
+  date: string;
+  tags: string[];
+}
 
 function App() {
-  return (
-    // 아래에 주입 클래스는 다크모드가 가능하므로 꺼 놓았다
-    // <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-    
-        <main className="w-full h-full min-h-[720px] flex p-6 gap-6">
-          {/* 여기 내용은 밑에 버튼 픽스해서 하는 것이라 건너뛴다 */}
-          <div>
+  const [hotTopics, setHotTopics] = useState<Topic[]>([]);
+  const [newTopics, setNewTopics] = useState<Topic[]>([]);
 
+  useEffect(() => {
+    // --- 백엔드 연동 시 이 부분(임시 데이터)은 삭제하세요 ---
+    const tempHotTopics: Topic[] = [
+      {
+        id: 'hot-1',
+        title: '취업 준비생을 위한 면접 팁',
+        content:
+          '현직 면접관이 알려주는 실전 면접 노하우를 공유합니다. 질문에 대한 답변 방법과 태도...',
+        author: '닉네임',
+        date: '2025.09.18',
+        tags: ['면접', '취업', '팁'],
+      },
+      {
+        id: 'hot-2',
+        title: '제목',
+        content: '내용......',
+        author: '닉네임',
+        date: '2025.09.18',
+        tags: ['태그1', '태그2', '태그3'],
+      },
+      {
+        id: 'hot-3',
+        title: '스타트업에서 배운 것들',
+        content: '3년차 스타트업 개발자가 경험한 실무 이야기를 나눕니다...',
+        author: '닉네임',
+        date: '2025.09.17',
+        tags: ['스타트업', '개발', '경험담'],
+      },
+      {
+        id: 'hot-4',
+        title: 'UX 디자인 포트폴리오 만들기',
+        content: '실무 디자이너가 알려주는 포트폴리오 작성법과 팁...',
+        author: '닉네임',
+        date: '2025.09.17',
+        tags: ['디자인', '포트폴리오', 'UX'],
+      },
+    ];
+    const tempNewTopics: Topic[] = [
+      {
+        id: 'new-1',
+        title: '효과적인 마케팅 전략',
+        content: '실전에서 검증된 마케팅 전략과 노하우를 공유합니다...',
+        author: '닉네임',
+        date: '2025.09.18',
+        tags: ['마케팅', '전략'],
+      },
+      {
+        id: 'new-2',
+        title: '프로그래밍 언어 선택 가이드',
+        content: '2025년 배워야 할 프로그래밍 언어와 선택 기준...',
+        author: '닉네임',
+        date: '2025.09.18',
+        tags: ['프로그래밍', '가이드'],
+      },
+      {
+        id: 'new-3',
+        title: '자기계발 루틴 만들기',
+        content: '효율적인 자기계발 방법과 습관 형성 팁...',
+        author: '닉네임',
+        date: '2025.09.18',
+        tags: ['자기계발', '루틴'],
+      },
+      {
+        id: 'new-4',
+        title: '서비스 기획 첫걸음',
+        content: '초보 기획자를 위한 실전 기획 프로세스...',
+        author: '닉네임',
+        date: '2025.09.18',
+        tags: ['기획', '서비스'],
+      },
+    ];
+    setHotTopics(tempHotTopics);
+    setNewTopics(tempNewTopics);
+    // --- 여기까지 삭제 ---
+  }, []);
+
+  return (
+    <main className="w-full h-full min-h-screen flex p-6 gap-6">
+      <div></div>
+      <AppSidebar />
+      <section className="flex-1 flex flex-col gap-12">
+        {/* Hot Topics Section */}
+        <section className="w-full flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-sky-500 flex items-center justify-center">
+                <Flame className="w-5 h-5 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+                HOT 토픽
+              </h2>
+            </div>
+            <p className="text-gray-600">가장 주목받고 있는 댓글을 보세요</p>
           </div>
-          {/* 카테고리 사이드바 */}
-          <AppSidebar />
-          {/* 토픽 콘텐츠 */}
-          <section className="flex-1 flex flex-col gap-12">
-            {/* 핫 토픽 */}
-            <div className="w-full flex flex-col gap-6">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  {/* figma에서 필요한 사진 이렇게 폴더를 생성하여 저장할 것 */}
-                  {/* <img src="/assets/fire.gif" alt="@IMG" className="w-7 h-7" /> */}
-                  <h4 className="scroll-m-20 text-xl font-semibold tracking-tight">
-                    HOT 토픽
-                  </h4>
-                </div>
-                <p className="md:text-base text-muted-foreground">
-                  가장 주목받고 있는 댓글을 보세요
-                </p>
+          {/* [수정] grid -> flex flex-col (한 줄에 하나씩) */}
+          <div className="flex flex-col gap-6">
+            {hotTopics.map((topic) => (
+              <TopicCard key={topic.id} {...topic} isHot />
+            ))}
+          </div>
+        </section>
+
+        {/* New Topics Section */}
+        <section className="w-full flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-sky-500 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-white" />
               </div>
-              {/* 그리드를 적용한 코드 */}
-              {/* grid-cols가 4이므로 25프로씩 잡아줄 것이다 w-full을 아래에 적용했다 */}
-              <div className="grid grid-cols-4 gap-6">
-                <SkeletonHotTopic />
-                <SkeletonHotTopic />
-                <SkeletonHotTopic />
-                <SkeletonHotTopic />
-              </div>
+              <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+                NEW 토픽
+              </h2>
             </div>
-            {/* 뉴 토픽 */}
-            <div className="w-full flex flex-col gap-6">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  {/* figma에서 필요한 사진 이렇게 폴더를 생성하여 저장할 것 */}
-                  {/* <img src="/assets/fire.gif" alt="@IMG" className="w-7 h-7" /> */}
-                  <h4 className="scroll-m-20 text-xl font-semibold tracking-tight">
-                    NEW 토픽
-                  </h4>
-                </div>
-                <p className="md:text-base text-muted-foreground">
-                  주목받을 댓글을 작성하세요!
-                </p>
-              </div>
-              {/* 그리드를 적용한 코드 */}
-              {/* grid-cols가 4이므로 25프로씩 잡아줄 것이다 w-full을 아래에 적용했다 */}
-              <div className="grid grid-cols-2 gap-6">
-                <Skeleton className="w-full h-[210px]" />
-                <Skeleton className="w-full h-[210px]" />
-                <Skeleton className="w-full h-[210px]" />
-                <Skeleton className="w-full h-[210px]" />
-              </div>
-            </div>
-          </section>
-        </main>
-      
-    // </ThemeProvider>
+            <p className="text-gray-600">주목받을 댓글을 작성하세요!</p>
+          </div>
+          {/* [수정] grid -> flex flex-col (한 줄에 하나씩) */}
+          <div className="flex flex-col gap-6">
+            {newTopics.map((topic) => (
+              <TopicCard key={topic.id} {...topic} />
+            ))}
+          </div>
+        </section>
+      </section>
+    </main>
   );
 }
 

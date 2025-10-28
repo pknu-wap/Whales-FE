@@ -8,6 +8,7 @@ import App from './pages/' // 메인 페이지
 import SignIn from "./pages/sign-in" // 회원가입 페이지
 import SignUp from "./pages/sign-up" // 로그인 페이지
 import RootLayout from "./pages/layout.tsx";
+import CreatePost from "./pages/CreatePost.tsx";
 
 // App.tsx -> index.tsx로 수정하였고 -> pages 폴더에 넣어서 관리하고 있다
 
@@ -16,6 +17,7 @@ createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <Routes>
         <Route element={<RootLayout />}>
+          <Route path="/create" element={<CreatePost />} />
           <Route index element={<App />} />
           <Route path="/sign-up" element={<SignUp />} />
           <Route path="/sign-in" element={<SignIn />} />
