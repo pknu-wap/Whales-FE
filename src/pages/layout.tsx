@@ -1,15 +1,15 @@
-import { AppFooter, AppHeader } from "@/components/common";
-import { Outlet } from "react-router";
+import { AppHeader } from "@/components/common/AppHeader";
+import { AppFooter } from "@/components/common/AppFooter";
+import { Outlet } from "react-router-dom";
 
-export default function RootLayout() {
+export default function Layout() {
   return (
-    <div className="page">
+    <div className="app-layout flex flex-col min-h-screen">
       <AppHeader />
-      <div className="container">
+      <main className="flex-1">
         <Outlet />
-      </div>
+      </main>
       <AppFooter />
     </div>
   );
 }
-

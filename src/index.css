@@ -1,5 +1,6 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @custom-variant dark (&:is(.dark *));
 
@@ -151,3 +152,5 @@
     flex: 1;
   }
 }
+.app-layout { display: flex; flex-direction: column; min-height: 100vh; }
+.app-main   { flex: 1; }

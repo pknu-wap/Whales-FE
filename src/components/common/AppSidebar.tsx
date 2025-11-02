@@ -188,3 +188,4 @@ export function AppSidebar(): React.ReactElement {
     </div>
   );
 }
+export default AppSidebar;
