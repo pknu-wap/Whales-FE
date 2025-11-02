@@ -89,10 +89,13 @@ export default function CreatePost() {
                       >
                         #{tag}
                         <button
+                          type="button"
                           onClick={() => handleRemoveHashtag(tag)}
                           className="ml-1 hover:bg-background/50 rounded-full p-0.5"
+                          aria-label={`${tag} 태그 제거`}
+                          title="태그 삭제"
                         >
-                          <X className="w-3 h-3" />
+                          <X className="w-3 h-3" aria-hidden="true" focusable="false" />
                         </button>
                       </Badge>
                     ))}

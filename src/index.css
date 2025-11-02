@@ -1,5 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 
 @custom-variant dark (&:is(.dark *));
 
@@ -151,3 +155,5 @@
     flex: 1;
   }
 }
+.app-layout { display: flex; flex-direction: column; min-height: 100vh; }
+.app-main   { flex: 1; } /* 본문이 남는 높이를 전부 차지 → footer는 항상 아래 */
