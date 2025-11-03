@@ -35,7 +35,7 @@ function AppHeader() {
             className="gap-2 border-blue-400 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
           >
             <LogIn className="w-4 h-4" />
-            <NavLink to={'/sign-in'}>로그인</NavLink>
+            <NavLink to={'/login'}>로그인</NavLink>
           </Button>
 
           {/* 5. 글쓰기 버튼: 메인 그라데이션을 적용합니다. */}
