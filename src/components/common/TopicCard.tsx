@@ -20,7 +20,7 @@ export function TopicCard({
   author,
   date,
   tags,
-  isHot,
+  //isHot,
 }: TopicCardProps) {
   const navigate = useNavigate();
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 // 1. import 경로를 수정합니다. (src/ 경로를 포함)
 import { AppSidebar, TopicCard } from '@/components/common';
 import { Flame, Sparkles } from 'lucide-react';

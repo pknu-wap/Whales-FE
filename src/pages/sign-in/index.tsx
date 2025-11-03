@@ -1,4 +1,4 @@
-import { Button, Checkbox, Label } from "@/components/ui";
+import { Button, Checkbox} from "@/components/ui";
 import { Asterisk } from "lucide-react";
 
 export default function  SignIn() {
