@@ -6,37 +6,39 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
+import { createPost } from '@/services/api'; // ✅ axios API 함수 사용
 
 export default function CreatePost() {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('');
-  const [hashtags, setHashtags] = useState<string[]>([]);
-  const [hashtagInput, setHashtagInput] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
   const [content, setContent] = useState('');
 
-  const handleAddHashtag = () => {
-    if (hashtagInput.trim() && !hashtags.includes(hashtagInput.trim())) {
-      setHashtags([...hashtags, hashtagInput.trim()]);
-      setHashtagInput('');
+  const handleAddTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
     }
   };
 
-  const handleRemoveHashtag = (tag: string) => {
-    setHashtags(hashtags.filter((t) => t !== tag));
+  const handleRemoveTag = (tag: string) => {
+    setTags(tags.filter((t) => t !== tag));
   };
 
-  const handleSubmit = () => {
-    // 게시글 작성 로직
-    console.log({ title, category, hashtags, content });
-    navigate('/');
+  const handleSubmit = async () => {
+    try {
+      await createPost({ title, content, tags }); // ✅ axios 요청 (http://localhost:8080/api/posts)
+      navigate('/');
+    } catch (error) {
+      console.error('게시글 작성 실패:', error);
+    }
   };
 
   return (
     <div className="min-h-screen bg-background">
       <main className="w-full max-w-7xl mx-auto flex p-6 gap-6">
         <AppSidebar />
-
         <section className="flex-1 flex flex-col gap-6">
           <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
             <h2 className="text-2xl font-bold mb-6">게시글 작성</h2>
@@ -53,43 +55,28 @@ export default function CreatePost() {
                 />
               </div>
 
-              {/* 카테고리 */}
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold">카테고리 *</label>
-                <Input
-                  placeholder="카테고리를 입력하세요"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="text-base"
-                />
-              </div>
-
               {/* 해시태그 */}
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold">해시태그</label>
                 <div className="flex gap-2">
                   <Input
                     placeholder="해시태그 입력 후 추가 버튼 클릭"
-                    value={hashtagInput}
-                    onChange={(e) => setHashtagInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleAddHashtag()}
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
                     className="text-base"
                   />
-                  <Button onClick={handleAddHashtag} variant="secondary">
+                  <Button onClick={handleAddTag} variant="secondary">
                     추가
                   </Button>
                 </div>
-                {hashtags.length > 0 && (
+                {tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {hashtags.map((tag, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="rounded-full gap-1 pr-1"
-                      >
+                    {tags.map((tag, index) => (
+                      <Badge key={index} variant="secondary" className="rounded-full gap-1 pr-1">
                         #{tag}
                         <button
-                          onClick={() => handleRemoveHashtag(tag)}
+                          onClick={() => handleRemoveTag(tag)}
                           className="ml-1 hover:bg-background/50 rounded-full p-0.5"
                         >
                           <X className="w-3 h-3" />
@@ -98,10 +85,6 @@ export default function CreatePost() {
                     ))}
                   </div>
                 )}
-                <p className="text-xs text-muted-foreground">
-                  → 검색어를 해시태그로 입력하면 사람들이 더 쉽게 글을 찾을 수
-                  있어요!
-                </p>
               </div>
 
               {/* 내용 */}
@@ -119,9 +102,6 @@ export default function CreatePost() {
               <div className="flex gap-3 justify-end mt-4">
                 <Button variant="outline" onClick={() => navigate(-1)}>
                   취소
-                </Button>
-                <Button variant="secondary" onClick={handleSubmit}>
-                  임시저장
                 </Button>
                 <Button onClick={handleSubmit}>게시글 작성</Button>
               </div>
