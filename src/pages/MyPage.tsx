@@ -46,13 +46,13 @@ export default function MyPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold mb-1">자전 최고</h2>
+                  <h2 className="text-2xl font-bold mb-1">유저 닉네임</h2>
                   <p className="text-sm text-muted-foreground mb-2">
-                    자연과학을 좋아한다
+                    컴퓨터공학
                   </p>
                   <div className="flex gap-2 mb-3">
                     <Badge variant="secondary" className="rounded-full">
-                      전공자: 자유전공학부
+                      전공 : 컴퓨터공학
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
