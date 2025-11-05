@@ -2,7 +2,7 @@ import axios from 'axios';
 import useAuthStore from '@/stores/authStore';
 
 // API 기본 URL 설정
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
 // axios 인스턴스 생성
 const api = axios.create({
@@ -45,15 +45,8 @@ api.interceptors.response.use(
 // ========================================
 
 // POST /auth/login/google - OAuth2 구글 로그인
-export const loginWithGoogle = () => {
-  window.location.href = `${API_BASE_URL}/auth/login/google`;
-};
-
-// GET /auth/login/google/callback?code - OAuth2 콜백 처리
-export const handleGoogleCallback = async (code: string) => {
-  const response = await api.get('/auth/login/google/callback', {
-    params: { code },
-  });
+export const loginWithGoogle = async (code: string, redirectUri: string) => {
+  const response = await api.post('/auth/login/google', { code, redirectUri });
   return response.data;
 };
 
@@ -119,6 +112,16 @@ export const updatePost = async (
 export const deletePost = async (id: string) => {
   const response = await api.delete(`/posts/${id}`);
   return response.data;
+};
+
+export const searchPosts = async (query: string) => {
+  const response = await api.get(`/posts/search`, { params: { query } });
+  return response.data.map((post: any) => ({
+    ...post,
+    tags: Array.isArray(post.tags)
+      ? post.tags.map((t: any) => (typeof t === 'object' ? t.name : t))
+      : [],
+  }));
 };
 
 // ========================================
@@ -208,6 +211,56 @@ export const deleteComment = async (id: string, hard: boolean = false) => {
   const response = await api.delete(`/comments/${id}`, {
     params: { hard },
   });
+  return response.data;
+};
+
+// ========================================
+// 🔗 Reactions API
+// ========================================
+
+// POST /posts/{postId}/like - 좋아요 토글
+export const togglePostLike = async (postId: string) => {
+  const response = await api.post(`/posts/${postId}/like`);
+  return response.data;
+};
+
+// POST /posts/{postId}/dislike - 싫어요 토글
+export const togglePostDislike = async (postId: string) => {
+  const response = await api.post(`/posts/${postId}/dislike`);
+  return response.data;
+};
+
+// POST /comments/{commentId}/like - 댓글 좋아요 토글
+export const toggleCommentLike = async (commentId: string) => {
+  const response = await api.post(`/comments/${commentId}/like`);
+  return response.data;
+};
+
+// POST /comments/{commentId}/dislike - 댓글 싫어요 토글
+export const toggleCommentDislike = async (commentId: string) => {
+  const response = await api.post(`/comments/${commentId}/dislike`);
+  return response.data;
+};
+
+// ========================================
+// 🔗 Scrap API
+// ========================================
+
+// POST /posts/{postId}/scrap - 게시글 스크랩 토글
+export const togglePostScrap = async (postId: string) => {
+  const response = await api.post(`/posts/${postId}/scrap`);
+  return response.data;
+};
+
+// GET /me/scraps - 내가 스크랩한 게시글 목록
+export const getMyScraps = async () => {
+  const response = await api.get(`/posts/scraps`);
+  return response.data;
+};
+
+// GET /posts/{postId}/scrap - 스크랩 여부
+export const getIsScraped = async (postId: string) => {
+  const response = await api.get(`/posts/${postId}/scrap`);
   return response.data;
 };
 

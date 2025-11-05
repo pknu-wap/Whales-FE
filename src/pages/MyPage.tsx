@@ -1,34 +1,77 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppSidebar } from '@/components/common';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { getMyProfile, getMyScraps, getPosts } from '@/services/api';
 
 export default function MyPage() {
   const [activeTab, setActiveTab] = useState('posts');
+  const [profile, setProfile] = useState<any>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [myPosts, setMyPosts] = useState<any[]>([]);
+  const [postsLoading, setPostsLoading] = useState(true);
+  const [myScraps, setMyScraps] = useState<any[]>([]);
+  const [scrapsLoading, setScrapsLoading] = useState(true);
 
-  const myPosts = [
-    {
-      id: 1,
-      title: 'C언어 형식',
-      category: '자연과학',
-      tags: ['컴퓨터'],
-      date: '2025.9.1',
-      likes: 3,
-      comments: 0,
-    },
-    {
-      id: 2,
-      title: '저급 언어',
-      category: '자연',
-      tags: ['컴퓨터', '과제'],
-      date: '2025.8.19',
-      likes: 5,
-      comments: 0,
-    },
-  ];
+  // ✅ 문자열 변환 유틸
+  const normalizeValue = (val: any) => {
+    if (val == null) return '-';
+    if (typeof val === 'object') return val.name ?? JSON.stringify(val);
+    return val;
+  };
+
+  // ✅ 태그 변환
+  const normalizeTags = (tags: any[]) =>
+    Array.isArray(tags)
+      ? tags.map((tag) =>
+          typeof tag === 'object' ? tag.name ?? JSON.stringify(tag) : tag
+        )
+      : [];
+
+  useEffect(() => {
+    getMyProfile()
+      .then((data) => {
+        const normalized = {
+          ...data,
+          nicknameColor: normalizeValue(data.nicknameColor),
+          major: normalizeValue(data.major),
+          bio: normalizeValue(data.bio),
+          plan: normalizeValue(data.plan),
+          intro: normalizeValue(data.intro),
+        };
+        setProfile(normalized);
+      })
+      .finally(() => setProfileLoading(false));
+  }, []);
+
+  useEffect(() => {
+    setPostsLoading(true);
+    getPosts()
+      .then((data) => {
+        const normalizedPosts = data.map((p: any) => ({
+          ...p,
+          tags: normalizeTags(p.tags),
+        }));
+        setMyPosts(normalizedPosts);
+      })
+      .finally(() => setPostsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    setScrapsLoading(true);
+    getMyScraps()
+      .then((data) => {
+        const normalizedScraps = data.map((p: any) => ({
+          ...p,
+          tags: normalizeTags(p.tags),
+        }));
+        setMyScraps(normalizedScraps);
+      })
+      .finally(() => setScrapsLoading(false));
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -39,57 +82,43 @@ export default function MyPage() {
           {/* 프로필 카드 */}
           <Card className="bg-gradient-to-b from-card to-secondary/30 border-border">
             <CardHeader className="pb-4">
-              <div className="flex items-start gap-4">
-                <Avatar className="w-20 h-20 border-4 border-primary/20">
-                  <AvatarFallback className="bg-primary/10 text-primary font-bold text-2xl">
-                    자
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold mb-1">유저 닉네임</h2>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    컴퓨터공학
-                  </p>
-                  <div className="flex gap-2 mb-3">
-                    <Badge variant="secondary" className="rounded-full">
-                      전공 : 컴퓨터공학
-                    </Badge>
+              {profileLoading ? (
+                <div className="p-6">로딩 중…</div>
+              ) : profile ? (
+                <div className="flex items-start gap-4">
+                  <Avatar className="w-20 h-20 border-4 border-primary/20">
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-2xl">
+                      {profile.displayName ? profile.displayName[0] : '유'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-bold mb-1">
+                      {normalizeValue(profile.displayName)}
+                    </h2>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      {normalizeValue(profile.bio)}
+                    </p>
+                    <div className="flex gap-2 mb-3">
+                      {profile.major && (
+                        <Badge variant="secondary" className="rounded-full">
+                          전공자: {normalizeValue(profile.major)}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground">이메일</span>
+                      <span>{profile.email ?? '-'}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-muted-foreground">이메일</span>
-                    <span>@ pukyong.ac.kr</span>
-                  </div>
+                  <Button variant="outline">프로필 수정</Button>
                 </div>
-                <Button variant="outline">프로필 수정</Button>
-              </div>
+              ) : (
+                <div className="p-6 text-muted-foreground">
+                  프로필 정보를 불러올 수 없습니다.
+                </div>
+              )}
             </CardHeader>
           </Card>
-
-          {/* 활동 통계 */}
-          <div className="grid grid-cols-3 gap-4">
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <p className="text-3xl font-bold text-primary">가입 일자</p>
-                <p className="text-sm text-muted-foreground mt-2">2025/06/22</p>
-              </CardContent>
-            </Card>
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <p className="text-3xl font-bold text-primary">계획</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  아무것도 안하기
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <p className="text-3xl font-bold text-primary"> 소개 </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  대한민국은 자연과학에 대한 투자가 필요하다
-                </p>
-              </CardContent>
-            </Card>
-          </div>
 
           {/* 탭 영역 */}
           <Tabs
@@ -98,76 +127,79 @@ export default function MyPage() {
             className="w-full"
           >
             <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
-              <TabsTrigger
-                value="posts"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
-              >
-                내가 쓴 글 (2)
-              </TabsTrigger>
-              <TabsTrigger
-                value="comments"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
-              >
-                내가 쓴 댓글 (2)
-              </TabsTrigger>
-              <TabsTrigger
-                value="saved"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
-              >
-                스크랩 (5)
-              </TabsTrigger>
+              <TabsTrigger value="posts">내가 쓴 글</TabsTrigger>
+              <TabsTrigger value="comments">내가 쓴 댓글</TabsTrigger>
+              <TabsTrigger value="saved">스크랩</TabsTrigger>
             </TabsList>
 
+            {/* 내가 쓴 글 */}
             <TabsContent value="posts" className="mt-6">
-              <div className="flex flex-col gap-4">
-                {myPosts.map((post) => (
-                  <Card
-                    key={post.id}
-                    className="hover:shadow-lg transition-shadow cursor-pointer"
-                  >
+              {postsLoading ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  로딩 중…
+                </div>
+              ) : myPosts.length > 0 ? (
+                myPosts.map((post) => (
+                  <Card key={post.id} className="hover:shadow-lg transition">
                     <CardContent className="p-6">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h3 className="font-bold text-lg mb-2">
-                            {post.title}
-                          </h3>
-                          <div className="flex gap-2 mb-3">
-                            {post.tags.map((tag, index) => (
-                              <Badge
-                                key={index}
-                                variant="secondary"
-                                className="rounded-full"
-                              >
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>{post.category}</span>
-                            <span>•</span>
-                            <span>{post.date}</span>
-                            <span>•</span>
-                            <span>👍 {post.likes}</span>
-                            <span>💬 {post.comments}</span>
-                          </div>
-                        </div>
+                      <h3 className="font-bold text-lg mb-2">
+                        {normalizeValue(post.title)}
+                      </h3>
+                      <div className="flex gap-2 mb-3">
+                        {post.tags.map((tag: string, i: number) => (
+                          <Badge key={i} variant="secondary" className="rounded-full">
+                            {normalizeValue(tag)}
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>{new Date(post.createdAt).toLocaleDateString('ko-KR')}</span>
+                        <span>👍 {post.reactions?.likeCount ?? 0}</span>
+                        <span>👎 {post.reactions?.dislikeCount ?? 0}</span>
                       </div>
                     </CardContent>
                   </Card>
-                ))}
-              </div>
+                ))
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  작성한 글이 없습니다.
+                </div>
+              )}
             </TabsContent>
 
-            <TabsContent value="comments" className="mt-6">
-              <div className="text-center py-12 text-muted-foreground">
-                내가 쓴 댓글이 여기에 표시됩니다
-              </div>
-            </TabsContent>
-
+            {/* 스크랩 */}
             <TabsContent value="saved" className="mt-6">
-              <div className="text-center py-12 text-muted-foreground">
-                스크랩한 글이 여기에 표시됩니다
-              </div>
+              {scrapsLoading ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  로딩 중…
+                </div>
+              ) : myScraps.length > 0 ? (
+                myScraps.map((post) => (
+                  <Card key={post.id} className="hover:shadow-lg transition">
+                    <CardContent className="p-6">
+                      <h3 className="font-bold text-lg mb-2">
+                        {normalizeValue(post.title)}
+                      </h3>
+                      <div className="flex gap-2 mb-3">
+                        {post.tags.map((tag: string, i: number) => (
+                          <Badge key={i} variant="secondary" className="rounded-full">
+                            {normalizeValue(tag)}
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>{new Date(post.createdAt).toLocaleDateString('ko-KR')}</span>
+                        <span>👍 {post.reactions?.likeCount ?? 0}</span>
+                        <span>👎 {post.reactions?.dislikeCount ?? 0}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  스크랩한 글이 없습니다.
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </section>
