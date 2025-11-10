@@ -16,7 +16,7 @@ export default function AuthCallback() {
       }
 
       try {
-        const redirectUri = 'http://localhost:8081/auth/callback';
+        const redirectUri = 'http://localhost:5173/auth/callback';
 
         // 백엔드로 code 전달 (백엔드가 JWT 발급)
         const response = await axios.post(
