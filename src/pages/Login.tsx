@@ -7,10 +7,9 @@ export default function Login() {
 
   // 🔗 백엔드 연결: POST /auth/login/google
   const handleGoogleLogin = () => {
-    // testid가 필요한 부분
     const clientId =
-      '12345';
-    const redirectUri = 'http://localhost:8081/auth/callback';
+      '672627774587-ng4kk4ds9kql97v5h82judmhfnt6rmah.apps.googleusercontent.com';
+    const redirectUri = 'http://localhost:5173/auth/callback';
     const scope = 'openid email profile';
 
     const googleAuthUrl =
@@ -22,7 +21,7 @@ export default function Login() {
       `&access_type=online` +
       `&prompt=consent`;
 
-      window.location.href = googleAuthUrl;
+    window.location.href = googleAuthUrl;
   };
 
   return (
