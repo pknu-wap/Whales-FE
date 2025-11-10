@@ -3,13 +3,23 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
 
+interface Tag {
+  id: string;
+  name: string;
+}
+
+interface Author {
+  id: string;
+  displayName: string;
+}
+
 interface TopicCardProps {
   id: string;
   title: string;
   content: string;
-  author: string;
+  author: Author | string;
   date: string;
-  tags: string[];
+  tags: Tag[] | string[];
   isHot?: boolean;
 }
 
@@ -24,6 +34,9 @@ export function TopicCard({
 }: TopicCardProps) {
   const navigate = useNavigate();
 
+  const displayAuthor = typeof author === 'string' ? author : author.displayName;
+  const displayTags = tags.map(tag => (typeof tag === 'string' ? tag : tag.name));
+
   return (
     <Card
       className="group hover:shadow-lg transition-all duration-300 cursor-pointer border-border bg-gradient-to-b from-card to-secondary/30"
@@ -34,11 +47,11 @@ export function TopicCard({
         <div className="flex items-center gap-3 mb-3">
           <Avatar className="w-10 h-10 border-2 border-primary/10">
             <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-              {author[0]}
+              {displayAuthor[0]}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <p className="font-semibold text-sm">{author}</p>
+            <p className="font-semibold text-sm">{displayAuthor}</p>
             <p className="text-xs text-muted-foreground">{date}</p>
           </div>
         </div>
@@ -51,13 +64,13 @@ export function TopicCard({
           {content}
         </p>
         <div className="flex flex-wrap gap-2">
-          {tags.map((tag, index) => (
+          {displayTags.map((tagName, index) => (
             <Badge
               key={index}
               variant="secondary"
               className="bg-secondary hover:bg-primary/10 hover:text-primary transition-colors"
             >
-              {tag}
+              {tagName}
             </Badge>
           ))}
         </div>

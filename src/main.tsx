@@ -12,25 +12,32 @@ import PostDetail from "./pages/PostDetail.tsx";
 import MyPage from "./pages/MyPage.tsx";
 import Login from "./pages/Login.tsx";
 import AuthCallback from "./pages/AuthCallback.tsx";
-// import useAuthStore from './stores/authStore.ts';
+import useAuthStore from './stores/authStore.ts';
+import RecentPage from "./pages/RecentPage";
+import TrendingPage from "./pages/TrendingPage";
+import SearchPage from "./pages/SearchPage";
 
 // App.tsx -> index.tsx로 수정하였고 -> pages 폴더에 넣어서 관리하고 있다
 
+useAuthStore.getState().initializeAuth();
+
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
     <BrowserRouter>
       <Routes>
         <Route element={<RootLayout />}>
+          <Route index element={<App />} />
           <Route path="/create" element={<CreatePost />} />
           <Route path="/post/:id" element={<PostDetail />} />
           <Route path="/mypage" element={<MyPage />} />
-          <Route index element={<App />} />
           <Route path="/login" element={<Login />} />
           <Route path="/sign-in" element={<SignIn />} />
-          {/* --- RootLayout을 사용하지 않는 독립 라우트 --- */}
-          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/recent" element={<RecentPage />} />
+          <Route path="/trending" element={<TrendingPage />} />
+          <Route path="/search" element={<SearchPage />} />
         </Route>
+
+        {/* ✅ RootLayout을 타지 않는 완전 독립 라우트 */}
+        <Route path="/auth/callback" element={<AuthCallback />} />
       </Routes>
     </BrowserRouter>
-  </StrictMode>
 );
