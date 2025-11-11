@@ -55,7 +55,7 @@ export default function AuthCallback() {
         alert('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
 
         // 🔧 디버깅할 동안은 일단 주석 처리해두면 콘솔이 안 사라짐
-        // navigate('/login');
+        navigate('/login');
       }
     };
 

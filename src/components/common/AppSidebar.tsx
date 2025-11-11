@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; // 1. useState를 import 합니다.
+import React, { useState } from 'react';
 import {
   Home,
   TrendingUp,
@@ -8,7 +8,7 @@ import {
   Settings,
   Menu, // 2. 토글 버튼용 'Menu' 아이콘을 import 합니다.
 } from 'lucide-react';
-import { NavLink } from 'react-router';
+import { NavLink, useLocation } from 'react-router-dom';
 
 // ... (TailwindSeparator 함수는 변경 없음) ...
 function TailwindSeparator(): React.ReactElement {
@@ -18,6 +18,11 @@ function TailwindSeparator(): React.ReactElement {
 export function AppSidebar(): React.ReactElement {
   // 3. 사이드바의 "열림/닫힘" 상태를 관리합니다. (기본값: true)
   const [isOpen, setIsOpen] = useState<boolean>(true);
+
+  // ✅ 현재 URL의 ?tag 값을 읽어서 활성 태그로 사용
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const activeTag = searchParams.get('tag');
 
   const navLinkBaseStyle =
     'flex items-center gap-3 font-medium w-full px-3 py-2 rounded-md transition-colors';
@@ -65,7 +70,7 @@ export function AppSidebar(): React.ReactElement {
         {/* 로고 */}
         <div>
           <NavLink to="/">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-sky-500 bg-clip-text text-transparent">
+            <h2 className="text-2xl font-bold bg-linear-to-r from-blue-500 to-sky-500 bg-clip-text text-transparent">
               카테고리
             </h2>
           </NavLink>
@@ -119,31 +124,39 @@ export function AppSidebar(): React.ReactElement {
           <div className="flex flex-col gap-1">
             <NavLink
               to="/search?tag=리액트"
-              className={({ isActive }) =>
+              className={() =>
                 `${tagLinkBaseStyle} ${
-                  isActive ? tagLinkActiveStyle : tagLinkInactiveStyle
+                  activeTag === '리액트'
+                    ? tagLinkActiveStyle
+                    : tagLinkInactiveStyle
                 }`
               }
             >
               <Tag className="w-4 h-4" />
               <span>리액트</span>
             </NavLink>
+
             <NavLink
               to="/search?tag=스프링부트"
-              className={({ isActive }) =>
+              className={() =>
                 `${tagLinkBaseStyle} ${
-                  isActive ? tagLinkActiveStyle : tagLinkInactiveStyle
+                  activeTag === '스프링부트'
+                    ? tagLinkActiveStyle
+                    : tagLinkInactiveStyle
                 }`
               }
             >
               <Tag className="w-4 h-4" />
               <span>스프링부트</span>
             </NavLink>
+
             <NavLink
               to="/search?tag=채용"
-              className={({ isActive }) =>
+              className={() =>
                 `${tagLinkBaseStyle} ${
-                  isActive ? tagLinkActiveStyle : tagLinkInactiveStyle
+                  activeTag === '채용'
+                    ? tagLinkActiveStyle
+                    : tagLinkInactiveStyle
                 }`
               }
             >

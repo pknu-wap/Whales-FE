@@ -1,4 +1,4 @@
-import { AppFooter, AppHeader } from "@/components/common";
+import { AppHeader } from "@/components/common";
 import { Outlet } from "react-router";
 
 export default function RootLayout() {
@@ -8,7 +8,7 @@ export default function RootLayout() {
       <div className="container">
         <Outlet />
       </div>
-      <AppFooter />
+      {/*<AppFooter />*/}
     </div>
   );
 }
