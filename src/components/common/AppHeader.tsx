@@ -58,7 +58,7 @@ function AppHeader() {
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => navigate("/")}
         >
-          <div className="w-15 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-sky-500 flex items-center justify-center text-white font-bold text-lg">
+          <div className="w-15 h-10 rounded-lg bg-linear-to-br from-blue-500 to-sky-500 flex items-center justify-center text-white font-bold text-lg">
             Whales
           </div>
         </div>
@@ -83,7 +83,7 @@ function AppHeader() {
           {/* ✅ 글쓰기 버튼: 항상 표시 */}
           <Button
             size="lg"
-            className="bg-gradient-to-r from-blue-500 to-sky-500 hover:opacity-90 transition-opacity gap-2 text-white"
+            className="bg-linear-to-r from-blue-500 to-sky-500 hover:opacity-90 transition-opacity gap-2 text-white"
           >
             <PenSquare className="w-4 h-4" />
             <NavLink to="/create" key="create-link">

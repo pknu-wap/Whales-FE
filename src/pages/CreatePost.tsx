@@ -46,7 +46,7 @@ export default function CreatePost() {
             <div className="flex flex-col gap-6">
               {/* 제목 */}
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold">제목 *</label>
+                <label className="text-sm font-semibold">제목</label>
                 <Input
                   placeholder="게시글 제목을 입력하세요"
                   value={title}
@@ -89,7 +89,7 @@ export default function CreatePost() {
 
               {/* 내용 */}
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold">내용 *</label>
+                <label className="text-sm font-semibold">내용</label>
                 <Textarea
                   placeholder="내용을 입력하세요"
                   value={content}

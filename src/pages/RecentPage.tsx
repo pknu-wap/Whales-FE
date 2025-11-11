@@ -68,7 +68,7 @@ export default function RecentPage() {
       <AppSidebar />
       <section className="flex-1 flex flex-col gap-8">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-sky-500 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-500 to-sky-500 flex items-center justify-center">
             <Clock className="w-5 h-5 text-white" />
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-gray-900">

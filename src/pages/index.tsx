@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 // 1. import 경로를 수정합니다. (src/ 경로를 포함)
 import { AppSidebar, TopicCard } from '@/components/common';
 import { Flame, Sparkles } from 'lucide-react';
@@ -77,7 +77,7 @@ const formatPost = (post: any) => ({
         <section className="w-full flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-sky-500 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-500 to-sky-500 flex items-center justify-center">
                 <Flame className="w-5 h-5 text-white" />
               </div>
               <h2 className="text-2xl font-bold tracking-tight text-gray-900">
@@ -98,7 +98,7 @@ const formatPost = (post: any) => ({
         <section className="w-full flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-sky-500 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-500 to-sky-500 flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <h2 className="text-2xl font-bold tracking-tight text-gray-900">
