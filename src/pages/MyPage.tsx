@@ -6,8 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { getMyProfile, getMyScraps, getPosts } from '@/services/api';
+import { useNavigate } from "react-router";
 
 export default function MyPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('posts');
   const [profile, setProfile] = useState<any>(null);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -140,7 +142,8 @@ export default function MyPage() {
                 </div>
               ) : myPosts.length > 0 ? (
                 myPosts.map((post) => (
-                  <Card key={post.id} className="hover:shadow-lg transition">
+                  <Card key={post.id} className="hover:shadow-lg transition"
+                  onClick={() => navigate(`/post/${post.id}`)}>
                     <CardContent className="p-6">
                       <h3 className="font-bold text-lg mb-2">
                         {normalizeValue(post.title)}
@@ -175,7 +178,8 @@ export default function MyPage() {
                 </div>
               ) : myScraps.length > 0 ? (
                 myScraps.map((post) => (
-                  <Card key={post.id} className="hover:shadow-lg transition">
+                  <Card key={post.id} className="hover:shadow-lg transition"
+                  onClick={() => navigate(`/post/${post.id}`)}>
                     <CardContent className="p-6">
                       <h3 className="font-bold text-lg mb-2">
                         {normalizeValue(post.title)}
