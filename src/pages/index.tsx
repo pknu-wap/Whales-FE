@@ -1,9 +1,25 @@
 import { useEffect, useState } from 'react';
-// 1. import 경로를 수정합니다. (src/ 경로를 포함)
 import { AppSidebar, TopicCard } from '@/components/common';
 import { Flame, Sparkles } from 'lucide-react';
 import { getPosts } from '@/services/api';
-// Topic 인터페이스 (id 포함)
+import { Button } from '@/components/ui/button';
+
+// 백엔드 응답 타입
+interface PostResponse {
+  id: string;
+  title: string;
+  content: string;
+  author?: { name?: string } | string;
+  authorName?: string;
+  createdAt?: string;
+  tags?: ({ id: string; name: string } | string)[];
+  reactions?: {
+    likeCount?: number;
+    dislikeCount?: number;
+  };
+}
+
+// 화면에서 사용하는 Topic 타입
 interface Topic {
   id: string;
   title: string;
@@ -11,13 +27,18 @@ interface Topic {
   author: string;
   date: string;
   tags: string[];
+  createdAt?: string;
 }
 
+const HOT_PAGE_SIZE = 2;
+const NEW_PAGE_SIZE = 2;
+
 function App() {
-  // const [hotTopics, setHotTopics] = useState<Topic[]>([]);
-  // const [newTopics, setNewTopics] = useState<Topic[]>([]);
-  const [posts, setPosts] = useState<Topic[]>([]);
+  const [posts, setPosts] = useState<PostResponse[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [hotPage, setHotPage] = useState(1);
+  const [newPage, setNewPage] = useState(1);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -33,47 +54,60 @@ function App() {
     fetchPosts();
   }, []);
 
-  // 데이터 변환 함수
-const formatPost = (post: any) => ({
-  id: post.id,
-  title: post.title,
-  content: post.content,
-  author: post.authorName || '익명',
-  date: post.createdAt
-    ? new Date(post.createdAt).toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      })
-    : '',
-  createdAt: post.createdAt || '', // ✅ 정렬용 원본도 유지
-  tags: Array.isArray(post.tags)
-    ? post.tags.map((tag: any) => (typeof tag === 'object' ? tag.name : tag))
-    : [],
-});
+  const formatPost = (post: PostResponse): Topic => ({
+    id: post.id,
+    title: post.title,
+    content: post.content,
+    author:
+      typeof post.author === 'object'
+        ? post.author?.name || '익명'
+        : post.author || post.authorName || '익명',
+    date: post.createdAt
+      ? new Date(post.createdAt).toLocaleDateString('ko-KR', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        })
+      : '',
+    createdAt: post.createdAt,
+    tags: Array.isArray(post.tags)
+      ? post.tags.map((tag) => (typeof tag === 'object' ? tag.name : tag))
+      : [],
+  });
 
+  if (loading) {
+    return (
+      <main className="w-full h-full min-h-screen flex p-6 gap-6">
+        <AppSidebar />
+        <section className="flex-1 flex items-center justify-center">
+          <p className="text-muted-foreground">불러오는 중...</p>
+        </section>
+      </main>
+    );
+  }
 
-  // HOT 토픽: 상단 4개 (기존 순서 유지)
-  const hotTopics1 = loading
-    ? []
-    : posts.slice(0, 4).map(formatPost);
+  const formatted = posts.map(formatPost);
 
-  // NEW 토픽: 최신순으로 정렬 후 4개 표시
-  const newTopicsSorted = loading
-  ? []
-  : posts
-      .map(formatPost) // ✅ 먼저 변환
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
-      .slice(0, 4);
+  // HOT: 기존 순서, 2개씩
+  const hotTotalPages = Math.max(1, Math.ceil(formatted.length / HOT_PAGE_SIZE));
+  const hotStart = (hotPage - 1) * HOT_PAGE_SIZE;
+  const hotTopics = formatted.slice(hotStart, hotStart + HOT_PAGE_SIZE);
+
+  // NEW: 최신순 정렬, 2개씩
+  const newSorted = [...formatted].sort(
+    (a, b) =>
+      new Date(b.createdAt || '').getTime() -
+      new Date(a.createdAt || '').getTime()
+  );
+  const newTotalPages = Math.max(1, Math.ceil(newSorted.length / NEW_PAGE_SIZE));
+  const newStart = (newPage - 1) * NEW_PAGE_SIZE;
+  const newTopics = newSorted.slice(newStart, newStart + NEW_PAGE_SIZE);
 
   return (
     <main className="w-full h-full min-h-screen flex p-6 gap-6">
       <AppSidebar />
       <section className="flex-1 flex flex-col gap-12">
-        {/* Hot Topics Section */}
+        {/* HOT 토픽 */}
         <section className="w-full flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
@@ -86,15 +120,52 @@ const formatPost = (post: any) => ({
             </div>
             <p className="text-gray-600">가장 주목받고 있는 댓글을 보세요</p>
           </div>
-          {/* [수정] grid -> flex flex-col (한 줄에 하나씩) */}
+
           <div className="flex flex-col gap-6">
-            {hotTopics1.map((topic) => (
+            {hotTopics.map((topic) => (
               <TopicCard key={topic.id} {...topic} isHot />
             ))}
           </div>
+
+          {/* HOT 페이지네이션 */}
+          {hotTotalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={hotPage === 1}
+                onClick={() => setHotPage((p) => Math.max(1, p - 1))}
+              >
+                이전
+              </Button>
+              {Array.from({ length: hotTotalPages }).map((_, idx) => {
+                const page = idx + 1;
+                return (
+                  <Button
+                    key={page}
+                    variant={page === hotPage ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setHotPage(page)}
+                  >
+                    {page}
+                  </Button>
+                );
+              })}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={hotPage === hotTotalPages}
+                onClick={() =>
+                  setHotPage((p) => Math.min(hotTotalPages, p + 1))
+                }
+              >
+                다음
+              </Button>
+            </div>
+          )}
         </section>
 
-        {/* New Topics Section */}
+        {/* NEW 토픽 */}
         <section className="w-full flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
@@ -107,12 +178,49 @@ const formatPost = (post: any) => ({
             </div>
             <p className="text-gray-600">주목받을 댓글을 작성하세요!</p>
           </div>
-          {/* [수정] grid -> flex flex-col (한 줄에 하나씩) */}
+
           <div className="flex flex-col gap-6">
-            {newTopicsSorted.map((topic) => (
+            {newTopics.map((topic) => (
               <TopicCard key={topic.id} {...topic} />
             ))}
           </div>
+
+          {/* NEW 페이지네이션 */}
+          {newTotalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={newPage === 1}
+                onClick={() => setNewPage((p) => Math.max(1, p - 1))}
+              >
+                이전
+              </Button>
+              {Array.from({ length: newTotalPages }).map((_, idx) => {
+                const page = idx + 1;
+                return (
+                  <Button
+                    key={page}
+                    variant={page === newPage ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setNewPage(page)}
+                  >
+                    {page}
+                  </Button>
+                );
+              })}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={newPage === newTotalPages}
+                onClick={() =>
+                  setNewPage((p) => Math.min(newTotalPages, p + 1))
+                }
+              >
+                다음
+              </Button>
+            </div>
+          )}
         </section>
       </section>
     </main>
