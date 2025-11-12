@@ -79,14 +79,6 @@ export const getPosts = async () => {
   return response.data;
 };
 
-// ✅ 태그별 게시글 조회
-export async function getPostsByTag(tag: string) {
-  const res = await axios.get(`${API_BASE_URL}/posts`, {
-    params: { tag }, // → 백엔드에서 @RequestParam("tag") String tag 로 받으면 됨
-  });
-  return res.data;   // List<PostResponse> 형태라고 가정
-}
-
 // GET /posts/{id} - 단건 조회
 export const getPost = async (id: string) => {
   const response = await api.get(`/posts/${id}`);
@@ -271,5 +263,10 @@ export const getIsScraped = async (postId: string) => {
   const response = await api.get(`/posts/${postId}/scrap`);
   return response.data;
 };
+
+// api 추가
+// ========================================
+// 🔗 Favorite Tags API (내 즐겨찾기 태그)
+// ========================================
 
 export default api;

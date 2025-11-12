@@ -30,7 +30,6 @@ export default function AuthCallback() {
           }
         );
 
-        console.log('login response:', response.data);
 
         const { accessToken, user } = response.data;
         if (!accessToken) {

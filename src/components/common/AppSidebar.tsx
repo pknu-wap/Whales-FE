@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// AppSidebar.tsx
+import React, { useState, useEffect } from 'react';
 import {
   Home,
   TrendingUp,
@@ -6,23 +7,37 @@ import {
   Clock,
   Tag,
   Settings,
-  Menu, // 2. 토글 버튼용 'Menu' 아이콘을 import 합니다.
+  Menu,
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
+import useTagStore from '@/stores/tagStore'; // ✅ 추가
 
-// ... (TailwindSeparator 함수는 변경 없음) ...
 function TailwindSeparator(): React.ReactElement {
   return <hr className="my-3 border-gray-200" />;
 }
 
 export function AppSidebar(): React.ReactElement {
-  // 3. 사이드바의 "열림/닫힘" 상태를 관리합니다. (기본값: true)
   const [isOpen, setIsOpen] = useState<boolean>(true);
 
-  // ✅ 현재 URL의 ?tag 값을 읽어서 활성 태그로 사용
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const activeTag = searchParams.get('tag');
+
+  // ✅ 전역 태그 스토어에서 구독
+  const { subscribedTags, hydrate } = useTagStore();
+
+  // 처음 마운트될 때 localStorage → store 로 복원
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
+
+  const defaultFavoriteTags = ['리액트', '스프링부트', '채용'];
+
+  // ✅ 실제 즐겨찾기: 구독 태그 있으면 그걸, 없으면 기본. 최대 4개
+  const favoriteTags = (subscribedTags.length > 0
+    ? subscribedTags
+    : defaultFavoriteTags
+  ).slice(0, 4);
 
   const navLinkBaseStyle =
     'flex items-center gap-3 font-medium w-full px-3 py-2 rounded-md transition-colors';
@@ -37,11 +52,8 @@ export function AppSidebar(): React.ReactElement {
     'text-gray-500 hover:bg-gray-100 hover:text-gray-800';
 
   return (
-    // 4. 전체를 감싸는 부모 div를 만들고, 이 부모가 sticky가 되도록 합니다.
-    // 이 div는 버튼과 사이드바 패널을 가로로 정렬합니다.
     <div className="sticky top-24 h-[calc(100vh-6rem)] flex gap-2">
-      {/* 5. 토글 버튼 */}
-      {/* 이 버튼은 항상 보이며, 사이드바 패널의 상태를 변경합니다. */}
+      {/* 토글 버튼 */}
       <div className="flex flex-col">
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -52,19 +64,17 @@ export function AppSidebar(): React.ReactElement {
         </button>
       </div>
 
-      {/* 6. 사이드바 패널 (기존 <aside> 코드) */}
-      {/* 이 <aside>는 'isOpen' 상태에 따라 너비, 패딩, 테두리가 변경됩니다. */}
+      {/* 사이드바 패널 */}
       <aside
         className={`
           flex flex-col gap-4 h-full overflow-y-auto bg-white rounded-lg shadow-sm
           transition-all duration-300 ease-in-out
           ${
             isOpen
-              ? 'min-w-60 w-60 p-4 border border-gray-200' // 열렸을 때
-              : 'w-0 min-w-0 p-0 border-0 opacity-0' // 닫혔을 때 (애니메이션)
+              ? 'min-w-60 w-60 p-4 border border-gray-200'
+              : 'w-0 min-w-0 p-0 border-0 opacity-0'
           }
         `}
-        // 7. 닫혔을 때 스크롤바 등이 보이지 않도록 overflow-hidden을 추가합니다.
         style={{ overflow: isOpen ? 'auto' : 'hidden' }}
       >
         {/* 로고 */}
@@ -76,7 +86,7 @@ export function AppSidebar(): React.ReactElement {
           </NavLink>
         </div>
 
-        {/* 홈, 최근, 인기 메뉴 */}
+        {/* 홈 / 최근 / 인기 */}
         <div className="flex flex-col gap-1">
           <NavLink
             to="/"
@@ -119,54 +129,35 @@ export function AppSidebar(): React.ReactElement {
         <TailwindSeparator />
 
         {/* 즐겨찾기 */}
-        <div className="flex flex-col gap-3">
-          <h3 className="text-sm font-semibold text-gray-800">즐겨찾기</h3>
-          <div className="flex flex-col gap-1">
-            <NavLink
-              to="/search?tag=리액트"
-              className={() =>
-                `${tagLinkBaseStyle} ${
-                  activeTag === '리액트'
-                    ? tagLinkActiveStyle
-                    : tagLinkInactiveStyle
-                }`
-              }
-            >
-              <Tag className="w-4 h-4" />
-              <span>리액트</span>
-            </NavLink>
+        {favoriteTags.length > 0 && (
+          <>
+            <div className="flex flex-col gap-3">
+              <h3 className="text-sm font-semibold text-gray-800">
+                즐겨찾기
+              </h3>
+              <div className="flex flex-col gap-1">
+                {favoriteTags.map((tag) => (
+                  <NavLink
+                    key={tag}
+                    to={`/search?tag=${encodeURIComponent(tag)}`}
+                    className={() =>
+                      `${tagLinkBaseStyle} ${
+                        activeTag === tag
+                          ? tagLinkActiveStyle
+                          : tagLinkInactiveStyle
+                      }`
+                    }
+                  >
+                    <Tag className="w-4 h-4" />
+                    <span>{tag}</span>
+                  </NavLink>
+                ))}
+              </div>
+            </div>
 
-            <NavLink
-              to="/search?tag=스프링부트"
-              className={() =>
-                `${tagLinkBaseStyle} ${
-                  activeTag === '스프링부트'
-                    ? tagLinkActiveStyle
-                    : tagLinkInactiveStyle
-                }`
-              }
-            >
-              <Tag className="w-4 h-4" />
-              <span>스프링부트</span>
-            </NavLink>
-
-            <NavLink
-              to="/search?tag=채용"
-              className={() =>
-                `${tagLinkBaseStyle} ${
-                  activeTag === '채용'
-                    ? tagLinkActiveStyle
-                    : tagLinkInactiveStyle
-                }`
-              }
-            >
-              <Tag className="w-4 h-4" />
-              <span>채용</span>
-            </NavLink>
-          </div>
-        </div>
-
-        <TailwindSeparator />
+            <TailwindSeparator />
+          </>
+        )}
 
         {/* 구독 태그 설정 */}
         <NavLink
@@ -184,7 +175,8 @@ export function AppSidebar(): React.ReactElement {
         <TailwindSeparator />
 
         {/* 새 게시판 만들기 */}
-        <NavLink
+        {/* 추후에 논의 하겠음 */}
+        {/*<NavLink
           to="/create-board"
           className={({ isActive }) =>
             `flex items-center justify-center gap-2 w-full px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors ${
@@ -196,7 +188,7 @@ export function AppSidebar(): React.ReactElement {
         >
           <Plus className="w-4 h-4" />
           <span>새 게시판 만들기</span>
-        </NavLink>
+        </NavLink>*/}
       </aside>
     </div>
   );
