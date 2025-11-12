@@ -106,7 +106,7 @@ export default function MyPage() {
 
         <section className="flex-1 flex flex-col gap-6">
           {/* 프로필 카드 */}
-          <Card className="bg-gradient-to-b from-card to-secondary/30 border-border">
+          <Card className="bg-linear-to-b from-card to-secondary/30 border-border">
             <CardHeader className="pb-4">
               {profileLoading ? (
                 <div className="p-6">로딩 중…</div>

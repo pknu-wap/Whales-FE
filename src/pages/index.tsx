@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AppSidebar, TopicCard } from '@/components/common';
-import { Flame, Sparkles } from 'lucide-react';
+import { Clock, Flame, Sparkles, TrendingUp } from 'lucide-react';
 import { getPosts } from '@/services/api';
 import { Button } from '@/components/ui/button';
 
@@ -111,11 +111,11 @@ function App() {
         <section className="w-full flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-500 to-sky-500 flex items-center justify-center">
-                <Flame className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 rounded-lg bg-linear-to-br from-orange-500 to-red-500 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-white" />
               </div>
               <h2 className="text-2xl font-bold tracking-tight text-gray-900">
-                HOT 토픽
+                인기 게시글
               </h2>
             </div>
             <p className="text-gray-600">가장 주목받고 있는 댓글을 보세요</p>
@@ -170,10 +170,10 @@ function App() {
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-500 to-sky-500 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
+            <Clock className="w-5 h-5 text-white" />
+            </div>
               <h2 className="text-2xl font-bold tracking-tight text-gray-900">
-                NEW 토픽
+                최근 게시글
               </h2>
             </div>
             <p className="text-gray-600">주목받을 댓글을 작성하세요!</p>

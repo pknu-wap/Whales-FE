@@ -35,11 +35,11 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/recent" element={<RecentPage />} />
           <Route path="/trending" element={<TrendingPage />} />
           <Route path="/search" element={<SearchPage />} />
+          <Route path="/settings/tags" element={<TagSettings />} />
         </Route>
 
         {/* ✅ RootLayout을 타지 않는 완전 독립 라우트 */}
         <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route path="/settings/tags" element={<TagSettings />} />
       </Routes>
     </BrowserRouter>
 );

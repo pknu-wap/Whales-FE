@@ -20,11 +20,22 @@ function AppHeader() {
   }, [initializeAuth]);
 
   const handleSearch = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const q = query.trim();
-    if (!q) return;
-    navigate(`/search?query=${encodeURIComponent(q)}`);
-  };
+  if (e) e.preventDefault();
+  const q = query.trim();
+  if (!q) return;
+
+  // 🔍 1) #으로 시작하면 태그 검색으로 처리
+  if (q.startsWith('#')) {
+    const tag = q.replace(/^#+/, '').trim(); // #, ## 다 제거 + 공백 제거
+    if (!tag) return;
+    navigate(`/search?tag=${encodeURIComponent(tag)}`);
+    return;
+  }
+
+  // 🔍 2) 그 외에는 일반 텍스트 검색
+  navigate(`/search?query=${encodeURIComponent(q)}`);
+};
+
 
   const handleLogout = () => {
     clearAuth();
