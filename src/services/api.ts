@@ -2,7 +2,7 @@ import axios from 'axios';
 import useAuthStore from '@/stores/authStore';
 
 // API 기본 URL 설정
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://3.27.82.185:8080/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://3.27.115.110:8080/api';
 
 // axios 인스턴스 생성
 const api = axios.create({
