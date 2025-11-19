@@ -1,7 +1,13 @@
+// src/components/common/TopicCard.tsx
+
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useNavigate } from 'react-router-dom';
+import { ThumbsUp, MessageCircle } from 'lucide-react';
+import { getPost, getPostComments } from '@/services/api';
 
 interface Tag {
   id: string;
@@ -23,6 +29,12 @@ interface TopicCardProps {
   isHot?: boolean;
 }
 
+type ReactionSummary = {
+  likeCount: number;
+  dislikeCount: number;
+  myReaction?: 'LIKE' | 'DISLIKE' | null;
+};
+
 export function TopicCard({
   id,
   title,
@@ -30,12 +42,50 @@ export function TopicCard({
   author,
   date,
   tags,
-  isHot,
 }: TopicCardProps) {
   const navigate = useNavigate();
 
-  const displayAuthor = typeof author === 'string' ? author : author.displayName;
-  const displayTags = tags.map(tag => (typeof tag === 'string' ? tag : tag.name));
+  const displayAuthor =
+    typeof author === 'string' ? author : author.displayName;
+  const displayTags = tags.map((tag) =>
+    typeof tag === 'string' ? tag : tag.name,
+  );
+
+  // ✅ 우하단 리액션용 state
+  const [reactions, setReactions] = useState<ReactionSummary | null>(null);
+  const [commentCount, setCommentCount] = useState(0);
+
+  // ✅ 카드 렌더링될 때 좋아요/싫어요/댓글 수 불러오기
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const p = await getPost(id);
+
+        const r: ReactionSummary | undefined = p?.reactions;
+        const likeCount = r?.likeCount ?? p?.likes ?? 0;
+        const dislikeCount = r?.dislikeCount ?? 0;
+
+        setReactions({
+          likeCount,
+          dislikeCount,
+          myReaction: r?.myReaction ?? null,
+        });
+
+        const comments = await getPostComments(id);
+        const count = Array.isArray(comments) ? comments.length : 0;
+        setCommentCount(count);
+      } catch (e) {
+        console.error('TopicCard 리액션/댓글 수 불러오기 실패:', e);
+        // 실패해도 최소한 0으로 유지
+        setReactions((prev) =>
+          prev ?? { likeCount: 0, dislikeCount: 0, myReaction: null },
+        );
+        setCommentCount(0);
+      }
+    };
+
+    fetchCounts();
+  }, [id]);
 
   return (
     <Card
@@ -43,7 +93,6 @@ export function TopicCard({
       onClick={() => navigate(`/post/${id}`)}
     >
       <CardHeader className="pb-3">
-        {/* ... (기존 코드는 변경 없음) ... */}
         <div className="flex items-center gap-3 mb-3">
           <Avatar className="w-10 h-10 border-2 border-primary/10">
             <AvatarFallback className="bg-primary/10 text-primary font-semibold">
@@ -59,10 +108,12 @@ export function TopicCard({
           {title}
         </h3>
       </CardHeader>
+
       <CardContent>
         <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
           {content}
         </p>
+
         <div className="flex flex-wrap gap-2">
           {displayTags.map((tagName, index) => (
             <Badge
@@ -74,7 +125,36 @@ export function TopicCard({
             </Badge>
           ))}
         </div>
+
+        {/* ✅ 우하단 리액션 */}
+        <div
+          className="mt-4 flex justify-end gap-3 text-xs"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* 좋아요 */}
+          <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600">
+            <ThumbsUp className="w-4 h-4 text-black-500" />
+            <span className="font-medium">
+              {reactions?.likeCount ?? 0}
+            </span>
+          </div>
+
+          {/* 싫어요 */}
+          <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600">
+            <ThumbsUp className="w-4 h-4 rotate-180 text-black-500" />
+            <span className="font-medium">
+              {reactions?.dislikeCount ?? 0}
+            </span>
+          </div>
+
+          {/* 댓글 */}
+          <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600">
+            <MessageCircle className="w-4 h-4 text-black-500" />
+            <span className="font-medium">{commentCount}</span>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
 }
+
