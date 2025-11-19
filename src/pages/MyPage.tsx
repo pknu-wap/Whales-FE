@@ -10,40 +10,79 @@ import { getMyProfile, getMyScraps, getPosts } from '@/services/api';
 
 const PAGE_SIZE = 4;
 
+// 탭 타입 (posts / comments / saved)
+type Tab = 'posts' | 'comments' | 'saved';
+
+// 포스트 타입: 실제로 사용하는 필드들 정의
+interface PostItem {
+  id: number;
+  title: string;
+  createdAt: string;
+  tags?: string[];
+  reactions?: {
+    likeCount?: number;
+    dislikeCount?: number;
+  };
+  // 나머지 필드는 자유롭게
+  [key: string]: unknown;
+}
+
+// 프로필 타입: 코드에서 사용하는 필드들 정의
+interface Profile {
+  id: number;
+  nickname: string;
+  displayName?: string;
+  email?: string;
+  nicknameColor?: string;
+  major?: string;
+  bio?: string;
+  plan?: string;
+  intro?: string;
+  [key: string]: unknown;
+}
+
+//  문자열 변환 유틸
+const normalizeValue = (val: unknown) => {
+  if (val == null) return '-';
+  if (typeof val === 'object') {
+    // @ts-expect-error name 속성이 있을 수도 있으니 한 번 시도
+    return (val as any).name ?? JSON.stringify(val);
+  }
+  return String(val);
+};
+
+//  태그 변환
+const normalizeTags = (tags: unknown): string[] =>
+  Array.isArray(tags)
+    ? tags.map((tag) =>
+        typeof tag === 'object'
+          ? // @ts-expect-error name 속성이 있을 수도 있음
+            ((tag as any).name ?? JSON.stringify(tag))
+          : String(tag)
+      )
+    : [];
+
 export default function MyPage() {
-  const [activeTab, setActiveTab] = useState('posts');
-  const [profile, setProfile] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<Tab>('posts');
+
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
-  const [myPosts, setMyPosts] = useState<any[]>([]);
+  const [myPosts, setMyPosts] = useState<PostItem[]>([]);
   const [postsLoading, setPostsLoading] = useState(true);
 
-  const [myScraps, setMyScraps] = useState<any[]>([]);
+  const [myScraps, setMyScraps] = useState<PostItem[]>([]);
   const [scrapsLoading, setScrapsLoading] = useState(true);
 
   // 페이지네이션 상태
   const [postPage, setPostPage] = useState(1);
   const [scrapPage, setScrapPage] = useState(1);
 
-  // ✅ 문자열 변환 유틸
-  const normalizeValue = (val: any) => {
-    if (val == null) return '-';
-    if (typeof val === 'object') return val.name ?? JSON.stringify(val);
-    return val;
-  };
-
-  // ✅ 태그 변환
-  const normalizeTags = (tags: any[]) =>
-    Array.isArray(tags)
-      ? tags.map((tag) =>
-          typeof tag === 'object' ? tag.name ?? JSON.stringify(tag) : tag
-        )
-      : [];
-
+  // 프로필 불러오기
   useEffect(() => {
     getMyProfile()
-      .then((data) => {
-        const normalized = {
+      .then((data: any) => {
+        const normalized: Profile = {
           ...data,
           nicknameColor: normalizeValue(data.nicknameColor),
           major: normalizeValue(data.major),
@@ -56,11 +95,12 @@ export default function MyPage() {
       .finally(() => setProfileLoading(false));
   }, []);
 
+  // 내가 쓴 글 불러오기
   useEffect(() => {
     setPostsLoading(true);
     getPosts()
-      .then((data) => {
-        const normalizedPosts = data.map((p: any) => ({
+      .then((data: any[]) => {
+        const normalizedPosts: PostItem[] = data.map((p: any) => ({
           ...p,
           tags: normalizeTags(p.tags),
         }));
@@ -70,11 +110,12 @@ export default function MyPage() {
       .finally(() => setPostsLoading(false));
   }, []);
 
+  // 스크랩 불러오기
   useEffect(() => {
     setScrapsLoading(true);
     getMyScraps()
-      .then((data) => {
-        const normalizedScraps = data.map((p: any) => ({
+      .then((data: any[]) => {
+        const normalizedScraps: PostItem[] = data.map((p: any) => ({
           ...p,
           tags: normalizeTags(p.tags),
         }));
@@ -84,18 +125,13 @@ export default function MyPage() {
       .finally(() => setScrapsLoading(false));
   }, []);
 
-  // 페이지네이션 계산
-  const postTotalPages = Math.max(
-    1,
-    Math.ceil(myPosts.length / PAGE_SIZE)
-  );
+  // 페이지네이션 계산 - 내가 쓴 글
+  const postTotalPages = Math.max(1, Math.ceil(myPosts.length / PAGE_SIZE));
   const postStart = (postPage - 1) * PAGE_SIZE;
   const pagedPosts = myPosts.slice(postStart, postStart + PAGE_SIZE);
 
-  const scrapTotalPages = Math.max(
-    1,
-    Math.ceil(myScraps.length / PAGE_SIZE)
-  );
+  // 페이지네이션 계산 - 스크랩
+  const scrapTotalPages = Math.max(1, Math.ceil(myScraps.length / PAGE_SIZE));
   const scrapStart = (scrapPage - 1) * PAGE_SIZE;
   const pagedScraps = myScraps.slice(scrapStart, scrapStart + PAGE_SIZE);
 
@@ -106,7 +142,7 @@ export default function MyPage() {
 
         <section className="flex-1 flex flex-col gap-6">
           {/* 프로필 카드 */}
-          <Card className="bg-linear-to-b from-card to-secondary/30 border-border">
+          <Card className="bg-gradient-to-b from-card to-secondary/30 border-border">
             <CardHeader className="pb-4">
               {profileLoading ? (
                 <div className="p-6">로딩 중…</div>
@@ -114,12 +150,16 @@ export default function MyPage() {
                 <div className="flex items-start gap-4">
                   <Avatar className="w-20 h-20 border-4 border-primary/20">
                     <AvatarFallback className="bg-primary/10 text-primary font-bold text-2xl">
-                      {profile.displayName ? profile.displayName[0] : '유'}
+                      {profile.displayName
+                        ? profile.displayName[0]
+                        : profile.nickname
+                        ? profile.nickname[0]
+                        : '유'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <h2 className="text-2xl font-bold mb-1">
-                      {normalizeValue(profile.displayName)}
+                      {normalizeValue(profile.displayName ?? profile.nickname)}
                     </h2>
                     <p className="text-sm text-muted-foreground mb-2">
                       {normalizeValue(profile.bio)}
@@ -149,7 +189,7 @@ export default function MyPage() {
           {/* 탭 영역 */}
           <Tabs
             value={activeTab}
-            onValueChange={setActiveTab}
+            onValueChange={(val) => setActiveTab(val as Tab)}
             className="w-full"
           >
             <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
@@ -168,32 +208,43 @@ export default function MyPage() {
                 <>
                   <div className="flex flex-col gap-4">
                     {pagedPosts.map((post) => (
-                      <Card key={post.id} className="hover:shadow-lg transition">
+                      <Card
+                        key={post.id}
+                        className="hover:shadow-lg transition"
+                      >
                         <CardContent className="p-6">
                           <h3 className="font-bold text-lg mb-2">
                             {normalizeValue(post.title)}
                           </h3>
-                          <div className="flex gap-2 mb-3">
-                            {post.tags.map((tag: string, i: number) => (
-                              <Badge
-                                key={i}
-                                variant="secondary"
-                                className="rounded-full"
-                              >
-                                {normalizeValue(tag)}
-                              </Badge>
-                            ))}
-                          </div>
+
+                          {Array.isArray(post.tags) && post.tags.length > 0 && (
+                            <div className="flex gap-2 mb-3 flex-wrap">
+                              {post.tags.map((tag, i) => (
+                                <Badge
+                                  key={i}
+                                  variant="secondary"
+                                  className="rounded-full"
+                                >
+                                  {normalizeValue(tag)}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span>
                               {post.createdAt
-                                ? new Date(post.createdAt).toLocaleDateString(
-                                    'ko-KR'
-                                  )
+                                ? new Date(
+                                    post.createdAt
+                                  ).toLocaleDateString('ko-KR')
                                 : '-'}
                             </span>
-                            <span>👍 {post.reactions?.likeCount ?? 0}</span>
-                            <span>👎 {post.reactions?.dislikeCount ?? 0}</span>
+                            <span>
+                              👍 {post.reactions?.likeCount ?? 0}
+                            </span>
+                            <span>
+                              👎 {post.reactions?.dislikeCount ?? 0}
+                            </span>
                           </div>
                         </CardContent>
                       </Card>
@@ -265,32 +316,43 @@ export default function MyPage() {
                 <>
                   <div className="flex flex-col gap-4">
                     {pagedScraps.map((post) => (
-                      <Card key={post.id} className="hover:shadow-lg transition">
+                      <Card
+                        key={post.id}
+                        className="hover:shadow-lg transition"
+                      >
                         <CardContent className="p-6">
                           <h3 className="font-bold text-lg mb-2">
                             {normalizeValue(post.title)}
                           </h3>
-                          <div className="flex gap-2 mb-3">
-                            {post.tags.map((tag: string, i: number) => (
-                              <Badge
-                                key={i}
-                                variant="secondary"
-                                className="rounded-full"
-                              >
-                                {normalizeValue(tag)}
-                              </Badge>
-                            ))}
-                          </div>
+
+                          {Array.isArray(post.tags) && post.tags.length > 0 && (
+                            <div className="flex gap-2 mb-3 flex-wrap">
+                              {post.tags.map((tag, i) => (
+                                <Badge
+                                  key={i}
+                                  variant="secondary"
+                                  className="rounded-full"
+                                >
+                                  {normalizeValue(tag)}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span>
                               {post.createdAt
-                                ? new Date(post.createdAt).toLocaleDateString(
-                                    'ko-KR'
-                                  )
+                                ? new Date(
+                                    post.createdAt
+                                  ).toLocaleDateString('ko-KR')
                                 : '-'}
                             </span>
-                            <span>👍 {post.reactions?.likeCount ?? 0}</span>
-                            <span>👎 {post.reactions?.dislikeCount ?? 0}</span>
+                            <span>
+                              👍 {post.reactions?.likeCount ?? 0}
+                            </span>
+                            <span>
+                              👎 {post.reactions?.dislikeCount ?? 0}
+                            </span>
                           </div>
                         </CardContent>
                       </Card>
@@ -316,7 +378,9 @@ export default function MyPage() {
                           return (
                             <Button
                               key={p}
-                              variant={p === scrapPage ? 'default' : 'outline'}
+                              variant={
+                                p === scrapPage ? 'default' : 'outline'
+                              }
                               size="sm"
                               onClick={() => setScrapPage(p)}
                             >

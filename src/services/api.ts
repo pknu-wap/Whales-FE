@@ -2,7 +2,7 @@ import axios from 'axios';
 import useAuthStore from '@/stores/authStore';
 
 // API 기본 URL 설정
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://3.27.115.110:8080/api';
 
 // axios 인스턴스 생성
 const api = axios.create({
@@ -116,13 +116,24 @@ export const deletePost = async (id: string) => {
 
 export const searchPosts = async (query: string) => {
   const response = await api.get(`/posts/search`, { params: { query } });
-  return response.data.map((post: any) => ({
+
+  type ApiTag = string | { name: string };
+
+  type ApiPost = {
+    tags?: ApiTag[] | null;
+    [key: string]: unknown; // 나머지 필드는 뭐가 오든 허용
+  };
+
+  return response.data.map((post: ApiPost) => ({
     ...post,
     tags: Array.isArray(post.tags)
-      ? post.tags.map((t: any) => (typeof t === 'object' ? t.name : t))
+      ? post.tags.map((t) =>
+          typeof t === 'object' && t !== null ? t.name : t
+        )
       : [],
   }));
 };
+
 
 // ========================================
 // 🔗 Tags(Post) API

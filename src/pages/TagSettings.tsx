@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
-import useTagStore from '@/stores/tagStore';
+import { useTagStore }from '@/stores/tagStore';
 
 export default function TagSettings() {
   const [input, setInput] = useState('');
@@ -68,7 +68,7 @@ export default function TagSettings() {
               </p>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {subscribedTags.map((tag) => (
+                {subscribedTags.map((tag: string) => (
                   <Badge
                     key={tag}
                     variant="secondary"
@@ -79,6 +79,7 @@ export default function TagSettings() {
                       type="button"
                       onClick={() => handleRemoveTag(tag)}
                       className="ml-1 text-gray-500 hover:text-red-500"
+                      aria-label={`${tag} 태그 삭제`}
                     >
                       <X className="w-3 h-3" />
                     </button>
