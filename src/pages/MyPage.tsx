@@ -10,24 +10,25 @@ import { getMyProfile, getMyScraps, getPosts } from '@/services/api';
 
 const PAGE_SIZE = 4;
 
-// 탭 타입 (posts / comments / saved)
+// 탭 타입
 type Tab = 'posts' | 'comments' | 'saved';
 
-// 포스트 타입: 실제로 사용하는 필드들 정의
+// 포스트 타입
+interface PostReactions {
+  likeCount?: number;
+  dislikeCount?: number;
+}
+
 interface PostItem {
   id: number;
   title: string;
   createdAt: string;
   tags?: string[];
-  reactions?: {
-    likeCount?: number;
-    dislikeCount?: number;
-  };
-  // 나머지 필드는 자유롭게
+  reactions?: PostReactions;
   [key: string]: unknown;
 }
 
-// 프로필 타입: 코드에서 사용하는 필드들 정의
+// 프로필 타입
 interface Profile {
   id: number;
   nickname: string;
@@ -41,26 +42,45 @@ interface Profile {
   [key: string]: unknown;
 }
 
-//  문자열 변환 유틸
-const normalizeValue = (val: unknown) => {
+// name 속성이 있는 객체 타입 가드
+const hasNameProperty = (val: unknown): val is { name: string } => {
+  return (
+    typeof val === 'object' &&
+    val !== null &&
+    'name' in val &&
+    typeof (val as { name: unknown }).name === 'string'
+  );
+};
+
+// ✅ 문자열 변환 유틸
+const normalizeValue = (val: unknown): string => {
   if (val == null) return '-';
-  if (typeof val === 'object') {
-    // @ts-expect-error name 속성이 있을 수도 있으니 한 번 시도
-    return (val as any).name ?? JSON.stringify(val);
+
+  if (hasNameProperty(val)) {
+    return val.name;
   }
+
+  if (typeof val === 'object') {
+    return JSON.stringify(val);
+  }
+
   return String(val);
 };
 
-//  태그 변환
-const normalizeTags = (tags: unknown): string[] =>
-  Array.isArray(tags)
-    ? tags.map((tag) =>
-        typeof tag === 'object'
-          ? // @ts-expect-error name 속성이 있을 수도 있음
-            ((tag as any).name ?? JSON.stringify(tag))
-          : String(tag)
-      )
-    : [];
+// ✅ 태그 변환
+const normalizeTags = (tags: unknown): string[] => {
+  if (!Array.isArray(tags)) return [];
+
+  return tags.map((tag) => {
+    if (hasNameProperty(tag)) {
+      return tag.name;
+    }
+    if (typeof tag === 'object' && tag !== null) {
+      return JSON.stringify(tag);
+    }
+    return String(tag);
+  });
+};
 
 export default function MyPage() {
   const [activeTab, setActiveTab] = useState<Tab>('posts');
@@ -81,7 +101,7 @@ export default function MyPage() {
   // 프로필 불러오기
   useEffect(() => {
     getMyProfile()
-      .then((data: any) => {
+      .then((data: Profile) => {
         const normalized: Profile = {
           ...data,
           nicknameColor: normalizeValue(data.nicknameColor),
@@ -99,8 +119,8 @@ export default function MyPage() {
   useEffect(() => {
     setPostsLoading(true);
     getPosts()
-      .then((data: any[]) => {
-        const normalizedPosts: PostItem[] = data.map((p: any) => ({
+      .then((data: PostItem[]) => {
+        const normalizedPosts: PostItem[] = data.map((p) => ({
           ...p,
           tags: normalizeTags(p.tags),
         }));
@@ -114,8 +134,8 @@ export default function MyPage() {
   useEffect(() => {
     setScrapsLoading(true);
     getMyScraps()
-      .then((data: any[]) => {
-        const normalizedScraps: PostItem[] = data.map((p: any) => ({
+      .then((data: PostItem[]) => {
+        const normalizedScraps: PostItem[] = data.map((p) => ({
           ...p,
           tags: normalizeTags(p.tags),
         }));
@@ -239,12 +259,8 @@ export default function MyPage() {
                                   ).toLocaleDateString('ko-KR')
                                 : '-'}
                             </span>
-                            <span>
-                              👍 {post.reactions?.likeCount ?? 0}
-                            </span>
-                            <span>
-                              👎 {post.reactions?.dislikeCount ?? 0}
-                            </span>
+                            <span>👍 {post.reactions?.likeCount ?? 0}</span>
+                            <span>👎 {post.reactions?.dislikeCount ?? 0}</span>
                           </div>
                         </CardContent>
                       </Card>
@@ -347,12 +363,8 @@ export default function MyPage() {
                                   ).toLocaleDateString('ko-KR')
                                 : '-'}
                             </span>
-                            <span>
-                              👍 {post.reactions?.likeCount ?? 0}
-                            </span>
-                            <span>
-                              👎 {post.reactions?.dislikeCount ?? 0}
-                            </span>
+                            <span>👍 {post.reactions?.likeCount ?? 0}</span>
+                            <span>👎 {post.reactions?.dislikeCount ?? 0}</span>
                           </div>
                         </CardContent>
                       </Card>
