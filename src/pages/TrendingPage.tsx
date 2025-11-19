@@ -84,7 +84,7 @@ export default function TrendingPage() {
 
   if (loading) {
     return (
-      <main className="w-full h-full min-h-screen flex p-6 gap-6">
+      <main className="w-full max-w-7xl mx-auto flex p-6 gap-6 items-start">
         <AppSidebar />
         <section className="flex-1 flex items-center justify-center">
           <div className="text-center text-muted-foreground py-8">
@@ -101,7 +101,7 @@ export default function TrendingPage() {
   const pagePosts = formattedPosts.slice(start, start + PAGE_SIZE);
 
   return (
-    <main className="w-full h-full min-h-screen flex p-6 gap-6">
+    <main className="w-full max-w-7xl mx-auto flex p-6 gap-6 items-start">
       <AppSidebar />
       <section className="flex-1 flex flex-col gap-8">
         <div className="flex items-center gap-3 mb-2">

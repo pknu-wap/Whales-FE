@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AppSidebar, TopicCard } from '@/components/common';
-import { Clock, Flame, Sparkles, TrendingUp } from 'lucide-react';
+import { Clock, TrendingUp } from 'lucide-react';
 import { getPosts } from '@/services/api';
 import { Button } from '@/components/ui/button';
 
@@ -75,6 +75,7 @@ function App() {
       : [],
   });
 
+  // 🔹 로딩 화면
   if (loading) {
     return (
       <main className="w-full h-full min-h-screen flex p-6 gap-6">
@@ -99,12 +100,16 @@ function App() {
       new Date(b.createdAt || '').getTime() -
       new Date(a.createdAt || '').getTime()
   );
-  const newTotalPages = Math.max(1, Math.ceil(newSorted.length / NEW_PAGE_SIZE));
+  const newTotalPages = Math.max(
+    1,
+    Math.ceil(newSorted.length / NEW_PAGE_SIZE)
+  );
   const newStart = (newPage - 1) * NEW_PAGE_SIZE;
   const newTopics = newSorted.slice(newStart, newStart + NEW_PAGE_SIZE);
 
+  // 🔹 실제 화면
   return (
-    <main className="w-full h-full min-h-screen flex p-6 gap-6">
+    <main className="w-full flex p-6 gap-6 items-start">
       <AppSidebar />
       <section className="flex-1 flex flex-col gap-12">
         {/* HOT 토픽 */}
@@ -170,8 +175,8 @@ function App() {
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-500 to-sky-500 flex items-center justify-center">
-            <Clock className="w-5 h-5 text-white" />
-            </div>
+                <Clock className="w-5 h-5 text-white" />
+              </div>
               <h2 className="text-2xl font-bold tracking-tight text-gray-900">
                 최근 게시글
               </h2>
