@@ -23,7 +23,7 @@ export default function AuthCallback() {
 
         // ✅ 백엔드 요청 (TokenResponse 반환)
         const response = await axios.post(
-          'http://localhost:8080/api/auth/login/google',
+          'http://3.27.82.185:8080/api/auth/login/google',
           {
             code,
             redirectUri,
