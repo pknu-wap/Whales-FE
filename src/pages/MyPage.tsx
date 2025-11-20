@@ -8,7 +8,16 @@ import { getMyProfile, getMyScraps, getPosts } from '@/services/api';
 // 탭 타입
 type Tab = 'posts' | 'comments' | 'saved';
 
-// 포스트 타입
+type TrustLevel =
+  | 'basic' // 흰색 : 신규 / 기본
+  | 'active' // 회색 : 활동 중 / 검증 전
+  | 'trusted' // 초록 : 신뢰 회원
+  | 'model' // 파랑 : 검증된 / 모범 회원
+  | 'top' // 보라 : 상위 기여자 / 우수 멤버
+  | 'legend' // 금색 : 레전드 / 명예 등급
+  | 'warning' // 주의 회원
+  | 'danger'; // 경고 회원
+
 interface PostReactions {
   likeCount?: number;
   dislikeCount?: number;
@@ -34,6 +43,7 @@ interface Profile {
   bio?: string;
   plan?: string;
   intro?: string;
+  trustLevel?: TrustLevel;
   [key: string]: unknown;
 }
 
@@ -75,6 +85,30 @@ const normalizeTags = (tags: unknown): string[] => {
     }
     return String(tag);
   });
+};
+
+// 회원 신뢰도별 아바타 테두리 색
+const getTrustRingClass = (trustLevel?: TrustLevel): string => {
+  switch (trustLevel) {
+    case 'basic':
+      return 'border-[#e5e7eb] bg-white';
+    case 'active':
+      return 'border-[#4b5563] bg-white';
+    case 'trusted':
+      return 'border-[#22c55e] bg-white';
+    case 'model':
+      return 'border-[#2563eb] bg-white';
+    case 'top':
+      return 'border-[#a855f7] bg-white';
+    case 'legend':
+      return 'border-[#facc15] bg-white';
+    case 'warning':
+      return 'border-[#f97316] bg-white';
+    case 'danger':
+      return 'border-[#ef4444] bg-white';
+    default:
+      return 'border-[#2563eb] bg-white';
+  }
 };
 
 export default function MyPage() {
