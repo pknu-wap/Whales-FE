@@ -7,6 +7,7 @@ import { getMyProfile, getMyScraps, getPosts } from '@/services/api';
 import RookieBadge from '@/assets/Rookie Ver.2.svg';
 import EditFieldIcon from '@/assets/글쓰기 수정.svg';
 import EditProfileIcon from '@/assets/프로필 수정.svg';
+import EditPostIcon from '@/assets/수정하기.svg';
 
 // 탭 타입
 type Tab = 'posts' | 'comments' | 'saved';
@@ -30,6 +31,7 @@ interface PostItem {
   id: number;
   title: string;
   createdAt: string;
+  content?: string;
   tags?: string[];
   reactions?: PostReactions;
   [key: string]: unknown;
@@ -88,6 +90,16 @@ const normalizeTags = (tags: unknown): string[] => {
     }
     return String(tag);
   });
+};
+
+const formatDate = (value?: string) => {
+  if (!value) return '-';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '-';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}.${m}.${day}`;
 };
 
 // 회원 신뢰도별 아바타 테두리 색
@@ -213,6 +225,19 @@ export default function MyPage() {
 
   const gradeRingClass = getTrustRingClass(profile?.trustLevel);
 
+  // 글 카드 렌더링
+  const renderPostCard = (post: PostItem) => {
+    const contentText =
+      (post.content as string | undefined) ??
+      (normalizeValue(post['content']) === '-'
+        ? ''
+        : normalizeValue(post['content']));
+
+    return (
+      <div
+        key={post.id}
+        className="w-full rounded-2xl border border-[#e2e5ec] bg-[#f7f8fb] px-6 py-5 flex flex-col gap-4 shadow-sm"
+      >
 
   return (
     <div className="min-h-screen bg-background">
@@ -354,43 +379,6 @@ export default function MyPage() {
                 <>
                   <div className="flex flex-col gap-4">
                     {pagedScraps.map((post) => (
-                      <Card
-                        key={post.id}
-                        className="hover:shadow-lg transition"
-                      >
-                        <CardContent className="p-6">
-                          <h3 className="font-bold text-lg mb-2">
-                            {normalizeValue(post.title)}
-                          </h3>
-
-                          {Array.isArray(post.tags) && post.tags.length > 0 && (
-                            <div className="flex gap-2 mb-3 flex-wrap">
-                              {post.tags.map((tag, i) => (
-                                <Badge
-                                  key={i}
-                                  variant="secondary"
-                                  className="rounded-full"
-                                >
-                                  {normalizeValue(tag)}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>
-                              {post.createdAt
-                                ? new Date(
-                                    post.createdAt
-                                  ).toLocaleDateString('ko-KR')
-                                : '-'}
-                            </span>
-                            <span>👍 {post.reactions?.likeCount ?? 0}</span>
-                            <span>👎 {post.reactions?.dislikeCount ?? 0}</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
                   </div>
 
                   {/* 스크랩 페이지네이션 */}
