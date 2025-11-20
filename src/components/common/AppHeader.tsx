@@ -86,7 +86,11 @@ function AppHeader() {
             placeholder="게시글 검색..."
             className="pl-10 h-11 bg-blue-50 border-blue-200 focus-visible:ring-blue-500"
           />
-          <button type="submit" className="hidden" aria-hidden />
+          <button
+          type="submit"
+          className="sr-only"
+          aria-label="검색"
+          />    
         </form>
 
         {/* 우측 버튼 */}

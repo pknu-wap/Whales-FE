@@ -3,14 +3,13 @@ import React, { useState, useEffect } from 'react';
 import {
   Home,
   TrendingUp,
-  Plus,
   Clock,
   Tag,
   Settings,
   Menu,
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
-import useTagStore from '@/stores/tagStore'; // ✅ 추가
+import { useTagStore } from '@/stores/tagStore'; // ✅ 추가
 
 function TailwindSeparator(): React.ReactElement {
   return <hr className="my-3 border-gray-200" />;
@@ -136,7 +135,7 @@ export function AppSidebar(): React.ReactElement {
                 즐겨찾기
               </h3>
               <div className="flex flex-col gap-1">
-                {favoriteTags.map((tag) => (
+                {favoriteTags.map((tag: string) => (
                   <NavLink
                     key={tag}
                     to={`/search?tag=${encodeURIComponent(tag)}`}
