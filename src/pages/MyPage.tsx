@@ -28,6 +28,7 @@ type TrustLevel =
 interface PostReactions {
   likeCount?: number;
   dislikeCount?: number;
+  commentCount?: number;
 }
 
 interface PostItem {
@@ -40,12 +41,10 @@ interface PostItem {
   [key: string]: unknown;
 }
 
-// 프로필 타입
 interface Profile {
   id: number;
   nickname: string;
   displayName?: string;
-  email?: string;
   nicknameColor?: string;
   major?: string;
   bio?: string;
@@ -65,32 +64,18 @@ const hasNameProperty = (val: unknown): val is { name: string } => {
   );
 };
 
-// ✅ 문자열 변환 유틸
 const normalizeValue = (val: unknown): string => {
   if (val == null) return '-';
-
-  if (hasNameProperty(val)) {
-    return val.name;
-  }
-
-  if (typeof val === 'object') {
-    return JSON.stringify(val);
-  }
-
+  if (hasNameProperty(val)) return val.name;
+  if (typeof val === 'object') return JSON.stringify(val);
   return String(val);
 };
 
-// ✅ 태그 변환
 const normalizeTags = (tags: unknown): string[] => {
   if (!Array.isArray(tags)) return [];
-
   return tags.map((tag) => {
-    if (hasNameProperty(tag)) {
-      return tag.name;
-    }
-    if (typeof tag === 'object' && tag !== null) {
-      return JSON.stringify(tag);
-    }
+    if (hasNameProperty(tag)) return tag.name;
+    if (typeof tag === 'object' && tag !== null) return JSON.stringify(tag);
     return String(tag);
   });
 };
