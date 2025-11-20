@@ -145,6 +145,24 @@ export default function MyPage() {
   }, []);
 
   // 내가 쓴 글 불러오기
+  // 프로필에서 화면 표시용 이름/소개 계산
+  const profileName =
+    (profile?.displayName && profile.displayName !== '-') ||
+    (profile?.nickname && profile.nickname !== '-')
+      ? profile?.displayName || profile?.nickname || '닉네임'
+      : '닉네임';
+
+  const profileBio =
+    profile && profile.bio && profile.bio !== '-'
+      ? profile.bio
+      : '소개 문구가 없습니다.';
+
+  // 프로필 값이 바뀌면 편집용 state 초기화
+  useEffect(() => {
+    setEditName(profileName);
+    setEditBio(profileBio);
+  }, [profileName, profileBio]);
+
   useEffect(() => {
     setPostsLoading(true);
     getPosts()
@@ -183,6 +201,11 @@ export default function MyPage() {
   const scrapTotalPages = Math.max(1, Math.ceil(myScraps.length / PAGE_SIZE));
   const scrapStart = (scrapPage - 1) * PAGE_SIZE;
   const pagedScraps = myScraps.slice(scrapStart, scrapStart + PAGE_SIZE);
+  const profileInitial =
+    profileName && profileName.length > 0 ? profileName[0] : '유';
+
+  const gradeRingClass = getTrustRingClass(profile?.trustLevel);
+
 
   return (
     <div className="min-h-screen bg-background">
