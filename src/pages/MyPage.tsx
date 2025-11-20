@@ -5,6 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getMyProfile, getMyScraps, getPosts } from '@/services/api';
 
 import RookieBadge from '@/assets/Rookie Ver.2.svg';
+import LikeIcon from '@/assets/좋아요.svg';
+import DislikeIcon from '@/assets/싫어요.svg';
+import CommentIcon from '@/assets/댓글.svg';
 import EditFieldIcon from '@/assets/글쓰기 수정.svg';
 import EditProfileIcon from '@/assets/프로필 수정.svg';
 import EditPostIcon from '@/assets/수정하기.svg';
@@ -126,6 +129,14 @@ const getTrustRingClass = (trustLevel?: TrustLevel): string => {
   }
 };
 
+// SVG 아이콘용 리액션 박스
+const ReactionBox = ({ icon, value }: { icon: string; value?: number }) => (
+  <div className="flex items-center gap-1.5 rounded-2xl bg-[#f3f4f6] px-3 py-1 text-xs text-slate-600">
+    <img src={icon} alt="reaction" className="w-4 h-4 opacity-80" />
+    <span>{value ?? 0}</span>
+  </div>
+);
+
 export default function MyPage() {
   const [activeTab, setActiveTab] = useState<Tab>('posts');
 
@@ -238,6 +249,24 @@ export default function MyPage() {
         key={post.id}
         className="w-full rounded-2xl border border-[#e2e5ec] bg-[#f7f8fb] px-6 py-5 flex flex-col gap-4 shadow-sm"
       >
+        {/* 날짜 + 리액션 */}
+        <div className="border-t border-slate-200 pt-3 flex items-center justify-between text-xs text-slate-500">
+          <span>{formatDate(post.createdAt)}</span>
+          <div className="flex items-center gap-3">
+            <ReactionBox icon={LikeIcon} value={post.reactions?.likeCount} />
+            <ReactionBox
+              icon={DislikeIcon}
+              value={post.reactions?.dislikeCount}
+            />
+            <ReactionBox
+              icon={CommentIcon}
+              value={post.reactions?.commentCount}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background">
