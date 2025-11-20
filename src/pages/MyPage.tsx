@@ -351,30 +351,101 @@ export default function MyPage() {
                   )}
                 </>
               ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  작성한 글이 없습니다.
+                <div className="text-slate-500">
+                  프로필 정보를 불러올 수 없습니다.
                 </div>
               )}
-            </TabsContent>
+            </CardContent>
+          </Card>
 
-            {/* 내가 쓴 댓글 - 아직 구현 안 되어 있으니 그대로 둠 */}
-            <TabsContent value="comments" className="mt-6">
-              <div className="text-center py-12 text-muted-foreground">
-                댓글 목록 기능은 아직 준비 중입니다.
-              </div>
-            </TabsContent>
+          {/* 가운데 카드 (탭 + 글 목록) */}
+          <Card className="w-full rounded-[24px] shadow-sm border border-[#e1e4ec] bg-white">
+            <CardContent className="pt-6 px-6 pb-8">
+              <Tabs
+                value={activeTab}
+                onValueChange={(val) => setActiveTab(val as Tab)}
+                className="w-full"
+              >
+                {/* 탭 버튼 */}
+                <TabsList className="flex gap-3 bg-transparent p-0 mb-6">
+                  <TabsTrigger
+                    value="posts"
+                    className="
+                      px-5
+                      py-2.5
+                      text-sm
+                      font-semibold
+                      rounded-[14px]
+                      bg-[#f3f4f6]
+                      text-slate-700
+                      shadow-[0_1px_2px_rgba(0,0,0,0.06)]
+                      data-[state=active]:bg-[#3b82f6]
+                      data-[state=active]:text-white
+                    "
+                  >
+                    내가 쓴 글 ({postsCount})
+                  </TabsTrigger>
 
-            {/* 스크랩 */}
-            <TabsContent value="saved" className="mt-6">
-              {scrapsLoading ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  로딩 중…
-                </div>
-              ) : pagedScraps.length > 0 ? (
-                <>
-                  <div className="flex flex-col gap-4">
-                    {pagedScraps.map((post) => (
+                  <TabsTrigger
+                    value="comments"
+                    className="
+                      px-5
+                      py-2.5
+                      text-sm
+                      font-semibold
+                      rounded-[14px]
+                      bg-[#f3f4f6]
+                      text-slate-700
+                      shadow-[0_1px_2px_rgba(0,0,0,0.06)]
+                      data-[state=active]:bg-[#3b82f6]
+                      data-[state=active]:text-white
+                    "
+                  >
+                    내가 쓴 댓글 ({commentsCount})
+                  </TabsTrigger>
+
+                  <TabsTrigger
+                    value="saved"
+                    className="
+                      px-5
+                      py-2.5
+                      text-sm
+                      font-semibold
+                      rounded-[14px]
+                      bg-[#f3f4f6]
+                      text-slate-700
+                      shadow-[0_1px_2px_rgba(0,0,0,0.06)]
+                      data-[state=active]:bg-[#3b82f6]
+                      data-[state=active]:text-white
+                    "
+                  >
+                    스크랩 ({scrapCount})
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* 내가 쓴 글 */}
+                <TabsContent value="posts" className="mt-2">
+                  {postsLoading ? (
+                    <div className="text-center py-16 text-slate-400">
+                      로딩 중…
+                    </div>
+                  ) : myPosts.length === 0 ? (
+                    <div className="text-center py-16 text-slate-400">
+                      작성한 글이 없습니다.
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      {myPosts.map((post) => renderPostCard(post))}
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* 내가 쓴 댓글 */}
+                <TabsContent value="comments" className="mt-2">
+                  <div className="text-center py-16 text-slate-400">
+                    댓글 목록 기능은 아직 준비 중입니다.
                   </div>
+                </TabsContent>
 
                 {/* 스크랩 */}
                 <TabsContent value="saved" className="mt-2">
