@@ -1,7 +1,7 @@
 // AppSidebar.tsx
 import React, { useState, useEffect } from 'react';
 import {
-  Home,
+  Home, 
   TrendingUp,
   Clock,
   Tag,
@@ -9,10 +9,10 @@ import {
   Menu,
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { useTagStore } from '@/stores/tagStore'; // ✅ 추가
+import { useTagStore } from '@/stores/tagStore';
 
 function TailwindSeparator(): React.ReactElement {
-  return <hr className="my-3 border-gray-200" />;
+  return <hr className="my-3 border-gray-300" />;
 }
 
 export function AppSidebar(): React.ReactElement {
@@ -22,41 +22,45 @@ export function AppSidebar(): React.ReactElement {
   const searchParams = new URLSearchParams(location.search);
   const activeTag = searchParams.get('tag');
 
-  // ✅ 전역 태그 스토어에서 구독
   const { subscribedTags, hydrate } = useTagStore();
 
-  // 처음 마운트될 때 localStorage → store 로 복원
   useEffect(() => {
     hydrate();
   }, [hydrate]);
 
   const defaultFavoriteTags = ['리액트', '스프링부트', '채용'];
 
-  // ✅ 실제 즐겨찾기: 구독 태그 있으면 그걸, 없으면 기본. 최대 4개
   const favoriteTags = (subscribedTags.length > 0
     ? subscribedTags
     : defaultFavoriteTags
   ).slice(0, 4);
 
-  const navLinkBaseStyle =
-    'flex items-center gap-3 font-medium w-full px-3 py-2 rounded-md transition-colors';
-  const navLinkActiveStyle = 'bg-blue-100 text-blue-700';
-  const navLinkInactiveStyle =
-    'text-gray-600 hover:bg-gray-100 hover:text-gray-900';
+ const navLinkBaseStyle =
+  'flex items-center gap-3 font-medium w-full px-3 py-2 rounded-md transition-colors';
 
-  const tagLinkBaseStyle =
-    'flex items-center gap-2 text-sm w-full px-3 py-1.5 rounded-md transition-colors';
-  const tagLinkActiveStyle = 'font-semibold text-blue-600 bg-blue-50';
-  const tagLinkInactiveStyle =
-    'text-gray-500 hover:bg-gray-100 hover:text-gray-800';
+// ✅ 활성 상태: 연한 파란색 배경 + 파란 글자
+const navLinkActiveStyle = 'bg-blue-100 text-blue-700';
+
+// ✅ 비활성 상태: 기본은 진회색, hover 시 살짝 파란 배경
+const navLinkInactiveStyle =
+  'text-black/80 hover:bg-blue-50 hover:text-blue-700';
+
+const tagLinkBaseStyle =
+  'flex items-center gap-2 text-sm w-full px-3 py-1.5 rounded-md transition-colors';
+
+// ✅ 태그 활성 상태도 연한 파란색으로
+const tagLinkActiveStyle = 'font-semibold text-blue-700 bg-blue-100';
+
+const tagLinkInactiveStyle =
+  'text-black/70 hover:bg-blue-50 hover:text-blue-700';
 
   return (
-    <div className="sticky top-24 h-[calc(100vh-6rem)] flex gap-2">
+    <div className="sticky top-24 flex gap-2">
       {/* 토글 버튼 */}
       <div className="flex flex-col">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="p-2 rounded-md text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+          className="p-2 rounded-md text-black/80 hover:bg-gray-200 hover:text-black"
           aria-label="Toggle sidebar"
         >
           <Menu className="w-5 h-5" />
@@ -65,21 +69,17 @@ export function AppSidebar(): React.ReactElement {
 
       {/* 사이드바 패널 */}
       <aside
-        className={`
-          flex flex-col gap-4 h-full overflow-y-auto bg-white rounded-lg shadow-sm
-          transition-all duration-300 ease-in-out
-          ${
-            isOpen
-              ? 'min-w-60 w-60 p-4 border border-gray-200'
-              : 'w-0 min-w-0 p-0 border-0 opacity-0'
-          }
-        `}
-        style={{ overflow: isOpen ? 'auto' : 'hidden' }}
+        className={`flex flex-col gap-4 rounded-lg shadow-sm transition-all duration-300 ease-in-out
+        ${
+          isOpen
+            ? 'min-w-52 w-52 p-4 border border-gray-300 bg-gray-100'
+            : 'w-0 min-w-0 p-0 border-0 opacity-0 overflow-hidden'
+        }`}
       >
         {/* 로고 */}
         <div>
           <NavLink to="/">
-            <h2 className="text-2xl font-bold bg-linear-to-r from-blue-500 to-sky-500 bg-clip-text text-transparent">
+            <h2 className="text-xl font-bold text-black">
               카테고리
             </h2>
           </NavLink>
@@ -129,66 +129,49 @@ export function AppSidebar(): React.ReactElement {
 
         {/* 즐겨찾기 */}
         {favoriteTags.length > 0 && (
-          <>
-            <div className="flex flex-col gap-3">
-              <h3 className="text-sm font-semibold text-gray-800">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-black">
                 즐겨찾기
               </h3>
-              <div className="flex flex-col gap-1">
-                {favoriteTags.map((tag: string) => (
-                  <NavLink
-                    key={tag}
-                    to={`/search?tag=${encodeURIComponent(tag)}`}
-                    className={() =>
-                      `${tagLinkBaseStyle} ${
-                        activeTag === tag
-                          ? tagLinkActiveStyle
-                          : tagLinkInactiveStyle
-                      }`
-                    }
-                  >
-                    <Tag className="w-4 h-4" />
-                    <span>{tag}</span>
-                  </NavLink>
-                ))}
-              </div>
+              <NavLink
+                to="/settings/tags"
+                className={({ isActive }) =>
+                  `rounded-md transition-colors flex items-center justify-center
+                  ${
+                    isActive
+                      ? 'bg-gray-200 text-black'
+                      : 'text-black/80 hover:bg-gray-200 hover:text-black'
+                  } px-2 py-1`
+                }
+                aria-label="구독 태그 설정"
+              >
+                <Settings className="w-6 h-6" />
+              </NavLink>
             </div>
 
-            <TailwindSeparator />
-          </>
+            <div className="flex flex-col gap-1">
+              {favoriteTags.map((tag) => (
+                <NavLink
+                  key={tag}
+                  to={`/search?tag=${encodeURIComponent(tag)}`}
+                  className={() =>
+                    `${tagLinkBaseStyle} ${
+                      activeTag === tag
+                        ? tagLinkActiveStyle
+                        : tagLinkInactiveStyle
+                    }`
+                  }
+                >
+                  <Tag className="w-4 h-4" />
+                  <span>{tag}</span>
+                </NavLink>
+              ))}
+            </div>
+          </div>
         )}
-
-        {/* 구독 태그 설정 */}
-        <NavLink
-          to="/settings/tags"
-          className={({ isActive }) =>
-            `${navLinkBaseStyle} ${
-              isActive ? navLinkActiveStyle : navLinkInactiveStyle
-            }`
-          }
-        >
-          <Settings className="w-5 h-5" />
-          <span>구독 태그 설정</span>
-        </NavLink>
-
-        <TailwindSeparator />
-
-        {/* 새 게시판 만들기 */}
-        {/* 추후에 논의 하겠음 */}
-        {/*<NavLink
-          to="/create-board"
-          className={({ isActive }) =>
-            `flex items-center justify-center gap-2 w-full px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors ${
-              isActive
-                ? 'bg-blue-100 text-blue-700 border-blue-300 font-medium'
-                : ''
-            }`
-          }
-        >
-          <Plus className="w-4 h-4" />
-          <span>새 게시판 만들기</span>
-        </NavLink>*/}
       </aside>
     </div>
   );
 }
+
