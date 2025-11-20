@@ -126,6 +126,10 @@ export default function MyPage() {
   // 페이지네이션 상태
   const [postPage, setPostPage] = useState(1);
   const [scrapPage, setScrapPage] = useState(1);
+  // 프로필 수정 모드
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editBio, setEditBio] = useState('');
 
   // 프로필 불러오기
   useEffect(() => {
