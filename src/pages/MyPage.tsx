@@ -242,6 +242,49 @@ export default function MyPage() {
         key={post.id}
         className="w-full rounded-2xl border border-[#e2e5ec] bg-[#f7f8fb] px-6 py-5 flex flex-col gap-4 shadow-sm"
       >
+        {/* 제목 + 수정 버튼 */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">
+              {normalizeValue(post.title)}
+            </h3>
+
+            {/* 태그 */}
+            {Array.isArray(post.tags) && post.tags.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {post.tags.map((tag, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center rounded-full bg-[#e3edff] text-[#2563eb] text-xs px-3 py-1"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 글 수정 버튼 */}
+          <Button
+            type="button"
+            className="p-0 bg-transparent hover:bg-gray-50 rounded-xl"
+            aria-label="게시글 수정"
+          >
+            <img
+              src={EditPostIcon}
+              alt="수정하기"
+              className="w-[92px] h-auto"
+            />
+          </Button>
+        </div>
+
+        {/* 내용 */}
+        {contentText && contentText !== '-' && (
+          <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-line mt-1">
+            {contentText}
+          </div>
+        )}
+
         {/* 날짜 + 리액션 */}
         <div className="border-t border-slate-200 pt-3 flex items-center justify-between text-xs text-slate-500">
           <span>{formatDate(post.createdAt)}</span>
