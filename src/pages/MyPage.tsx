@@ -293,14 +293,20 @@ export default function MyPage() {
                       ) : (
                         <div className="flex flex-col gap-2">
                           {/* 닉네임 박스 */}
-                          <div className="inline-flex items-center bg-white rounded-[18px] h-11 px-4 shadow-sm w-fit min-w-[260px]">
-                            <input
-                              value={editName}
-                              onChange={(e) => setEditName(e.target.value)}
-                              aria-label="닉네임"
-                              className="flex-1 bg-transparent border-none outline-none text-[20px] font-semibold text-[#9CA3AF] placeholder:text-[#d1d5db] mr-2"
-                              placeholder="닉네임"
-                            />
+                          <div className="inline-flex items-center bg-white rounded-[14px] h-[2.2rem] px-3 shadow-sm w-fit">
+                            <div className="grid items-center mr-1">
+                              <span className="invisible col-start-1 row-start-1 text-2xl font-bold px-1 whitespace-pre">
+                                {editName || '닉네임'}
+                              </span>
+                              <input
+                                value={editName}
+                                onChange={(e) => setEditName(e.target.value)}
+                                aria-label="닉네임 수정"
+                                placeholder="닉네임"
+                                size={1}
+                                className="col-start-1 row-start-1 w-full min-w-0 bg-transparent border-none outline-none text-2xl font-bold text-[#9CA3AF] placeholder:text-[#d1d5db] px-1"
+                              />
+                            </div>
                             <img
                               src={EditFieldIcon}
                               alt="닉네임 수정 아이콘"
@@ -309,14 +315,22 @@ export default function MyPage() {
                           </div>
 
                           {/* 소개 문구 박스 */}
-                          <div className="inline-flex items-center bg-white rounded-[18px] h-10 px-4 shadow-sm w-fit min-w-[280px]">
-                            <input
-                              value={editBio}
-                              onChange={(e) => setEditBio(e.target.value)}
-                              aria-label="소개 문구 입력"
-                              className="flex-1 bg-transparent border-none outline-none text-[16px] text-[#9CA3AF] placeholder:text-[#d1d5db] mr-2"
-                              placeholder="소개 문구가 없습니다."
-                            />
+                          <div className="inline-flex items-center bg-white rounded-[14px] h-[1.7rem] px-4 shadow-sm w-fit">
+                            <div className="grid items-center">
+                              {/* 너비 잡아주는 투명 span */}
+                              <span className="invisible col-start-1 row-start-1 text-sm whitespace-pre">
+                                {editBio || '소개 문구가 없습니다.'}
+                              </span>
+                              {/* 실제 input */}
+                              <input
+                                value={editBio}
+                                onChange={(e) => setEditBio(e.target.value)}
+                                aria-label="소개 문구 수정"
+                                placeholder="소개 문구가 없습니다."
+                                size={1}
+                                className="col-start-1 row-start-1 w-full min-w-0 bg-transparent border-none outline-none text-sm text-[#9CA3AF] placeholder:text-[#d1d5db]"
+                              />
+                            </div>
                             <img
                               src={EditFieldIcon}
                               alt="소개 수정"
