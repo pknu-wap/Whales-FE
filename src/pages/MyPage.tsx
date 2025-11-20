@@ -13,7 +13,6 @@ import EditFieldIcon from '@/assets/글쓰기 수정.svg';
 import EditProfileIcon from '@/assets/프로필 수정.svg';
 import EditPostIcon from '@/assets/수정하기.svg';
 
-// 탭 타입
 type Tab = 'posts' | 'comments' | 'saved';
 
 type TrustLevel =
@@ -55,7 +54,6 @@ interface Profile {
   [key: string]: unknown;
 }
 
-// name 속성이 있는 객체 타입 가드
 const hasNameProperty = (val: unknown): val is { name: string } => {
   return (
     typeof val === 'object' &&
@@ -157,7 +155,6 @@ export default function MyPage() {
       .finally(() => setProfileLoading(false));
   }, []);
 
-  // 내가 쓴 글 불러오기
   // 프로필에서 화면 표시용 이름/소개 계산
   const profileName =
     (profile?.displayName && profile.displayName !== '-') ||
@@ -305,8 +302,9 @@ export default function MyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="w-full max-w-7xl mx-auto flex p-6 gap-6">
+    // 전체 배경 흰색
+    <div className="min-h-screen bg-white">
+      <main className="w-full max-w-6xl mx-auto flex gap-6 px-6 py-10">
         <AppSidebar />
 
         <section className="flex-1 flex flex-col gap-6">
