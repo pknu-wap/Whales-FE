@@ -1,41 +1,35 @@
-// src/pages/MyPage.tsx
 import { useState, useEffect } from 'react';
 import { AppSidebar } from '@/components/common';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { TopicCard } from '@/components/common/TopicCard';
-
 import { getMyProfile, getMyScraps, getPosts } from '@/services/api';
 
 import RookieBadge from '@/assets/Rookie Ver.2.svg';
+import LikeIcon from '@/assets/좋아요.svg';
+import DislikeIcon from '@/assets/싫어요.svg';
+import CommentIcon from '@/assets/댓글.svg';
 import EditFieldIcon from '@/assets/글쓰기 수정.svg';
 import EditProfileIcon from '@/assets/프로필 수정.svg';
+import EditPostIcon from '@/assets/수정하기.svg';
 
 type Tab = 'posts' | 'comments' | 'saved';
 
 type TrustLevel =
-  | 'basic'
-  | 'active'
-  | 'trusted'
-  | 'model'
-  | 'top'
-  | 'legend'
-  | 'warning'
-  | 'danger';
+  | 'basic' // 흰색 : 신규 / 기본
+  | 'active' // 회색 : 활동 중 / 검증 전
+  | 'trusted' // 초록 : 신뢰 회원
+  | 'model' // 파랑 : 검증된 / 모범 회원
+  | 'top' // 보라 : 상위 기여자 / 우수 멤버
+  | 'legend' // 금색 : 레전드 / 명예 등급
+  | 'warning' // 주의 회원
+  | 'danger'; // 경고 회원
 
 interface PostReactions {
   likeCount?: number;
   dislikeCount?: number;
   commentCount?: number;
 }
-
-type AuthorLike = {
-  id?: number | string;
-  userId?: number | string;
-  displayName?: string;
-  nickname?: string;
-};
 
 interface PostItem {
   id: number;
@@ -44,7 +38,6 @@ interface PostItem {
   content?: string;
   tags?: string[];
   reactions?: PostReactions;
-  author?: AuthorLike | string;
   [key: string]: unknown;
 }
 
@@ -96,6 +89,7 @@ const formatDate = (value?: string) => {
   return `${y}.${m}.${day}`;
 };
 
+// 회원 신뢰도별 아바타 테두리 색
 const getTrustRingClass = (trustLevel?: TrustLevel): string => {
   switch (trustLevel) {
     case 'basic':
@@ -119,6 +113,14 @@ const getTrustRingClass = (trustLevel?: TrustLevel): string => {
   }
 };
 
+// SVG 아이콘용 리액션 박스
+const ReactionBox = ({ icon, value }: { icon: string; value?: number }) => (
+  <div className="flex items-center gap-1.5 rounded-2xl bg-[#f3f4f6] px-3 py-1 text-xs text-slate-600">
+    <img src={icon} alt="reaction" className="w-4 h-4 opacity-80" />
+    <span>{value ?? 0}</span>
+  </div>
+);
+
 export default function MyPage() {
   const [activeTab, setActiveTab] = useState<Tab>('posts');
 
@@ -131,12 +133,13 @@ export default function MyPage() {
   const [myScraps, setMyScraps] = useState<PostItem[]>([]);
   const [scrapsLoading, setScrapsLoading] = useState(true);
 
+  // 프로필 수정 모드
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
 
+  // 프로필 불러오기
   useEffect(() => {
-    setProfileLoading(true);
     getMyProfile()
       .then((data: Profile) => {
         const normalized: Profile = {
@@ -152,6 +155,7 @@ export default function MyPage() {
       .finally(() => setProfileLoading(false));
   }, []);
 
+  // 프로필에서 화면 표시용 이름/소개 계산
   const profileName =
     (profile?.displayName && profile.displayName !== '-') ||
     (profile?.nickname && profile.nickname !== '-')
@@ -163,11 +167,13 @@ export default function MyPage() {
       ? profile.bio
       : '소개 문구가 없습니다.';
 
+  // 프로필 값이 바뀌면 편집용 state 초기화
   useEffect(() => {
     setEditName(profileName);
     setEditBio(profileBio);
   }, [profileName, profileBio]);
 
+  // 내가 쓴 글
   useEffect(() => {
     setPostsLoading(true);
     getPosts()
@@ -181,6 +187,7 @@ export default function MyPage() {
       .finally(() => setPostsLoading(false));
   }, []);
 
+  // 스크랩
   useEffect(() => {
     setScrapsLoading(true);
     getMyScraps()
@@ -195,7 +202,7 @@ export default function MyPage() {
   }, []);
 
   const postsCount = myPosts.length;
-  const commentsCount = 0;
+  const commentsCount = 0; // 아직 구현 안됨
   const scrapCount = myScraps.length;
 
   const profileInitial =
@@ -205,7 +212,7 @@ export default function MyPage() {
 
   const handleToggleEditProfile = () => {
     if (isEditingProfile) {
-      // TODO: PATCH API 연동
+      // TODO: PATCH API
       setProfile((prev) =>
         prev
           ? {
@@ -219,51 +226,85 @@ export default function MyPage() {
     setIsEditingProfile((prev) => !prev);
   };
 
-  const getPostAuthor = (
-    post: PostItem,
-  ): string | { id: string; displayName: string } => {
-    const rawAuthor = post.author;
-
-    if (!rawAuthor) return profileName;
-
-    if (typeof rawAuthor === 'string') {
-      return rawAuthor;
-    }
-
-    const id = rawAuthor.id ?? rawAuthor.userId ?? '';
-    const displayName = rawAuthor.displayName ?? rawAuthor.nickname ?? profileName;
-
-    return {
-      id: String(id),
-      displayName,
-    };
-  };
-
+  // 글 카드 렌더링
   const renderPostCard = (post: PostItem) => {
-    const rawContent =
+    const contentText =
       (post.content as string | undefined) ??
       (normalizeValue(post['content']) === '-'
         ? ''
         : normalizeValue(post['content']));
 
-    const contentText = rawContent ?? '';
-
     return (
-      <TopicCard
+      <div
         key={post.id}
-        id={String(post.id)}
-        title={normalizeValue(post.title)}
-        content={contentText}
-        author={getPostAuthor(post)}
-        date={formatDate(post.createdAt)}
-        tags={post.tags ?? []}
-      />
+        className="w-full rounded-2xl border border-[#e2e5ec] bg-[#f7f8fb] px-6 py-5 flex flex-col gap-4 shadow-sm"
+      >
+        {/* 제목 + 수정 버튼 */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">
+              {normalizeValue(post.title)}
+            </h3>
+
+            {/* 태그 */}
+            {Array.isArray(post.tags) && post.tags.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {post.tags.map((tag, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center rounded-full bg-[#e3edff] text-[#2563eb] text-xs px-3 py-1"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 글 수정 버튼 */}
+          <Button
+            type="button"
+            className="p-0 bg-transparent hover:bg-gray-50 rounded-xl"
+            aria-label="게시글 수정"
+          >
+            <img
+              src={EditPostIcon}
+              alt="수정하기"
+              className="w-[92px] h-auto"
+            />
+          </Button>
+        </div>
+
+        {/* 내용 */}
+        {contentText && contentText !== '-' && (
+          <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-line mt-1">
+            {contentText}
+          </div>
+        )}
+
+        {/* 날짜 + 리액션 */}
+        <div className="border-t border-slate-200 pt-3 flex items-center justify-between text-xs text-slate-500">
+          <span>{formatDate(post.createdAt)}</span>
+          <div className="flex items-center gap-3">
+            <ReactionBox icon={LikeIcon} value={post.reactions?.likeCount} />
+            <ReactionBox
+              icon={DislikeIcon}
+              value={post.reactions?.dislikeCount}
+            />
+            <ReactionBox
+              icon={CommentIcon}
+              value={post.reactions?.commentCount}
+            />
+          </div>
+        </div>
+      </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="w-full max-w-7xl mx-auto flex p-6 gap-6">
+    // 전체 배경 흰색
+    <div className="min-h-screen bg-white">
+      <main className="w-full max-w-6xl mx-auto flex gap-6 px-6 py-10">
         <AppSidebar />
 
         <section className="flex-1 flex flex-col gap-6">
@@ -283,38 +324,82 @@ export default function MyPage() {
                     </div>
 
                     <div className="flex flex-col gap-2">
+                      {/* 보기 모드 / 수정 모드 */}
                       {!isEditingProfile ? (
                         <>
                           <h1 className="text-2xl font-bold text-slate-900">
                             {profileName}
                           </h1>
-                          <p className="text-sm text-slate-700">{profileBio}</p>
+                          <p className="text-sm text-slate-700">
+                            {profileBio}
+                          </p>
                         </>
                       ) : (
                         <div className="flex flex-col gap-2">
                           {/* 닉네임 박스 */}
-                          <div className="inline-flex items-center bg-white rounded-[18px] h-11 px-4 shadow-sm w-fit min-w-[260px]">
+                          <div
+                            className="
+                              inline-flex items-center
+                              bg-white
+                              rounded-[18px]        
+                              h-11                  
+                              px-4
+                              shadow-sm
+                              w-fit
+                              min-w-[260px]        
+                            "
+                          >
                             <input
                               value={editName}
                               onChange={(e) => setEditName(e.target.value)}
                               aria-label="닉네임"
-                              className="flex-1 bg-transparent border-none outline-none text-[20px] font-semibold text-[#9CA3AF] placeholder:text-[#d1d5db] mr-2"
+                              className="
+                                flex-1
+                                bg-transparent
+                                border-none
+                                outline-none
+                                text-[20px]         
+                                font-semibold
+                                text-[#9CA3AF]       /* 회색 글자 */
+                                placeholder:text-[#d1d5db]
+                                mr-2
+                              "
                               placeholder="닉네임"
                             />
                             <img
-                              src={EditFieldIcon}
+                              src={EditFieldIcon}    // 글쓰기 수정.svg
                               alt="닉네임 수정"
                               className="w-[18px] h-[18px] opacity-80"
                             />
                           </div>
 
                           {/* 소개 문구 박스 */}
-                          <div className="inline-flex items-center bg-white rounded-[18px] h-10 px-4 shadow-sm w-fit min-w-[280px]">
+                          <div
+                            className="
+                              inline-flex items-center
+                              bg-white
+                              rounded-[18px]
+                              h-10
+                              px-4
+                              shadow-sm
+                              w-fit
+                              min-w-[280px]
+                            "
+                          >
                             <input
                               value={editBio}
                               onChange={(e) => setEditBio(e.target.value)}
                               aria-label="소개 문구 입력"
-                              className="flex-1 bg-transparent border-none outline-none text-[16px] text-[#9CA3AF] placeholder:text-[#d1d5db] mr-2"
+                              className="
+                                flex-1
+                                bg-transparent
+                                border-none
+                                outline-none
+                                text-[16px]          
+                                text-[#9CA3AF]
+                                placeholder:text-[#d1d5db]
+                                mr-2
+                              "
                               placeholder="소개 문구가 없습니다."
                             />
                             <img
@@ -326,6 +411,7 @@ export default function MyPage() {
                         </div>
                       )}
 
+                      {/* Rookie 뱃지 svg */}
                       <div className="mt-1">
                         <img
                           src={RookieBadge}
@@ -366,30 +452,64 @@ export default function MyPage() {
                 onValueChange={(val) => setActiveTab(val as Tab)}
                 className="w-full"
               >
-                {/* 탭 버튼: 왼쪽 정렬 */}
-                <TabsList className="bg-transparent p-0 mb-6 gap-3 justify-start">
+                {/* 탭 버튼 */}
+                <TabsList className="flex gap-3 bg-transparent p-0 mb-6">
                   <TabsTrigger
                     value="posts"
-                    className="px-5 py-2.5 text-sm font-semibold rounded-[14px] bg-[#f3f4f6] text-slate-700 shadow-[0_1px_2px_rgba(0,0,0,0.06)] data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white"
+                    className="
+                      px-5
+                      py-2.5
+                      text-sm
+                      font-semibold
+                      rounded-[14px]
+                      bg-[#f3f4f6]
+                      text-slate-700
+                      shadow-[0_1px_2px_rgba(0,0,0,0.06)]
+                      data-[state=active]:bg-[#3b82f6]
+                      data-[state=active]:text-white
+                    "
                   >
                     내가 쓴 글 ({postsCount})
                   </TabsTrigger>
 
                   <TabsTrigger
                     value="comments"
-                    className="px-5 py-2.5 text-sm font-semibold rounded-[14px] bg-[#f3f4f6] text-slate-700 shadow-[0_1px_2px_rgba(0,0,0,0.06)] data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white"
+                    className="
+                      px-5
+                      py-2.5
+                      text-sm
+                      font-semibold
+                      rounded-[14px]
+                      bg-[#f3f4f6]
+                      text-slate-700
+                      shadow-[0_1px_2px_rgba(0,0,0,0.06)]
+                      data-[state=active]:bg-[#3b82f6]
+                      data-[state=active]:text-white
+                    "
                   >
                     내가 쓴 댓글 ({commentsCount})
                   </TabsTrigger>
 
                   <TabsTrigger
                     value="saved"
-                    className="px-5 py-2.5 text-sm font-semibold rounded-[14px] bg-[#f3f4f6] text-slate-700 shadow-[0_1px_2px_rgba(0,0,0,0.06)] data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white"
+                    className="
+                      px-5
+                      py-2.5
+                      text-sm
+                      font-semibold
+                      rounded-[14px]
+                      bg-[#f3f4f6]
+                      text-slate-700
+                      shadow-[0_1px_2px_rgba(0,0,0,0.06)]
+                      data-[state=active]:bg-[#3b82f6]
+                      data-[state=active]:text-white
+                    "
                   >
                     스크랩 ({scrapCount})
                   </TabsTrigger>
                 </TabsList>
 
+                {/* 내가 쓴 글 */}
                 <TabsContent value="posts" className="mt-2">
                   {postsLoading ? (
                     <div className="text-center py-16 text-slate-400">
@@ -406,12 +526,14 @@ export default function MyPage() {
                   )}
                 </TabsContent>
 
+                {/* 내가 쓴 댓글 */}
                 <TabsContent value="comments" className="mt-2">
                   <div className="text-center py-16 text-slate-400">
                     댓글 목록 기능은 아직 준비 중입니다.
                   </div>
                 </TabsContent>
 
+                {/* 스크랩 */}
                 <TabsContent value="saved" className="mt-2">
                   {scrapsLoading ? (
                     <div className="text-center py-16 text-slate-400">

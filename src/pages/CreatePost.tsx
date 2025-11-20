@@ -28,7 +28,7 @@ export default function CreatePost() {
 
   const handleSubmit = async () => {
     try {
-      await createPost({ title, content, tags }); // ✅ axios 요청
+      await createPost({ title, content, tags }); // ✅ axios 요청 (http://localhost:8080/api/posts)
       navigate('/');
     } catch (error) {
       console.error('게시글 작성 실패:', error);
@@ -36,12 +36,9 @@ export default function CreatePost() {
   };
 
   return (
-    // 🔹 min-h-screen 제거 → 내용만큼만 높이
-    <div className="bg-background">
-      {/* 🔹 flex 컨테이너에 items-start 추가 */}
-      <main className="w-full max-w-7xl mx-auto flex p-6 gap-6 items-start">
+    <div className="min-h-screen bg-background">
+      <main className="w-full max-w-7xl mx-auto flex p-6 gap-6">
         <AppSidebar />
-
         <section className="flex-1 flex flex-col gap-6">
           <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
             <h2 className="text-2xl font-bold mb-6">게시글 작성</h2>
@@ -76,11 +73,7 @@ export default function CreatePost() {
                 {tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
                     {tags.map((tag, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="rounded-full gap-1 pr-1"
-                      >
+                      <Badge key={index} variant="secondary" className="rounded-full gap-1 pr-1">
                         #{tag}
                         <button
                           onClick={() => handleRemoveTag(tag)}

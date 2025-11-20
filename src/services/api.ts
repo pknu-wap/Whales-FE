@@ -10,7 +10,6 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // ✅ 이거 추가: refresh 쿠키 보내려면 필수
 });
 
 // 🔗 백엔드 연결: 요청 인터셉터 (Bearer 토큰 자동 추가)
@@ -29,49 +28,14 @@ api.interceptors.request.use(
 );
 
 // 🔗 백엔드 연결: 응답 인터셉터 (에러 처리)
-// 🔗 백엔드 연결: 응답 인터셉터 (AccessToken 자동 재발급)
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    // error.response, error.config 둘 다 있어야 인터셉터 실행
-    if (!error.response || !error.config) {
-      return Promise.reject(error);
+  (error) => {
+    if (error.response?.status === 401) {
+      // 🔒 보안: 인증 실패 시 store 초기화 후 로그인 페이지로 이동
+      useAuthStore.getState().clearAuth();
+      window.location.href = '/login';
     }
-
-    // 원래 요청 설정
-    const original = error.config as any;
-
-    // ★ Access Token 만료 → 401 처리 (재시도 플래그로 무한루프 방지)
-    if (error.response.status === 401 && !original._retry) {
-      original._retry = true;
-
-      try {
-        // 1) Refresh API 호출 (api가 아니라 axios 기본 인스턴스 사용!)
-        const refreshResponse = await axios.post(
-          `${API_BASE_URL}/auth/refresh`,
-          {},
-          { withCredentials: true } // 쿠키 포함
-        );
-
-        const { accessToken, user } = refreshResponse.data;
-
-        // 2) Zustand에 Access Token & User 갱신
-        useAuthStore.getState().setAuth(accessToken, user);
-
-        // 3) 원래 요청에 새 토큰 붙여서 재전송
-        original.headers = original.headers || {};
-        original.headers.Authorization = `Bearer ${accessToken}`;
-
-        return api(original);
-      } catch (refreshError) {
-        // RefreshToken도 만료 → 강제 로그아웃
-        useAuthStore.getState().clearAuth();
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
-      }
-    }
-
-    // 그 외 에러는 그대로 throw
     return Promise.reject(error);
   }
 );
