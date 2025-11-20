@@ -112,11 +112,10 @@ export function TopicCard({
           {displayTags.map((tagName, index) => (
             <Badge
               key={index}
-              variant="secondary"
-              className="bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100 hover:text-blue-800 transition-colors"
-            >
-              {tagName}
+              variant="outline"   // ✔️ outline 사용
+            > {tagName}
             </Badge>
+
           ))}
         </div>
 
