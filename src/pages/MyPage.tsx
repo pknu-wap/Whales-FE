@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getMyProfile, getMyScraps, getPosts } from '@/services/api';
 
+import RookieBadge from '@/assets/Rookie Ver.2.svg';
+import EditFieldIcon from '@/assets/글쓰기 수정.svg';
+import EditProfileIcon from '@/assets/프로필 수정.svg';
 
 // 탭 타입
 type Tab = 'posts' | 'comments' | 'saved';
@@ -217,106 +220,69 @@ export default function MyPage() {
         <AppSidebar />
 
         <section className="flex-1 flex flex-col gap-6">
-          {/* 프로필 카드 */}
-          <Card className="bg-gradient-to-b from-card to-secondary/30 border-border">
-            <CardHeader className="pb-4">
+          {/* 상단 프로필 배너 */}
+          <Card className="w-full rounded-[24px] border border-[#d0ddff] shadow-sm bg-[#eef3ff]">
+            <CardContent className="flex items-center justify-between py-7 px-9">
               {profileLoading ? (
-                <div className="p-6">로딩 중…</div>
+                <div className="text-slate-500">프로필 불러오는 중…</div>
               ) : profile ? (
-                <div className="flex items-start gap-4">
-                  <Avatar className="w-20 h-20 border-4 border-primary/20">
-                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-2xl">
-                      {profile.displayName
-                        ? profile.displayName[0]
-                        : profile.nickname
-                        ? profile.nickname[0]
-                        : '유'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <h2 className="text-2xl font-bold mb-1">
-                      {normalizeValue(profile.displayName ?? profile.nickname)}
-                    </h2>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {normalizeValue(profile.bio)}
-                    </p>
-                    <div className="flex gap-2 mb-3">
-                      {profile.major && (
-                        <Badge variant="secondary" className="rounded-full">
-                          전공자: {normalizeValue(profile.major)}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-muted-foreground">이메일</span>
-                      <span>{profile.email ?? '-'}</span>
-                    </div>
-                  </div>
-                  <Button variant="outline">프로필 수정</Button>
-                </div>
-              ) : (
-                <div className="p-6 text-muted-foreground">
-                  프로필 정보를 불러올 수 없습니다.
-                </div>
-              )}
-            </CardHeader>
-          </Card>
-
-          {/* 탭 영역 */}
-          <Tabs
-            value={activeTab}
-            onValueChange={(val) => setActiveTab(val as Tab)}
-            className="w-full"
-          >
-            <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
-              <TabsTrigger value="posts">내가 쓴 글</TabsTrigger>
-              <TabsTrigger value="comments">내가 쓴 댓글</TabsTrigger>
-              <TabsTrigger value="saved">스크랩</TabsTrigger>
-            </TabsList>
-
-            {/* 내가 쓴 글 */}
-            <TabsContent value="posts" className="mt-6">
-              {postsLoading ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  로딩 중…
-                </div>
-              ) : pagedPosts.length > 0 ? (
                 <>
-                  <div className="flex flex-col gap-4">
-                    {pagedPosts.map((post) => (
-                      <Card
-                        key={post.id}
-                        className="hover:shadow-lg transition"
-                      >
-                        <CardContent className="p-6">
-                          <h3 className="font-bold text-lg mb-2">
-                            {normalizeValue(post.title)}
-                          </h3>
+                  <div className="flex items-center gap-6">
+                    {/* 아바타 */}
+                    <div
+                      className={`w-20 h-20 rounded-full flex items-center justify-center text-3xl font-semibold text-slate-900 border-[7px] ${gradeRingClass}`}
+                    >
+                      {profileInitial}
+                    </div>
 
-                          {Array.isArray(post.tags) && post.tags.length > 0 && (
-                            <div className="flex gap-2 mb-3 flex-wrap">
-                              {post.tags.map((tag, i) => (
-                                <Badge
-                                  key={i}
-                                  variant="secondary"
-                                  className="rounded-full"
-                                >
-                                  {normalizeValue(tag)}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>
-                              {post.createdAt
-                                ? new Date(
-                                    post.createdAt
-                                  ).toLocaleDateString('ko-KR')
-                                : '-'}
-                            </span>
-                            <span>👍 {post.reactions?.likeCount ?? 0}</span>
-                            <span>👎 {post.reactions?.dislikeCount ?? 0}</span>
+                    <div className="flex flex-col gap-2">
+                      {/* 보기 모드 / 수정 모드 */}
+                      {!isEditingProfile ? (
+                        <>
+                          <h1 className="text-2xl font-bold text-slate-900">
+                            {profileName}
+                          </h1>
+                          <p className="text-sm text-slate-700">
+                            {profileBio}
+                          </p>
+                        </>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          {/* 닉네임 박스 */}
+                          <div
+                            className="
+                              inline-flex items-center
+                              bg-white
+                              rounded-[18px]        
+                              h-11                  
+                              px-4
+                              shadow-sm
+                              w-fit
+                              min-w-[260px]        
+                            "
+                          >
+                            <input
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              aria-label="닉네임"
+                              className="
+                                flex-1
+                                bg-transparent
+                                border-none
+                                outline-none
+                                text-[20px]         
+                                font-semibold
+                                text-[#9CA3AF]       /* 회색 글자 */
+                                placeholder:text-[#d1d5db]
+                                mr-2
+                              "
+                              placeholder="닉네임"
+                            />
+                            <img
+                              src={EditFieldIcon}    // 글쓰기 수정.svg
+                              alt="닉네임 수정"
+                              className="w-[18px] h-[18px] opacity-80"
+                            />
                           </div>
                         </CardContent>
                       </Card>
