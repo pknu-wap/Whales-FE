@@ -1,7 +1,7 @@
 // AppSidebar.tsx
 import React, { useState, useEffect } from 'react';
 import {
-  Home,
+  Home, 
   TrendingUp,
   Clock,
   Tag,
@@ -35,17 +35,24 @@ export function AppSidebar(): React.ReactElement {
     : defaultFavoriteTags
   ).slice(0, 4);
 
-  const navLinkBaseStyle =
-    'flex items-center gap-3 font-medium w-full px-3 py-2 rounded-md transition-colors';
-  const navLinkActiveStyle = 'bg-gray-200 text-black';
-  const navLinkInactiveStyle =
-    'text-black/80 hover:bg-gray-200 hover:text-black';
+ const navLinkBaseStyle =
+  'flex items-center gap-3 font-medium w-full px-3 py-2 rounded-md transition-colors';
 
-  const tagLinkBaseStyle =
-    'flex items-center gap-2 text-sm w-full px-3 py-1.5 rounded-md transition-colors';
-  const tagLinkActiveStyle = 'font-semibold text-black bg-gray-200';
-  const tagLinkInactiveStyle =
-    'text-black/70 hover:bg-gray-200 hover:text-black';
+// ✅ 활성 상태: 연한 파란색 배경 + 파란 글자
+const navLinkActiveStyle = 'bg-blue-100 text-blue-700';
+
+// ✅ 비활성 상태: 기본은 진회색, hover 시 살짝 파란 배경
+const navLinkInactiveStyle =
+  'text-black/80 hover:bg-blue-50 hover:text-blue-700';
+
+const tagLinkBaseStyle =
+  'flex items-center gap-2 text-sm w-full px-3 py-1.5 rounded-md transition-colors';
+
+// ✅ 태그 활성 상태도 연한 파란색으로
+const tagLinkActiveStyle = 'font-semibold text-blue-700 bg-blue-100';
+
+const tagLinkInactiveStyle =
+  'text-black/70 hover:bg-blue-50 hover:text-blue-700';
 
   return (
     <div className="sticky top-24 flex gap-2">
