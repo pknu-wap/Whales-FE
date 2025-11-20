@@ -1,14 +1,9 @@
-// MyPage.tsx
 import { useState, useEffect } from 'react';
 import { AppSidebar } from '@/components/common';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { getMyProfile, getMyScraps, getPosts } from '@/services/api';
 
-const PAGE_SIZE = 4;
 
 // 탭 타입
 type Tab = 'posts' | 'comments' | 'saved';
