@@ -149,9 +149,6 @@ export default function MyPage() {
   const [myScraps, setMyScraps] = useState<PostItem[]>([]);
   const [scrapsLoading, setScrapsLoading] = useState(true);
 
-  // 페이지네이션 상태
-  const [postPage, setPostPage] = useState(1);
-  const [scrapPage, setScrapPage] = useState(1);
   // 프로필 수정 모드
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editName, setEditName] = useState('');
@@ -193,6 +190,7 @@ export default function MyPage() {
     setEditBio(profileBio);
   }, [profileName, profileBio]);
 
+  // 내가 쓴 글
   useEffect(() => {
     setPostsLoading(true);
     getPosts()
@@ -202,12 +200,11 @@ export default function MyPage() {
           tags: normalizeTags(p.tags),
         }));
         setMyPosts(normalizedPosts);
-        setPostPage(1); // 데이터 갱신 시 1페이지로
       })
       .finally(() => setPostsLoading(false));
   }, []);
 
-  // 스크랩 불러오기
+  // 스크랩
   useEffect(() => {
     setScrapsLoading(true);
     getMyScraps()
@@ -217,24 +214,34 @@ export default function MyPage() {
           tags: normalizeTags(p.tags),
         }));
         setMyScraps(normalizedScraps);
-        setScrapPage(1); // 데이터 갱신 시 1페이지로
       })
       .finally(() => setScrapsLoading(false));
   }, []);
 
-  // 페이지네이션 계산 - 내가 쓴 글
-  const postTotalPages = Math.max(1, Math.ceil(myPosts.length / PAGE_SIZE));
-  const postStart = (postPage - 1) * PAGE_SIZE;
-  const pagedPosts = myPosts.slice(postStart, postStart + PAGE_SIZE);
+  const postsCount = myPosts.length;
+  const commentsCount = 0; // 아직 구현 안됨
+  const scrapCount = myScraps.length;
 
-  // 페이지네이션 계산 - 스크랩
-  const scrapTotalPages = Math.max(1, Math.ceil(myScraps.length / PAGE_SIZE));
-  const scrapStart = (scrapPage - 1) * PAGE_SIZE;
-  const pagedScraps = myScraps.slice(scrapStart, scrapStart + PAGE_SIZE);
   const profileInitial =
     profileName && profileName.length > 0 ? profileName[0] : '유';
 
   const gradeRingClass = getTrustRingClass(profile?.trustLevel);
+
+  const handleToggleEditProfile = () => {
+    if (isEditingProfile) {
+      // TODO: PATCH API
+      setProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              displayName: editName,
+              bio: editBio,
+            }
+          : prev,
+      );
+    }
+    setIsEditingProfile((prev) => !prev);
+  };
 
   // 글 카드 렌더링
   const renderPostCard = (post: PostItem) => {
@@ -338,49 +345,8 @@ export default function MyPage() {
                               className="w-[18px] h-[18px] opacity-80"
                             />
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
 
-                  {/* 내가 쓴 글 페이지네이션 */}
-                  {postTotalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 mt-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={postPage === 1}
-                        onClick={() =>
-                          setPostPage((p) => Math.max(1, p - 1))
-                        }
-                      >
-                        이전
-                      </Button>
-                      {Array.from({ length: postTotalPages }).map((_, idx) => {
-                        const p = idx + 1;
-                        return (
-                          <Button
-                            key={p}
-                            variant={p === postPage ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setPostPage(p)}
                           >
-                            {p}
-                          </Button>
-                        );
-                      })}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={postPage === postTotalPages}
-                        onClick={() =>
-                          setPostPage((p) =>
-                            Math.min(postTotalPages, p + 1)
-                          )
-                        }
-                      >
-                        다음
-                      </Button>
                     </div>
                   )}
                 </>
@@ -410,58 +376,25 @@ export default function MyPage() {
                     {pagedScraps.map((post) => (
                   </div>
 
-                  {/* 스크랩 페이지네이션 */}
-                  {scrapTotalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 mt-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={scrapPage === 1}
-                        onClick={() =>
-                          setScrapPage((p) => Math.max(1, p - 1))
-                        }
-                      >
-                        이전
-                      </Button>
-                      {Array.from({ length: scrapTotalPages }).map(
-                        (_, idx) => {
-                          const p = idx + 1;
-                          return (
-                            <Button
-                              key={p}
-                              variant={
-                                p === scrapPage ? 'default' : 'outline'
-                              }
-                              size="sm"
-                              onClick={() => setScrapPage(p)}
-                            >
-                              {p}
-                            </Button>
-                          );
-                        }
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={scrapPage === scrapTotalPages}
-                        onClick={() =>
-                          setScrapPage((p) =>
-                            Math.min(scrapTotalPages, p + 1)
-                          )
-                        }
-                      >
-                        다음
-                      </Button>
+                {/* 스크랩 */}
+                <TabsContent value="saved" className="mt-2">
+                  {scrapsLoading ? (
+                    <div className="text-center py-16 text-slate-400">
+                      로딩 중…
+                    </div>
+                  ) : myScraps.length === 0 ? (
+                    <div className="text-center py-16 text-slate-400">
+                      스크랩한 글이 없습니다.
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      {myScraps.map((post) => renderPostCard(post))}
                     </div>
                   )}
-                </>
-              ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  스크랩한 글이 없습니다.
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
         </section>
       </main>
     </div>
