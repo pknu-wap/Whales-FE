@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { AppSidebar } from '@/components/common';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
 import { getMyProfile, getMyScraps, getPosts } from '@/services/api';
 
 import RookieBadge from '@/assets/Rookie Ver.2.svg';
@@ -331,9 +332,68 @@ export default function MyPage() {
                             />
                           </div>
 
+                          {/* 소개 문구 박스 */}
+                          <div
+                            className="
+                              inline-flex items-center
+                              bg-white
+                              rounded-[18px]
+                              h-10
+                              px-4
+                              shadow-sm
+                              w-fit
+                              min-w-[280px]
+                            "
                           >
+                            <input
+                              value={editBio}
+                              onChange={(e) => setEditBio(e.target.value)}
+                              aria-label="소개 문구 입력"
+                              className="
+                                flex-1
+                                bg-transparent
+                                border-none
+                                outline-none
+                                text-[16px]          
+                                text-[#9CA3AF]
+                                placeholder:text-[#d1d5db]
+                                mr-2
+                              "
+                              placeholder="소개 문구가 없습니다."
+                            />
+                            <img
+                              src={EditFieldIcon}
+                              alt="소개 수정"
+                              className="w-[16px] h-[16px] opacity-80"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Rookie 뱃지 svg */}
+                      <div className="mt-1">
+                        <img
+                          src={RookieBadge}
+                          alt="Rookie Badge"
+                          className="h-7 w-auto"
+                        />
+                      </div>
                     </div>
-                  )}
+                  </div>
+
+                  {/* 프로필 수정 버튼 */}
+                  <Button
+                    type="button"
+                    onClick={handleToggleEditProfile}
+                    className="p-0 bg-transparent hover:bg-gray-100 rounded-xl"
+                    aria-label="프로필 수정"
+                  >
+                    <img
+                      src={EditProfileIcon}
+                      alt="프로필 수정"
+                      className="w-[118px] h-auto"
+                    />
+                  </Button>
                 </>
               ) : (
                 <div className="text-slate-500">
