@@ -277,7 +277,7 @@ export default function MyPage() {
                   <div className="flex items-center gap-6">
                     {/* 아바타 */}
                     <div
-                      className={`w-20 h-20 rounded-full flex items-center justify-center text-3xl font-semibold text-slate-900 border-[7px] ${gradeRingClass}`}
+                      className={`w-20 h-20 rounded-full flex items-center justify-center text-3xl font-semibold text-slate-900 border-[9px] ${gradeRingClass}`}
                     >
                       {profileInitial}
                     </div>
@@ -303,8 +303,8 @@ export default function MyPage() {
                             />
                             <img
                               src={EditFieldIcon}
-                              alt="닉네임 수정"
-                              className="w-[18px] h-[18px] opacity-80"
+                              alt="닉네임 수정 아이콘"
+                              className="w-4 h-4 opacity-80 ml-0"
                             />
                           </div>
 
@@ -320,7 +320,7 @@ export default function MyPage() {
                             <img
                               src={EditFieldIcon}
                               alt="소개 수정"
-                              className="w-[16px] h-[16px] opacity-80"
+                              className="w-4 h-4 opacity-80 ml-1"
                             />
                           </div>
                         </div>
