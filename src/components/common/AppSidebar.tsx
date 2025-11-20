@@ -35,25 +35,25 @@ export function AppSidebar(): React.ReactElement {
     : defaultFavoriteTags
   ).slice(0, 4);
 
- const navLinkBaseStyle =
+const navLinkBaseStyle =
   'flex items-center gap-3 font-medium w-full px-3 py-2 rounded-md transition-colors';
 
-// ✅ 활성 상태: 연한 파란색 배경 + 파란 글자
-const navLinkActiveStyle = 'bg-blue-100 text-blue-700';
+// ✅ 활성 상태: 태그와 동일한 연파랑 + 검정 글자
+const navLinkActiveStyle = 'bg-blue-200 text-black';
 
-// ✅ 비활성 상태: 기본은 진회색, hover 시 살짝 파란 배경
+// ✅ 비활성 상태: 기본 회색 → hover 시 연파랑 + 검정
 const navLinkInactiveStyle =
-  'text-black/80 hover:bg-blue-50 hover:text-blue-700';
+  'text-black/80 hover:bg-blue-100 hover:text-black';
 
 const tagLinkBaseStyle =
   'flex items-center gap-2 text-sm w-full px-3 py-1.5 rounded-md transition-colors';
 
-// ✅ 태그 활성 상태도 연한 파란색으로
-const tagLinkActiveStyle = 'font-semibold text-blue-700 bg-blue-100';
+// ✅ 태그 활성 상태도 동일하게
+const tagLinkActiveStyle = 'bg-blue-200 text-black font-semibold';
 
+// ❗ 비활성 태그 hover도 통일
 const tagLinkInactiveStyle =
-  'text-black/70 hover:bg-blue-50 hover:text-blue-700';
-
+  'text-black/70 hover:bg-blue-100 hover:text-black';
   return (
     <div className="sticky top-24 flex gap-2">
       {/* 토글 버튼 */}
