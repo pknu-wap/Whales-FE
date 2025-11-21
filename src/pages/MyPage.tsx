@@ -6,7 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { TopicCard } from '@/components/common/TopicCard';
 
-import { getMyProfile, getMyScraps, getPosts } from '@/services/api';
+import {
+  getMyProfile,
+  getMyScraps,
+  getPosts,
+  getMyComments,
+} from '@/services/api';
 
 import RookieBadge from '@/assets/Rookie Ver.2.svg';
 import EditFieldIcon from '@/assets/글쓰기 수정.svg';
@@ -28,6 +33,7 @@ interface PostReactions {
   likeCount?: number;
   dislikeCount?: number;
   commentCount?: number;
+  myReaction?: 'LIKE' | 'DISLIKE' | null;
 }
 
 type AuthorLike = {
@@ -46,6 +52,26 @@ interface PostItem {
   reactions?: PostReactions;
   author?: AuthorLike | string;
   [key: string]: unknown;
+}
+
+interface MyComment {
+  id: string;
+  postId: string;
+  content: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  reactions?: {
+    likeCount?: number;
+    dislikeCount?: number;
+    myReaction?: 'LIKE' | 'DISLIKE' | null;
+  };
+  author: {
+    id: string;
+    displayName: string;
+    email: string;
+    nicknameColor: string;
+  };
 }
 
 interface Profile {
@@ -131,6 +157,10 @@ export default function MyPage() {
   const [myScraps, setMyScraps] = useState<PostItem[]>([]);
   const [scrapsLoading, setScrapsLoading] = useState(true);
 
+  // 내가 쓴 댓글 상태
+  const [myComments, setMyComments] = useState<MyComment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(true);
+
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
@@ -194,8 +224,18 @@ export default function MyPage() {
       .finally(() => setScrapsLoading(false));
   }, []);
 
+  // 내가 쓴 댓글 불러오기
+  useEffect(() => {
+    setCommentsLoading(true);
+    getMyComments()
+      .then((data: MyComment[]) => {
+        setMyComments(data);
+      })
+      .finally(() => setCommentsLoading(false));
+  }, []);
+
   const postsCount = myPosts.length;
-  const commentsCount = 0;
+  const commentsCount = myComments.length;
   const scrapCount = myScraps.length;
 
   const profileInitial =
@@ -239,6 +279,7 @@ export default function MyPage() {
     };
   };
 
+  // 내가 쓴 글/스크랩 카드
   const renderPostCard = (post: PostItem) => {
     const rawContent =
       (post.content as string | undefined) ??
@@ -257,7 +298,27 @@ export default function MyPage() {
         author={getPostAuthor(post)}
         date={formatDate(post.createdAt)}
         tags={post.tags ?? []}
-        reactions={post.reactions} /* 여기만 추가됨 */
+        reactions={post.reactions} // 여기서 post.reactions 그대로 전달
+      />
+    );
+  };
+
+  // 내가 쓴 댓글 카드 (댓글 reaction 사용, postId로 해당 글로 이동)
+  const renderCommentCard = (comment: MyComment) => {
+    return (
+      <TopicCard
+        key={comment.id}
+        id={comment.postId} // TopicCard 클릭 시 /post/{postId}로 이동
+        title="내가 댓글을 단 글"
+        content={comment.content}
+        author={comment.author.displayName}
+        date={formatDate(comment.createdAt)}
+        tags={[]} // 댓글 API에 태그 정보가 없으므로 일단 빈 배열
+        reactions={{
+          likeCount: comment.reactions?.likeCount ?? 0,
+          dislikeCount: comment.reactions?.dislikeCount ?? 0,
+          // 댓글에는 commentCount가 없으니 undefined로 두거나 0으로 처리 가능
+        }}
       />
     );
   };
@@ -318,11 +379,9 @@ export default function MyPage() {
                           {/* 소개 문구 박스 */}
                           <div className="inline-flex items-center bg-white rounded-[14px] h-[1.7rem] px-4 shadow-sm w-fit">
                             <div className="grid items-center">
-                              {/* 너비 잡아주는 투명 span */}
                               <span className="invisible col-start-1 row-start-1 text-sm whitespace-pre">
                                 {editBio || '소개 문구가 없습니다.'}
                               </span>
-                              {/* 실제 input */}
                               <input
                                 value={editBio}
                                 onChange={(e) => setEditBio(e.target.value)}
@@ -373,7 +432,7 @@ export default function MyPage() {
             </CardContent>
           </Card>
 
-          {/* 가운데 카드 (탭 + 글 목록) */}
+          {/* 가운데 카드 (탭 + 목록) */}
           <Card className="w-full rounded-[24px] shadow-sm border border-[#e1e4ec] bg-white">
             <CardContent className="pt-6 px-6 pb-8">
               <Tabs
@@ -381,7 +440,6 @@ export default function MyPage() {
                 onValueChange={(val) => setActiveTab(val as Tab)}
                 className="w-full"
               >
-                {/* 탭 버튼: 왼쪽 정렬 */}
                 <TabsList className="bg-transparent p-0 mb-6 gap-3 justify-start">
                   <TabsTrigger
                     value="posts"
@@ -405,6 +463,7 @@ export default function MyPage() {
                   </TabsTrigger>
                 </TabsList>
 
+                {/* 내가 쓴 글 */}
                 <TabsContent value="posts" className="mt-2">
                   {postsLoading ? (
                     <div className="text-center py-16 text-slate-400">
@@ -421,12 +480,24 @@ export default function MyPage() {
                   )}
                 </TabsContent>
 
+                {/* 내가 쓴 댓글 */}
                 <TabsContent value="comments" className="mt-2">
-                  <div className="text-center py-16 text-slate-400">
-                    댓글 목록 기능은 아직 준비 중입니다.
-                  </div>
+                  {commentsLoading ? (
+                    <div className="text-center py-16 text-slate-400">
+                      로딩 중…
+                    </div>
+                  ) : myComments.length === 0 ? (
+                    <div className="text-center py-16 text-slate-400">
+                      작성한 댓글이 없습니다.
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      {myComments.map((comment) => renderCommentCard(comment))}
+                    </div>
+                  )}
                 </TabsContent>
 
+                {/* 스크랩 */}
                 <TabsContent value="saved" className="mt-2">
                   {scrapsLoading ? (
                     <div className="text-center py-16 text-slate-400">
