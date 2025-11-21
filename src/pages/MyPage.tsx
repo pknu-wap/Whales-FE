@@ -257,6 +257,7 @@ export default function MyPage() {
         author={getPostAuthor(post)}
         date={formatDate(post.createdAt)}
         tags={post.tags ?? []}
+        reactions={post.reactions} /* 여기만 추가됨 */
       />
     );
   };
