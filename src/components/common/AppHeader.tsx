@@ -5,8 +5,13 @@ import { Search, LogIn, PenSquare } from "lucide-react";
 import useAuthStore from "../../stores/authStore";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
+import WhalesLogo from "@/assets/Whales.svg"
+import AlarmButton from "@/assets/AlarmButton.svg"
+import ChatButton from "@/assets/ChatButton.svg"
+
+
 function AppHeader() {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const navigate = useNavigate();
 
   const { user, clearAuth, initializeAuth } = useAuthStore();
@@ -14,50 +19,57 @@ function AppHeader() {
 
   // ✅ 로그인 상태 복원
   useEffect(() => {
-    if (typeof initializeAuth === "function") {
+    if (typeof initializeAuth === 'function') {
       initializeAuth();
     }
   }, [initializeAuth]);
 
   const handleSearch = (e?: React.FormEvent) => {
-  if (e) e.preventDefault();
-  const q = query.trim();
-  if (!q) return;
+    if (e) e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
 
-  // 🔍 1) #으로 시작하면 태그 검색으로 처리
-  if (q.startsWith('#')) {
-    const tag = q.replace(/^#+/, '').trim(); // #, ## 다 제거 + 공백 제거
-    if (!tag) return;
-    navigate(`/search?tag=${encodeURIComponent(tag)}`);
-    return;
-  }
+    // 🔍 1) #으로 시작하면 태그 검색으로 처리
+    if (q.startsWith('#')) {
+      const tag = q.replace(/^#+/, '').trim(); // #, ## 다 제거 + 공백 제거
+      if (!tag) return;
+      navigate(`/search?tag=${encodeURIComponent(tag)}`);
+      return;
+    }
 
-  // 🔍 2) 그 외에는 일반 텍스트 검색
-  navigate(`/search?query=${encodeURIComponent(q)}`);
-};
-
+    // 🔍 2) 그 외에는 일반 텍스트 검색
+    navigate(`/search?query=${encodeURIComponent(q)}`);
+  };
 
   const handleLogout = () => {
     clearAuth();
-    navigate("/login");
+    navigate('/login');
+  };
+
+  const handleWriteClick = () => {
+    if (!isLoggedIn) {
+      navigate('/login');
+    } else {
+      navigate('/create');
+    }
   };
 
   // ✅ 닉네임 색상 Tailwind 변환 유틸
   const getNicknameColorClass = (color?: string) => {
-    if (!color) return "text-gray-700";
+    if (!color) return 'text-gray-700';
     switch (color.toLowerCase()) {
-      case "blue":
-        return "text-blue-600";
-      case "green":
-        return "text-green-600";
-      case "red":
-        return "text-red-600";
-      case "purple":
-        return "text-purple-600";
-      case "gray":
-        return "text-gray-600";
+      case 'blue':
+        return 'text-blue-600';
+      case 'green':
+        return 'text-green-600';
+      case 'red':
+        return 'text-red-600';
+      case 'purple':
+        return 'text-purple-600';
+      case 'gray':
+        return 'text-gray-600';
       default:
-        return "text-gray-700";
+        return 'text-gray-700';
     }
   };
 
@@ -67,34 +79,38 @@ function AppHeader() {
         {/* 로고 */}
         <div
           className="flex items-center gap-2 cursor-pointer"
-          onClick={() => navigate("/")}
+          onClick={() => navigate('/')}
         >
-          <div className="w-15 h-10 rounded-lg bg-linear-to-br from-blue-500 to-sky-500 flex items-center justify-center text-white font-bold text-lg">
-            Whales
-          </div>
+          <img src={WhalesLogo} alt="Whales 로고" className="h-10 w-auto" />
         </div>
 
         {/* 검색창 */}
-        <form onSubmit={handleSearch} className="flex-1 max-w-2xl relative">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 cursor-pointer"
-            onClick={() => handleSearch()}
-          />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="게시글 검색..."
-            className="pl-10 h-11 bg-blue-50 border-blue-200 focus-visible:ring-blue-500"
-          />
-          <button type="submit" className="hidden" aria-hidden />
+        {/* 검색창 */}
+        <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
+          <div className="relative flex w-full items-center rounded-xl bg-[#E5F1FF] border border-[#A9C8FF] px-4 py-2 shadow-sm">
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="게시글 검색하기"
+              className="
+        flex-1 border-none bg-transparent shadow-none
+        focus-visible:ring-0 focus-visible:ring-offset-0
+        text-sm placeholder:text-[#7BA4F5]
+      "
+            />
+            <button type="submit" className="ml-2">
+              <Search className="w-4 h-4 text-[#7BA4F5] cursor-pointer" />
+            </button>
+          </div>
         </form>
 
         {/* 우측 버튼 */}
         <div className="flex items-center gap-3">
-          {/* ✅ 글쓰기 버튼: 항상 표시 */}
+          {/* ✏️ 글쓰기 버튼 - 파란 그라디언트 + 연한 느낌 */}
           <Button
             size="lg"
-            className="bg-linear-to-r from-blue-500 to-sky-500 hover:opacity-90 transition-opacity gap-2 text-white"
+            variant="outline"
+            className="gap-2 rounded-md bg-gradient-to-r from-[#E4EEFF] to-[#C7DBFF] border-[#9AB8FF] text-black hover:opacity-90 transition-opacity"
           >
             <PenSquare className="w-4 h-4" />
             <NavLink to="/create" key="create-link">
@@ -105,11 +121,10 @@ function AppHeader() {
           {/* 로그인 상태에 따른 UI */}
           {!isLoggedIn ? (
             <>
-              {/* 로그인 버튼 */}
+              {/* 🔑 로그인 버튼 - 진한 파란색 그라디언트 */}
               <Button
-                variant="outline"
                 size="lg"
-                className="gap-2 border-blue-400 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                className="gap-2 rounded-md bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-black hover:brightness-110 transition"
               >
                 <LogIn className="w-4 h-4" />
                 <NavLink to="/login" key="login-link">
@@ -122,16 +137,19 @@ function AppHeader() {
               {/* 프로필 + 닉네임 */}
               <div
                 className="flex items-center gap-3 px-3 py-2 rounded-md bg-blue-50 hover:bg-blue-100 cursor-pointer"
-                onClick={() => navigate("/mypage")}
+                onClick={() => navigate('/mypage')}
               >
                 <Avatar className="w-8 h-8 border border-blue-300">
                   {user?.avatarUrl ? (
-                    <AvatarImage src={user.avatarUrl} alt={user?.displayName ?? ""} />
+                    <AvatarImage
+                      src={user.avatarUrl}
+                      alt={user?.displayName ?? ''}
+                    />
                   ) : (
                     <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
                       {user?.displayName
                         ? user.displayName[0].toUpperCase()
-                        : "유"}
+                        : '유'}
                     </AvatarFallback>
                   )}
                 </Avatar>
@@ -144,7 +162,7 @@ function AppHeader() {
                 </span>
               </div>
 
-              {/* 로그아웃 버튼 */}
+              {/* 로그아웃 버튼 (기존 스타일 유지) */}
               <Button
                 variant="outline"
                 size="lg"
