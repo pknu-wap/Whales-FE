@@ -45,10 +45,22 @@ export default function Login() {
         <section className="flex flex-col items-center gap-4">
           <img src={WhalesLogo} alt="Whales 로고" className="h-16 w-auto" />
           <p className="text-lg text-white/90">신뢰할 수 있는 정보, 편리한 탐색</p>
-          <div className="mt-1 inline-flex items-center rounded-full px-4 py-1 bg-white/20 text-xs text-white tracking-wide">
+          <div
+            className="
+              mt-2
+              w-[300px]
+              h-8
+              rounded-[14px]
+              bg-white/25
+              border border-white/5
+              backdrop-blur-sm
+              flex items-center justify-center
+              text-white text-sm font-medium
+            "
+          >
             부경대 학생을 위한 웹 커뮤니티
           </div>
-        </section>
+                  </section>
 
         {/* 로그인 영역 */}
         <section className="flex flex-col items-start gap-6 w-full max-w-[560px]">
