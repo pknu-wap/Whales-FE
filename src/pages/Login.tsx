@@ -29,21 +29,20 @@ export default function Login() {
 
 
   return (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-6 left-6"
-          onClick={() => navigate(-1)}
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div className="w-[450px] max-w-[90vw] flex flex-col px-6 gap-8">
-          <div className="flex flex-col gap-3">
-            <h1 className="scroll-m-20 text-5xl font-bold tracking-tight">
-              로그인
-            </h1>
-            <p className="text-xl text-muted-foreground">
     <div className="fixed inset-0 w-full h-full bg-gradient-to-r from-[#0066FF] to-[#9BD8FF] flex items-center justify-center">
+      {/* 뒤로가기 */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute top-6 left-6 text-white hover:bg-white/10"
+        onClick={() => navigate(-1)}
+      >
+        <ArrowLeft className="w-5 h-5" />
+      </Button>
+
+      {/* 가운데 큰 레이아웃 */}
+      <div className="w-full max-w-5xl flex flex-col items-center gap-24 px-6">
+        {/* 상단 Whales 로고 영역 */}
         <section className="flex flex-col items-center gap-4">
           <img src={WhalesLogo} alt="Whales 로고" className="h-16 w-auto" />
           <p className="text-lg text-white/90">신뢰할 수 있는 정보, 편리한 탐색</p>
