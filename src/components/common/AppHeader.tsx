@@ -1,58 +1,76 @@
-import { useState, useEffect } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import { Button, Input } from "../ui";
-import { Search, LogIn, PenSquare } from "lucide-react";
-import useAuthStore from "../../stores/authStore";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { useState, useEffect } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { Button, Input } from '../ui';
+import { Search, LogIn, PenSquare, Clock } from 'lucide-react';
+import useAuthStore from '../../stores/authStore';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
-import WhalesLogo from "@/assets/Whales.svg"
-import AlarmButton from "@/assets/AlarmButton.svg"
-import ChatButton from "@/assets/ChatButton.svg"
+import WhalesLogo from '@/assets/Whales.svg';
+import AlarmButton from '@/assets/AlarmButton.svg';
+import ChatButton from '@/assets/ChatButton.svg';
 
+import { getSearchHistory } from '@/services/api';
+import type { SearchHistoryItem } from '@/services/api';
 
 function AppHeader() {
   const [query, setQuery] = useState('');
-  const navigate = useNavigate();
+  const [history, setHistory] = useState<SearchHistoryItem[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
 
+  const navigate = useNavigate();
   const { user, clearAuth, initializeAuth } = useAuthStore();
   const isLoggedIn = !!user;
 
-  // ✅ 로그인 상태 복원
   useEffect(() => {
     if (typeof initializeAuth === 'function') {
       initializeAuth();
     }
   }, [initializeAuth]);
 
+  // 🔍 검색 실행: keyword 하나로만 넘김
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const q = query.trim();
-    if (!q) return;
+    const keyword = query.trim();
+    if (!keyword) return;
 
-    // 🔍 1) #으로 시작하면 태그 검색으로 처리
-    if (q.startsWith('#')) {
-      const tag = q.replace(/^#+/, '').trim(); // #, ## 다 제거 + 공백 제거
-      if (!tag) return;
-      navigate(`/search?tag=${encodeURIComponent(tag)}`);
-      return;
-    }
-
-    // 🔍 2) 그 외에는 일반 텍스트 검색
-    navigate(`/search?query=${encodeURIComponent(q)}`);
+    navigate(`/search?keyword=${encodeURIComponent(keyword)}`);
+    setShowHistory(false);
   };
 
-  const handleLogout = () => {
-    clearAuth();
-    navigate('/login');
-  };
+  // ✅ 검색창 포커스 시 검색 기록 불러오기
+  const handleFocusSearch = async () => {
+    setShowHistory(true);
 
-  const handleWriteClick = () => {
-    if (!isLoggedIn) {
-      navigate('/login');
-    } else {
-      navigate('/create');
+    if (!isLoggedIn) return;
+
+    try {
+      const items = await getSearchHistory(); // GET /search/history
+      setHistory(items);
+    } catch (err) {
+      console.error('검색 기록 불러오기 실패', err);
     }
   };
+
+  // ✅ blur 시 바로 닫으면 아이템 클릭이 안 되므로 약간 딜레이 후 닫기
+  const handleBlurSearch = () => {
+    setTimeout(() => setShowHistory(false), 120);
+  };
+
+  // ✅ 검색 기록 클릭: 인풋 채우고 바로 검색 이동
+  const handleClickHistoryItem = (keyword: string) => {
+    setQuery(keyword);
+    setShowHistory(false);
+    navigate(`/search?keyword=${encodeURIComponent(keyword)}`);
+  };
+
+  // ✅ 현재 입력된 query로 기록 필터링 (앞부분 포함 검색)
+  const filteredHistory = history
+    .filter((item) =>
+      query.trim()
+        ? item.keyword.toLowerCase().includes(query.toLowerCase())
+        : true
+    )
+    .slice(0, 5);
 
   // ✅ 닉네임 색상 Tailwind 변환 유틸
   const getNicknameColorClass = (color?: string) => {
@@ -73,6 +91,19 @@ function AppHeader() {
     }
   };
 
+  const handleLogout = () => {
+    clearAuth();
+    navigate('/login');
+  };
+
+  const handleWriteClick = () => {
+    if (!isLoggedIn) {
+      navigate('/login');
+    } else {
+      navigate('/create');
+    }
+  };
+
   return (
     <header className="w-full border-b border-gray-200 bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-[1400px] mx-auto px-6 py-4 flex items-center gap-6">
@@ -84,24 +115,61 @@ function AppHeader() {
           <img src={WhalesLogo} alt="Whales 로고" className="h-10 w-auto" />
         </div>
 
-        {/* 검색창 */}
-        {/* 검색창 */}
-        <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
+        {/* 🔍 검색창 + 검색 기록 드롭다운 */}
+        <form onSubmit={handleSearch} className="flex-1 max-w-2xl relative">
           <div className="relative flex w-full items-center rounded-xl bg-[#E5F1FF] border border-[#A9C8FF] px-4 py-1 shadow-sm">
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="게시글 검색하기"
+              onFocus={handleFocusSearch}
+              onBlur={handleBlurSearch}
               className="
-        flex-1 border-none bg-transparent shadow-none
-        focus-visible:ring-0 focus-visible:ring-offset-0
-        text-sm placeholder:text-[#7BA4F5]
-      "
+                flex-1 border-none bg-transparent shadow-none
+                focus-visible:ring-0 focus-visible:ring-offset-0
+                text-sm placeholder:text-[#7BA4F5]
+              "
             />
             <button type="submit" className="ml-2">
               <Search className="w-4 h-4 text-[#7BA4F5] cursor-pointer" />
             </button>
           </div>
+
+          {/* 🔽 검색 기록 드롭다운 */}
+          {showHistory && (
+            <div
+              className="
+                absolute left-0 right-0 mt-1
+                rounded-xl bg-[#E5F1FF] border border-[#A9C8FF]
+                shadow-sm overflow-hidden
+              "
+            >
+              {/* 상단 라벨 영역 */}
+              <div className="px-4 py-2 text-xs text-[#7BA4F5] border-b border-[#A9C8FF]/60">
+                최근 검색 기록
+              </div>
+
+              <ul className="max-h-64 overflow-y-auto">
+                {filteredHistory.length === 0 ? (
+                  <li className="px-4 py-2 text-xs text-[#7BA4F5]/70">
+                    최근 검색 기록이 없습니다.
+                  </li>
+                ) : (
+                  filteredHistory.map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-[#4B6FBF] hover:bg-[#D7E6FF] cursor-pointer"
+                      onMouseDown={(e) => e.preventDefault()} // blur 방지
+                      onClick={() => handleClickHistoryItem(item.keyword)}
+                    >
+                      <Clock className="w-4 h-4 opacity-70" />
+                      <span className="truncate">{item.keyword}</span>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+          )}
         </form>
 
         {/* 우측 버튼 */}
@@ -110,12 +178,11 @@ function AppHeader() {
           <Button
             size="lg"
             variant="outline"
+            onClick={handleWriteClick}
             className="gap-2 rounded-md bg-gradient-to-r from-[#E4EEFF] to-[#C7DBFF] border-[#9AB8FF] text-black hover:opacity-90 transition-opacity"
           >
             <PenSquare className="w-4 h-4" />
-            <NavLink to="/create" key="create-link">
-              글쓰기
-            </NavLink>
+            <span>글쓰기</span>
           </Button>
 
           {/* 로그인 상태에 따른 UI */}
@@ -162,7 +229,7 @@ function AppHeader() {
                 </span>
               </div>
 
-              {/* 로그아웃 버튼 (기존 스타일 유지) */}
+              {/* 로그아웃 버튼 */}
               <Button
                 variant="outline"
                 size="lg"
