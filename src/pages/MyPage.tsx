@@ -1,4 +1,3 @@
-// src/pages/MyPage.tsx
 import { useState, useEffect } from 'react';
 import { AppSidebar } from '@/components/common';
 import { Button } from '@/components/ui/button';
@@ -19,6 +18,7 @@ import EditProfileIcon from '@/assets/프로필 수정.svg';
 
 type Tab = 'posts' | 'comments' | 'saved';
 
+// 등급 테두리 색상
 type TrustLevel =
   | 'basic'
   | 'active'
@@ -42,7 +42,6 @@ type AuthorLike = {
   displayName?: string;
   nickname?: string;
 };
-
 interface PostItem {
   id: number;
   title: string;
@@ -141,34 +140,42 @@ const getTrustRingClass = (trustLevel?: TrustLevel): string => {
     case 'danger':
       return 'border-[#ef4444] bg-white';
     default:
+      // 기본값은 파란색(검증된 느낌)으로 두었음
       return 'border-[#2563eb] bg-white';
   }
 };
 
 export default function MyPage() {
+  // 상단 탭 상태 (내가 쓴 글 / 댓글 / 스크랩)
   const [activeTab, setActiveTab] = useState<Tab>('posts');
 
+  // 프로필 상태
   const [profile, setProfile] = useState<Profile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
+  // 내가 쓴 글 목록
   const [myPosts, setMyPosts] = useState<PostItem[]>([]);
   const [postsLoading, setPostsLoading] = useState(true);
 
+  // 내가 스크랩한 글 목록
   const [myScraps, setMyScraps] = useState<PostItem[]>([]);
   const [scrapsLoading, setScrapsLoading] = useState(true);
 
-  // 내가 쓴 댓글 상태
+  // 내가 남긴 댓글 목록 상태
   const [myComments, setMyComments] = useState<MyComment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(true);
 
+  // 프로필 인라인 편집 모드 상태
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
 
+  // 프로필 정보 불러오기
   useEffect(() => {
     setProfileLoading(true);
     getMyProfile()
       .then((data: Profile) => {
+        // 서버에서 오는 값들을 화면용 문자열로 정규화
         const normalized: Profile = {
           ...data,
           nicknameColor: normalizeValue(data.nicknameColor),
@@ -182,22 +189,26 @@ export default function MyPage() {
       .finally(() => setProfileLoading(false));
   }, []);
 
+  // 화면에 보여줄 이름 (displayName 우선, 없으면 nickname)
   const profileName =
     (profile?.displayName && profile.displayName !== '-') ||
     (profile?.nickname && profile.nickname !== '-')
       ? profile?.displayName || profile?.nickname || '닉네임'
       : '닉네임';
 
+  // 화면에 보여줄 소개 문구 (없으면 기본 문구)
   const profileBio =
     profile && profile.bio && profile.bio !== '-'
       ? profile.bio
       : '소개 문구가 없습니다.';
 
+  // 프로필 데이터가 바뀔 때 인라인 편집 인풋 초기값 동기화
   useEffect(() => {
     setEditName(profileName);
     setEditBio(profileBio);
   }, [profileName, profileBio]);
 
+  // 내가 쓴 글 목록 불러오기
   useEffect(() => {
     setPostsLoading(true);
     getPosts()
@@ -211,6 +222,7 @@ export default function MyPage() {
       .finally(() => setPostsLoading(false));
   }, []);
 
+  // 스크랩한 글 목록 불러오기
   useEffect(() => {
     setScrapsLoading(true);
     getMyScraps()
@@ -224,7 +236,7 @@ export default function MyPage() {
       .finally(() => setScrapsLoading(false));
   }, []);
 
-  // 내가 쓴 댓글 불러오기
+  // 내가 쓴 댓글 조회 (추후 페이징/무한스크롤 생기면 이쪽에서 로직 확장)
   useEffect(() => {
     setCommentsLoading(true);
     getMyComments()
@@ -234,18 +246,22 @@ export default function MyPage() {
       .finally(() => setCommentsLoading(false));
   }, []);
 
+  // 각 탭별 카운트
   const postsCount = myPosts.length;
   const commentsCount = myComments.length;
   const scrapCount = myScraps.length;
 
+  // 프로필 이니셜 (이름 없을 때 대비해서 '유' 기본값)
   const profileInitial =
     profileName && profileName.length > 0 ? profileName[0] : '유';
 
+  // 등급에 따른 아바타 테두리 클래스
   const gradeRingClass = getTrustRingClass(profile?.trustLevel);
 
+  // 프로필 수정 버튼 토글 + 저장 로직
   const handleToggleEditProfile = () => {
     if (isEditingProfile) {
-      // TODO: PATCH API 연동
+      // TODO: API 붙이면 여기서 PATCH 호출해서 프로필 업데이트
       setProfile((prev) =>
         prev
           ? {
@@ -259,6 +275,7 @@ export default function MyPage() {
     setIsEditingProfile((prev) => !prev);
   };
 
+  // TopicCard에 내려줄 author 정보 정규화
   const getPostAuthor = (
     post: PostItem,
   ): string | { id: string; displayName: string } => {
@@ -279,8 +296,9 @@ export default function MyPage() {
     };
   };
 
-  // 내가 쓴 글/스크랩 카드
+  // 공통 글 카드 렌더러 (내 글 + 스크랩에서 재사용)
   const renderPostCard = (post: PostItem) => {
+    // content가 없거나 객체로 들어올 가능성 있어서 방어코드
     const rawContent =
       (post.content as string | undefined) ??
       (normalizeValue(post['content']) === '-'
@@ -298,12 +316,12 @@ export default function MyPage() {
         author={getPostAuthor(post)}
         date={formatDate(post.createdAt)}
         tags={post.tags ?? []}
-        reactions={post.reactions} // 여기서 post.reactions 그대로 전달
+        reactions={post.reactions} // 게시글에 달린 반응 정보 그대로 전달
       />
     );
   };
 
-  // 내가 쓴 댓글 카드 (댓글 reaction 사용, postId로 해당 글로 이동)
+  // 내가 쓴 댓글 카드 (postId 기준으로 원본 글 상세로 이동)
   const renderCommentCard = (comment: MyComment) => {
     return (
       <TopicCard
@@ -313,11 +331,11 @@ export default function MyPage() {
         content={comment.content}
         author={comment.author.displayName}
         date={formatDate(comment.createdAt)}
-        tags={[]} // 댓글 API에 태그 정보가 없으므로 일단 빈 배열
+        tags={[]} // 댓글 API에 태그 정보 없음 → 일단 빈 배열
         reactions={{
           likeCount: comment.reactions?.likeCount ?? 0,
           dislikeCount: comment.reactions?.dislikeCount ?? 0,
-          // 댓글에는 commentCount가 없으니 undefined로 두거나 0으로 처리 가능
+          // 댓글에는 commentCount 없음
         }}
       />
     );
@@ -329,7 +347,7 @@ export default function MyPage() {
         <AppSidebar />
 
         <section className="flex-1 flex flex-col gap-6">
-          {/* 상단 프로필 배너 */}
+          {/* 상단 프로필 영역 */}
           <Card className="w-full rounded-[24px] border border-[#d0ddff] shadow-sm bg-[#eef3ff]">
             <CardContent className="flex items-center justify-between py-7 px-9">
               {profileLoading ? (
@@ -337,7 +355,7 @@ export default function MyPage() {
               ) : profile ? (
                 <>
                   <div className="flex items-center gap-6">
-                    {/* 아바타 */}
+                    {/* 프로필 이니셜 + 등급 링 */}
                     <div
                       className={`w-20 h-20 rounded-full flex items-center justify-center text-3xl font-semibold text-slate-900 border-[9px] ${gradeRingClass}`}
                     >
@@ -354,7 +372,7 @@ export default function MyPage() {
                         </>
                       ) : (
                         <div className="flex flex-col gap-2">
-                          {/* 닉네임 박스 */}
+                          {/* 닉네임 인라인 편집 인풋 */}
                           <div className="inline-flex items-center bg-white rounded-[14px] h-[2.2rem] px-3 shadow-sm w-fit">
                             <div className="grid items-center mr-1">
                               <span className="invisible col-start-1 row-start-1 text-2xl font-bold px-1 whitespace-pre">
@@ -376,7 +394,7 @@ export default function MyPage() {
                             />
                           </div>
 
-                          {/* 소개 문구 박스 */}
+                          {/* 소개 문구 인라인 편집 인풋 */}
                           <div className="inline-flex items-center bg-white rounded-[14px] h-[1.7rem] px-4 shadow-sm w-fit">
                             <div className="grid items-center">
                               <span className="invisible col-start-1 row-start-1 text-sm whitespace-pre">
@@ -410,7 +428,7 @@ export default function MyPage() {
                     </div>
                   </div>
 
-                  {/* 프로필 수정 버튼 */}
+                  {/* 프로필 수정 토글 버튼 */}
                   <Button
                     type="button"
                     onClick={handleToggleEditProfile}
@@ -432,7 +450,7 @@ export default function MyPage() {
             </CardContent>
           </Card>
 
-          {/* 가운데 카드 (탭 + 목록) */}
+          {/* 가운데 카드: 탭 + 목록 영역 */}
           <Card className="w-full rounded-[24px] shadow-sm border border-[#e1e4ec] bg-white">
             <CardContent className="pt-6 px-6 pb-8">
               <Tabs
@@ -463,7 +481,7 @@ export default function MyPage() {
                   </TabsTrigger>
                 </TabsList>
 
-                {/* 내가 쓴 글 */}
+                {/* 내가 쓴 글 탭 */}
                 <TabsContent value="posts" className="mt-2">
                   {postsLoading ? (
                     <div className="text-center py-16 text-slate-400">
@@ -480,7 +498,7 @@ export default function MyPage() {
                   )}
                 </TabsContent>
 
-                {/* 내가 쓴 댓글 */}
+                {/* 내가 쓴 댓글 탭 */}
                 <TabsContent value="comments" className="mt-2">
                   {commentsLoading ? (
                     <div className="text-center py-16 text-slate-400">
@@ -497,7 +515,7 @@ export default function MyPage() {
                   )}
                 </TabsContent>
 
-                {/* 스크랩 */}
+                {/* 스크랩 탭 */}
                 <TabsContent value="saved" className="mt-2">
                   {scrapsLoading ? (
                     <div className="text-center py-16 text-slate-400">
