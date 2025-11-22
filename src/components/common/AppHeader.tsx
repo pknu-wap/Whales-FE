@@ -87,7 +87,7 @@ function AppHeader() {
         {/* 검색창 */}
         {/* 검색창 */}
         <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
-          <div className="relative flex w-full items-center rounded-xl bg-[#E5F1FF] border border-[#A9C8FF] px-4 py-2 shadow-sm">
+          <div className="relative flex w-full items-center rounded-xl bg-[#E5F1FF] border border-[#A9C8FF] px-4 py-1 shadow-sm">
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
