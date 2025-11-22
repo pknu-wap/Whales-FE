@@ -28,7 +28,7 @@ export default function Login() {
   };
 
   return (
-    <div className="fixed inset-0 w-full h-full bg-gradient-to-r from-[#0066FF] to-[#9BD8FF] flex items-center justify-center">
+    <div className="fixed inset-0 w-full h-full bg-gradient-to-r from-[#0C59FF] to-[#C3E1FF] flex items-center justify-center">
       {/* 뒤로가기 */}
       <Button
         variant="ghost"
@@ -42,16 +42,16 @@ export default function Login() {
       {/* 가운데 큰 레이아웃 */}
       <div className="w-full max-w-5xl flex flex-col items-center gap-24 px-6">
         {/* 상단 Whales 로고 영역 */}
-        <section className="flex flex-col items-center gap-4">
+        <section className="flex flex-col items-center gap-6">
           <img src={WhalesLogo} alt="Whales 로고" className="h-16 w-auto" />
-          <p className="text-lg text-white/90">신뢰할 수 있는 정보, 편리한 탐색</p>
+          <p className="text-xl text-white font-semibold h-3">신뢰할 수 있는 정보, 편리한 탐색</p>
           <div
             className="
               mt-2
               w-[300px]
-              h-8
+              h-6
               rounded-[14px]
-              bg-white/25
+              bg-white/35
               border border-white/5
               backdrop-blur-sm
               flex items-center justify-center
@@ -65,8 +65,8 @@ export default function Login() {
         {/* 로그인 영역 */}
         <section className="flex flex-col items-start gap-6 w-full max-w-[560px]">
           <div className="flex flex-col gap-1 text-left">
-            <h2 className="text-3xl font-bold text-white">로그인</h2>
-            <p className="text-base text-white/80">
+            <h2 className="text-3xl font-bold text-white h-10">로그인</h2>
+            <p className="text-base text-white font-normal">
               구글 로그인으로 바로 시작하기
             </p>
           </div>
@@ -83,17 +83,17 @@ export default function Login() {
               text-base font-medium text-slate-900 hover:bg-white/90
             "
           >
-            <div className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center">
               <img src={GoogleLogo} alt="Google 로고" className="w-5 h-5" />
             </div>
-            <span className="flex-1 text-center pr-10">구글 로그인</span>
+            <span className="flex-1 text-center text-lg pr-10 font-semibold border-slate-500">구글 로그인</span>
           </Button>
 
           {/* 서비스 이용약관 동의 바 */}
           <div
             className="
               mt-2 w-full h-11 rounded-[18px]
-              bg-gradient-to-r from-[#5FA9FF] to-[#9CCBFF]
+              bg-gradient-to-r from-[#FFFFFF73] to-[#FFFFFF1A]
               border border-white/60
               flex items-center justify-between
               px-6 text-sm text-white
