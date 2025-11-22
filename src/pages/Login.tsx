@@ -9,12 +9,11 @@ import TermsCheckIcon from '@/assets/동의 체크.svg';
 export default function Login() {
   const navigate = useNavigate();
 
-  // 🔗 백엔드 연결: POST /auth/login/google
   const handleGoogleLogin = () => {
-
-    const clientId = "672627774587-ng4kk4ds9kql97v5h82judmhfnt6rmah.apps.googleusercontent.com";
-    const redirectUri = "http://localhost:5173/auth/callback";
-    const scope = "openid email profile";
+    const clientId =
+      '672627774587-ng4kk4ds9kql97v5h82judmhfnt6rmah.apps.googleusercontent.com';
+    const redirectUri = 'http://localhost:5173/auth/callback';
+    const scope = 'openid email profile';
 
     const googleAuthUrl =
       `https://accounts.google.com/o/oauth2/v2/auth` +
