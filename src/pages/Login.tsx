@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 
 import WhalesLogo from '@/assets/Whales 로고.svg';
 import GoogleLogo from '@/assets/구글 로고.svg';
+import TermsCheckIcon from '@/assets/동의 체크.svg';
+
 export default function Login() {
   const navigate = useNavigate();
 
@@ -83,9 +85,25 @@ export default function Login() {
             <span className="flex-1 text-center pr-10">구글 로그인</span>
           </Button>
 
+          {/* 서비스 이용약관 동의 바 */}
+          <div
+            className="
+              mt-2 w-full h-11 rounded-[18px]
+              bg-gradient-to-r from-[#5FA9FF] to-[#9CCBFF]
+              border border-white/60
+              flex items-center justify-between
+              px-6 text-sm text-white
+            "
+          >
+            <span>서비스 이용약관 동의 (필수)</span>
+            <img
+              src={TermsCheckIcon}
+              alt="동의 체크 아이콘"
+              className="w-5 h-5"
+            />
           </div>
-        </div>
-      </main>
+        </section>
+      </div>
     </div>
   );
 }
