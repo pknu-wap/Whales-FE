@@ -27,8 +27,6 @@ export default function Login() {
 
 
   return (
-    <div className="w-full min-h-screen bg-background">
-      <main className="w-full h-[calc(100vh-80px)] items-center justify-center flex p-6 gap-6 relative">
         <Button
           variant="ghost"
           size="icon"
@@ -43,6 +41,7 @@ export default function Login() {
               로그인
             </h1>
             <p className="text-xl text-muted-foreground">
+    <div className="fixed inset-0 w-full h-full bg-gradient-to-r from-[#0066FF] to-[#9BD8FF] flex items-center justify-center">
         <section className="flex flex-col items-center gap-4">
           <img src={WhalesLogo} alt="Whales 로고" className="h-16 w-auto" />
           <p className="text-lg text-white/90">신뢰할 수 있는 정보, 편리한 탐색</p>
