@@ -57,26 +57,16 @@ export default function Login() {
             </p>
           </div>
 
-          {/* 구글 로그인 버튼: 섹션 폭 전체 사용 */}
+          {/* 구글 로그인 버튼 */}
           <Button
             type="button"
             variant="ghost"
             size="lg"
             onClick={handleGoogleLogin}
             className="
-              w-full
-              h-14
-              rounded-full
-              bg-white
-              shadow-lg
-              flex items-center
-              justify-start
-              gap-3
-              px-6
-              text-base
-              font-medium
-              text-slate-900
-              hover:bg-white/90
+              w-full h-14 rounded-full bg-white shadow-lg
+              flex items-center justify-start gap-3 px-6
+              text-base font-medium text-slate-900 hover:bg-white/90
             "
           >
             <div className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center">
