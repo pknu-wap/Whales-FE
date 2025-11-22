@@ -27,7 +27,6 @@ export default function Login() {
     window.location.href = googleAuthUrl;
   };
 
-
   return (
     <div className="fixed inset-0 w-full h-full bg-gradient-to-r from-[#0066FF] to-[#9BD8FF] flex items-center justify-center">
       {/* 뒤로가기 */}
@@ -51,6 +50,11 @@ export default function Login() {
           </div>
         </section>
 
+        {/* 로그인 영역 */}
+        <section className="flex flex-col items-start gap-6 w-full max-w-[560px]">
+          <div className="flex flex-col gap-1 text-left">
+            <h2 className="text-3xl font-bold text-white">로그인</h2>
+            <p className="text-base text-white/80">
               구글 로그인으로 바로 시작하기
             </p>
           </div>
