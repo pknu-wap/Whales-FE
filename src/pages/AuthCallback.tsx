@@ -10,6 +10,7 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       console.log('AuthCallback component mounted');
+
       const code = new URL(window.location.href).searchParams.get('code');
 
       if (!code) {
@@ -20,7 +21,6 @@ export default function AuthCallback() {
 
       try {
         const redirectUri = 'http://localhost:5173/auth/callback';
-
         // ✅ 공통 api 인스턴스 사용
         //    (baseURL 이 http://3.27.115.110:8080/api 라고 가정)
         const response = await api.post('/auth/login/google', {
@@ -39,6 +39,7 @@ export default function AuthCallback() {
 
         // ✅ 홈으로 이동
         navigate('/');
+        // 필요하면 새로고침
         // window.location.reload();
       } catch (err) {
         console.error('로그인 중 오류 발생:', err);

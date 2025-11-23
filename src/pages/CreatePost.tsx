@@ -85,6 +85,7 @@ export default function CreatePost() {
                         <button
                           onClick={() => handleRemoveTag(tag)}
                           className="ml-1 hover:bg-background/50 rounded-full p-0.5"
+                          aria-label={`${tag} 태그 삭제`}
                         >
                           <X className="w-3 h-3" />
                         </button>

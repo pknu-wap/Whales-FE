@@ -27,11 +27,13 @@ interface TopicCardProps {
   date: string;
   tags: Tag[] | string[];
   isHot?: boolean;
+
+  reactions?: ReactionSummary;
 }
 
 type ReactionSummary = {
-  likeCount: number;
-  dislikeCount: number;
+  likeCount?: number;
+  dislikeCount?: number;
   myReaction?: 'LIKE' | 'DISLIKE' | null;
 };
 
@@ -42,6 +44,7 @@ export function TopicCard({
   author,
   date,
   tags,
+  reactions: initialReactions,
 }: TopicCardProps) {
   const navigate = useNavigate();
 
@@ -51,7 +54,9 @@ export function TopicCard({
     typeof tag === 'string' ? tag : tag.name,
   );
 
-  const [reactions, setReactions] = useState<ReactionSummary | null>(null);
+  const [reactions, setReactions] = useState<ReactionSummary | null>(
+    initialReactions ?? null,
+  );
   const [commentCount, setCommentCount] = useState(0);
 
   useEffect(() => {
@@ -107,24 +112,21 @@ export function TopicCard({
       </CardHeader>
 
       <CardContent>
-        {/* 🔼 태그를 위로 올림 */}
+        {/* 태그 (위쪽) */}
         <div className="flex flex-wrap gap-2 mb-3">
           {displayTags.map((tagName, index) => (
-            <Badge
-              key={index}
-              variant="outline"   // ✔️ outline 사용
-            > {tagName}
+            <Badge key={index} variant="outline">
+              {tagName}
             </Badge>
-
           ))}
         </div>
 
-        {/* 내용은 태그 아래로 */}
+        {/* 내용 (태그 아래) */}
         <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
           {content}
         </p>
 
-        {/* ✅ 우하단 리액션 */}
+        {/* 우하단 리액션 */}
         <div
           className="mt-2 flex justify-end gap-3 text-xs"
           onClick={(e) => e.stopPropagation()}
@@ -132,17 +134,13 @@ export function TopicCard({
           {/* 좋아요 */}
           <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600">
             <ThumbsUp className="w-4 h-4 text-gray-700" />
-            <span className="font-medium">
-              {reactions?.likeCount ?? 0}
-            </span>
+            <span className="font-medium">{reactions?.likeCount ?? 0}</span>
           </div>
 
           {/* 싫어요 */}
           <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600">
             <ThumbsUp className="w-4 h-4 rotate-180 text-gray-700" />
-            <span className="font-medium">
-              {reactions?.dislikeCount ?? 0}
-            </span>
+            <span className="font-medium">{reactions?.dislikeCount ?? 0}</span>
           </div>
 
           {/* 댓글 */}
@@ -155,5 +153,3 @@ export function TopicCard({
     </Card>
   );
 }
-
-

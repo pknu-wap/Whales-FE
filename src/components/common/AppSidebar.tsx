@@ -9,7 +9,7 @@ import {
   Menu,
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
-import useTagStore from '@/stores/tagStore';
+import { useTagStore } from '@/stores/tagStore';
 
 function TailwindSeparator(): React.ReactElement {
   return <hr className="my-3 border-gray-300" />;

@@ -14,10 +14,7 @@ const badgeVariants = cva(
           'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80',
         destructive:
           'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80',
-
-        // ✅ outline 스타일을 연한 파란색으로 변경
-        outline:
-          'border-blue-300 text-blue-600 bg-blue-50 hover:bg-blue-100',
+        outline: "bg-[#c9d8ff] text-black border-none font-normal hover:bg-[#bcd0ff]",
       },
     },
     defaultVariants: {
