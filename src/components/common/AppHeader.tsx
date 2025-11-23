@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Button, Input } from "../ui";
 import { Search, LogIn, PenSquare } from "lucide-react";
 import useAuthStore from "../../stores/authStore";
@@ -8,9 +8,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 function AppHeader() {
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { user, clearAuth, initializeAuth } = useAuthStore();
   const isLoggedIn = !!user;
+
+  const hiddenPaths = ["/login", "/auth/callback"];
 
   // ✅ 로그인 상태 복원
   useEffect(() => {
@@ -60,6 +63,10 @@ function AppHeader() {
         return "text-gray-700";
     }
   };
+
+  if (hiddenPaths.includes(location.pathname)) {
+    return null;
+  }
 
   return (
     <header className="w-full border-b border-gray-200 bg-white shadow-sm sticky top-0 z-50">
