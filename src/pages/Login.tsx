@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import WhalesLogo from '@/assets/Whales 로고.svg';
@@ -29,22 +28,23 @@ export default function Login() {
 
   return (
     <div className="fixed inset-0 w-full h-full bg-gradient-to-r from-[#0C59FF] to-[#C3E1FF] flex items-center justify-center">
-      {/* 뒤로가기 */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute top-6 left-6 text-white hover:bg-white/10"
-        onClick={() => navigate(-1)}
-      >
-        <ArrowLeft className="w-5 h-5" />
-      </Button>
-
       {/* 가운데 큰 레이아웃 */}
       <div className="w-full max-w-5xl flex flex-col items-center gap-24 px-6">
         {/* 상단 Whales 로고 영역 */}
         <section className="flex flex-col items-center gap-6">
-          <img src={WhalesLogo} alt="Whales 로고" className="h-16 w-auto" />
-          <p className="text-xl text-white font-semibold h-3">신뢰할 수 있는 정보, 편리한 탐색</p>
+        <img
+          src={WhalesLogo}
+          alt="Whales 로고"
+          className="
+            h-16 w-auto cursor-pointer
+            transition-all duration-200
+            hover:opacity-90 hover:scale-105
+          "
+          onClick={() => navigate(-1)}
+        />
+          <p className="text-xl text-white font-semibold h-3">
+            신뢰할 수 있는 정보, 편리한 탐색
+          </p>
           <div
             className="
               mt-2
@@ -60,7 +60,7 @@ export default function Login() {
           >
             부경대 학생을 위한 웹 커뮤니티
           </div>
-                  </section>
+        </section>
 
         {/* 로그인 영역 */}
         <section className="flex flex-col items-start gap-6 w-full max-w-[560px]">
@@ -86,7 +86,9 @@ export default function Login() {
             <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center">
               <img src={GoogleLogo} alt="Google 로고" className="w-5 h-5" />
             </div>
-            <span className="flex-1 text-center text-lg pr-10 font-semibold border-slate-500">구글 로그인</span>
+            <span className="flex-1 text-center text-lg pr-10 font-semibold">
+              구글 로그인
+            </span>
           </Button>
 
           {/* 서비스 이용약관 동의 바 */}
