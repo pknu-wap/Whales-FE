@@ -152,7 +152,7 @@ export default function CreatePost() {
                 <button
                   type="button"
                   onClick={() => navigate(-1)}
-                  className="p-2 rounded-full hover:bg-muted transition cursor-pointer"
+                  className="p-2 rounded-full transition cursor-pointer"
                 >
                   <img src={cancelIcon} alt="취소" className="w-20 h-20" />
                 </button>
@@ -160,7 +160,7 @@ export default function CreatePost() {
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  className="p-2 rounded-full hover:bg-primary/10 transition cursor-pointer"
+                  className="p-2 rounded-full  transition cursor-pointer"
                 >
                   <img src={submitIcon} alt="게시글 작성" className="w-36 h-36" />
                 </button>
