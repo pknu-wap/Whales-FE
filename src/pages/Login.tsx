@@ -50,7 +50,7 @@ export default function Login() {
             transition-all duration-200
             hover:opacity-90 hover:scale-105
           "
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/')}
         />
           <p className="text-xl text-white font-semibold h-3">
             신뢰할 수 있는 정보, 편리한 탐색
