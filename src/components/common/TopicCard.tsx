@@ -1,11 +1,13 @@
 // src/components/common/TopicCard.tsx
 
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ThumbsUp, MessageCircle } from 'lucide-react';
+import { getPost, getPostComments } from '@/services/api';
 
 interface Tag {
   id: string;
@@ -25,12 +27,15 @@ interface TopicCardProps {
   date: string;
   tags: Tag[] | string[];
   isHot?: boolean;
-  reactions?: {
-    likeCount?: number;
-    dislikeCount?: number;
-    commentCount?: number;
-  };
+
+  reactions?: ReactionSummary;
 }
+
+type ReactionSummary = {
+  likeCount?: number;
+  dislikeCount?: number;
+  myReaction?: 'LIKE' | 'DISLIKE' | null;
+};
 
 export function TopicCard({
   id,
@@ -39,7 +44,7 @@ export function TopicCard({
   author,
   date,
   tags,
-  reactions,
+  reactions: initialReactions,
 }: TopicCardProps) {
   const navigate = useNavigate();
 
@@ -49,9 +54,40 @@ export function TopicCard({
     typeof tag === 'string' ? tag : tag.name,
   );
 
-  const likeCount = reactions?.likeCount ?? 0;
-  const dislikeCount = reactions?.dislikeCount ?? 0;
-  const commentCount = reactions?.commentCount ?? 0;
+  const [reactions, setReactions] = useState<ReactionSummary | null>(
+    initialReactions ?? null,
+  );
+  const [commentCount, setCommentCount] = useState(0);
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const p = await getPost(id);
+
+        const r: ReactionSummary | undefined = p?.reactions;
+        const likeCount = r?.likeCount ?? p?.likes ?? 0;
+        const dislikeCount = r?.dislikeCount ?? 0;
+
+        setReactions({
+          likeCount,
+          dislikeCount,
+          myReaction: r?.myReaction ?? null,
+        });
+
+        const comments = await getPostComments(id);
+        const count = Array.isArray(comments) ? comments.length : 0;
+        setCommentCount(count);
+      } catch (e) {
+        console.error('TopicCard 리액션/댓글 수 불러오기 실패:', e);
+        setReactions((prev) =>
+          prev ?? { likeCount: 0, dislikeCount: 0, myReaction: null },
+        );
+        setCommentCount(0);
+      }
+    };
+
+    fetchCounts();
+  }, [id]);
 
   return (
     <Card
@@ -98,13 +134,13 @@ export function TopicCard({
           {/* 좋아요 */}
           <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600">
             <ThumbsUp className="w-4 h-4 text-gray-700" />
-            <span className="font-medium">{likeCount}</span>
+            <span className="font-medium">{reactions?.likeCount ?? 0}</span>
           </div>
 
           {/* 싫어요 */}
           <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600">
             <ThumbsUp className="w-4 h-4 rotate-180 text-gray-700" />
-            <span className="font-medium">{dislikeCount}</span>
+            <span className="font-medium">{reactions?.dislikeCount ?? 0}</span>
           </div>
 
           {/* 댓글 */}

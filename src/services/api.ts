@@ -31,12 +31,36 @@ api.interceptors.request.use(
 // 🔗 백엔드 연결: 응답 인터셉터 (에러 처리)
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // 🔒 보안: 인증 실패 시 store 초기화 후 로그인 페이지로 이동
-      useAuthStore.getState().clearAuth();
-      window.location.href = '/login';
+  async (error) => {
+    if (!error.response || !error.config) return Promise.reject(error);
+
+    const original = error.config;
+
+    // 401 처리 + 무한 루프 방지
+    if (error.response.status === 401 && !original._retry) {
+      original._retry = true;
+      try {
+        const refreshResponse = await axios.post(
+          `${API_BASE_URL}/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
+
+        const { accessToken, user } = refreshResponse.data;
+
+        // store 갱신
+        useAuthStore.getState().setAuth(accessToken, user);
+
+        // 기존 요청 재전송
+        original.headers.Authorization = `Bearer ${accessToken}`;
+        return api(original);
+      } catch (refreshError) {
+        useAuthStore.getState().clearAuth();
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
     }
+
     return Promise.reject(error);
   }
 );
@@ -135,7 +159,6 @@ export const searchPosts = async (query: string) => {
   }));
 };
 
-
 // ========================================
 // 🔗 Tags(Post) API
 // ========================================
@@ -227,7 +250,31 @@ export const deleteComment = async (id: string, hard: boolean = false) => {
 };
 
 // GET /comments/me - 내가 쓴 댓글 조회
-export const getMyComments = async () => {
+export interface CommentReactions {
+  likeCount: number;
+  dislikeCount: number;
+  myReaction: 'LIKE' | 'DISLIKE' | null;
+}
+
+export interface CommentAuthor {
+  id: string;
+  displayName: string;
+  email: string;
+  nicknameColor: string;
+}
+
+export interface MyComment {
+  id: string;
+  postId: string;
+  content: string;
+  status: 'ACTIVE' | 'DELETED';
+  createdAt: string;
+  updatedAt: string;
+  reactions: CommentReactions;
+  author: CommentAuthor;
+}
+
+export const getMyComments = async (): Promise<MyComment[]> => {
   const response = await api.get('/comments/me');
   return response.data;
 };

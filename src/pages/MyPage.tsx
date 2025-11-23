@@ -140,7 +140,7 @@ const getTrustRingClass = (trustLevel?: TrustLevel): string => {
     case 'danger':
       return 'border-[#ef4444] bg-white';
     default:
-      // 기본값은 파란색(검증된 느낌)으로 두었음
+      // 기본값은 파란색으로 두었음
       return 'border-[#2563eb] bg-white';
   }
 };
@@ -298,7 +298,6 @@ export default function MyPage() {
 
   // 공통 글 카드 렌더러 (내 글 + 스크랩에서 재사용)
   const renderPostCard = (post: PostItem) => {
-    // content가 없거나 객체로 들어올 가능성 있어서 방어코드
     const rawContent =
       (post.content as string | undefined) ??
       (normalizeValue(post['content']) === '-'
