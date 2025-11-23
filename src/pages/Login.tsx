@@ -1,14 +1,24 @@
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 import WhalesLogo from '@/assets/Whales 로고.svg';
 import GoogleLogo from '@/assets/구글 로고.svg';
 import TermsCheckIcon from '@/assets/동의 체크.svg';
+import TermsCheckBlue from '@/assets/동의 체크blue.svg';
 
 export default function Login() {
   const navigate = useNavigate();
 
+  // 약관 동의 상태
+  const [isAgreed, setIsAgreed] = useState(false);
+
   const handleGoogleLogin = () => {
+    if (!isAgreed) {
+      alert('서비스 이용약관에 동의해야 로그인할 수 있습니다.');
+      return;
+    }
+
     const clientId =
       '672627774587-ng4kk4ds9kql97v5h82judmhfnt6rmah.apps.googleusercontent.com';
     const redirectUri = 'http://localhost:5173/auth/callback';
@@ -78,9 +88,10 @@ export default function Login() {
             size="lg"
             onClick={handleGoogleLogin}
             className="
-              w-full h-14 rounded-full bg-white shadow-lg
+              w-full h-14 rounded-full shadow-lg
               flex items-center justify-start gap-3 px-6
-              text-base font-medium text-slate-900 hover:bg-white/90
+              text-base font-medium
+              bg-white text-slate-900
             "
           >
             <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center">
@@ -93,17 +104,21 @@ export default function Login() {
 
           {/* 서비스 이용약관 동의 바 */}
           <div
+            onClick={() => setIsAgreed(!isAgreed)}
             className="
               mt-2 w-full h-11 rounded-[18px]
               bg-gradient-to-r from-[#FFFFFF73] to-[#FFFFFF1A]
               border border-white/60
               flex items-center justify-between
               px-6 text-sm text-white
+              cursor-pointer select-none
             "
           >
             <span>서비스 이용약관 동의 (필수)</span>
+
+            {/* 체크 상태에 따라 아이콘 변경 */}
             <img
-              src={TermsCheckIcon}
+              src={isAgreed ? TermsCheckBlue : TermsCheckIcon}
               alt="동의 체크 아이콘"
               className="w-5 h-5"
             />
