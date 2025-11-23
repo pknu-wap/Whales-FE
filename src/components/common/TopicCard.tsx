@@ -84,9 +84,14 @@ export function TopicCard({
     fetchCounts();
   }, [id]);
 
+  const previewContent =
+  content.length > 50 ? content.substring(0, 50) + '...' : content;
+
+
   return (
     <Card
-      className="group hover:shadow-lg transition-all duration-300 cursor-pointer border-border bg-gradient-to-b from-card to-secondary/30"
+      className="group hover:shadow-lg transition-all duration-300 cursor-pointer border-border bg-gradient-to-b from-card to-secondary/30
+                 w-full h-60 flex flex-col" // ✅ 카드 가로는 부모에 맞추고, 세로는 고정 (예: h-64)
       onClick={() => navigate(`/post/${id}`)}
     >
       <CardHeader className="pb-3">
@@ -101,32 +106,38 @@ export function TopicCard({
             <p className="text-xs text-muted-foreground">{date}</p>
           </div>
         </div>
-        <h3 className="font-bold text-lg leading-tight group-hover:text-primary transition-colors">
+        <h3 className="font-bold text-lg leading-tight group-hover:text-primary transition-colors line-clamp-2">
           {title}
         </h3>
       </CardHeader>
 
-      <CardContent>
-        {/* 🔼 태그를 위로 올림 */}
-        <div className="flex flex-wrap gap-2 mb-3">
-          {displayTags.map((tagName, index) => (
-            <Badge
-              key={index}
-              variant="outline"   // ✔️ outline 사용
-            > {tagName}
-            </Badge>
+      {/* ✅ 아래 영역 전체를 위/아래로 나누기 위해 flex-col */}
+      <CardContent className="flex-1 flex flex-col pt-0">
+        {/* ⬆️ 태그 + 내용 영역 (위쪽, 가변) */}
+        <div className="flex-1 flex flex-col">
+          {/* 태그: 줄바꿈 없이 가로 스크롤 → 높이 고정 느낌 */}
+          <div className="flex items-center gap-2 mb-3 overflow-x-auto whitespace-nowrap">
+            {displayTags.map((tagName, index) => (
+              <Badge
+                key={index}
+                variant="outline"
+                className="shrink-0"
+              >
+                {tagName}
+              </Badge>
+            ))}
+          </div>
 
-          ))}
+          {/* 내용: 2줄로 고정, 남으면 ... 처리 */}
+          <p className="text-sm text-muted-foreground">
+  {previewContent}
+</p>
+
         </div>
 
-        {/* 내용은 태그 아래로 */}
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-          {content}
-        </p>
-
-        {/* ✅ 우하단 리액션 */}
+        {/* ✅ 우하단 리액션: 항상 맨 아래에 고정되도록 mt-auto + justify-end */}
         <div
-          className="mt-2 flex justify-end gap-3 text-xs"
+          className="mt-4 flex justify-end gap-3 text-xs"
           onClick={(e) => e.stopPropagation()}
         >
           {/* 좋아요 */}
@@ -155,5 +166,3 @@ export function TopicCard({
     </Card>
   );
 }
-
-

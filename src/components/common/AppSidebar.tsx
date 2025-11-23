@@ -140,8 +140,8 @@ const tagLinkInactiveStyle =
                   `rounded-md transition-colors flex items-center justify-center
                   ${
                     isActive
-                      ? 'bg-gray-200 text-black'
-                      : 'text-black/80 hover:bg-gray-200 hover:text-black'
+                      ? 'bg-blue-200 text-black'
+                      : 'text-black/80 hover:bg-blue-100 hover:text-black'
                   } px-2 py-1`
                 }
                 aria-label="구독 태그 설정"
