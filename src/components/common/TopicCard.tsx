@@ -1,5 +1,3 @@
-// src/components/common/TopicCard.tsx
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -27,11 +25,13 @@ interface TopicCardProps {
   date: string;
   tags: Tag[] | string[];
   isHot?: boolean;
+
+  reactions?: ReactionSummary;
 }
 
 type ReactionSummary = {
-  likeCount: number;
-  dislikeCount: number;
+  likeCount?: number;
+  dislikeCount?: number;
   myReaction?: 'LIKE' | 'DISLIKE' | null;
 };
 
@@ -42,6 +42,7 @@ export function TopicCard({
   author,
   date,
   tags,
+  reactions: initialReactions,
 }: TopicCardProps) {
   const navigate = useNavigate();
 
@@ -51,7 +52,9 @@ export function TopicCard({
     typeof tag === 'string' ? tag : tag.name,
   );
 
-  const [reactions, setReactions] = useState<ReactionSummary | null>(null);
+  const [reactions, setReactions] = useState<ReactionSummary | null>(
+    initialReactions ?? null,
+  );
   const [commentCount, setCommentCount] = useState(0);
 
   useEffect(() => {
@@ -111,22 +114,15 @@ export function TopicCard({
         </h3>
       </CardHeader>
 
-      {/* ✅ 아래 영역 전체를 위/아래로 나누기 위해 flex-col */}
-      <CardContent className="flex-1 flex flex-col pt-0">
-        {/* ⬆️ 태그 + 내용 영역 (위쪽, 가변) */}
-        <div className="flex-1 flex flex-col">
-          {/* 태그: 줄바꿈 없이 가로 스크롤 → 높이 고정 느낌 */}
-          <div className="flex items-center gap-2 mb-3 overflow-x-auto whitespace-nowrap">
-            {displayTags.map((tagName, index) => (
-              <Badge
-                key={index}
-                variant="outline"
-                className="shrink-0"
-              >
-                {tagName}
-              </Badge>
-            ))}
-          </div>
+      <CardContent>
+        {/* 🔼 태그를 위로 올림 */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {displayTags.map((tagName, index) => (
+            <Badge key={index} variant="outline">
+              {tagName}
+            </Badge>
+          ))}
+        </div>
 
           {/* 내용: 2줄로 고정, 남으면 ... 처리 */}
           <p className="text-sm text-muted-foreground">
@@ -143,17 +139,13 @@ export function TopicCard({
           {/* 좋아요 */}
           <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600">
             <ThumbsUp className="w-4 h-4 text-gray-700" />
-            <span className="font-medium">
-              {reactions?.likeCount ?? 0}
-            </span>
+            <span className="font-medium">{reactions?.likeCount ?? 0}</span>
           </div>
 
           {/* 싫어요 */}
           <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600">
             <ThumbsUp className="w-4 h-4 rotate-180 text-gray-700" />
-            <span className="font-medium">
-              {reactions?.dislikeCount ?? 0}
-            </span>
+            <span className="font-medium">{reactions?.dislikeCount ?? 0}</span>
           </div>
 
           {/* 댓글 */}
