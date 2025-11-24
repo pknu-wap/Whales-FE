@@ -354,7 +354,17 @@ function AppHeader() {
               size="lg"
               variant="outline"
               onClick={handleWriteClick}
-              className="gap-2 rounded-md bg-gradient-to-r from-[#E4EEFF] to-[#C7DBFF] border-[#9AB8FF] text-black hover:opacity-90 transition-opacity"
+              className="
+  gap-2
+  px-6 py-2
+  rounded-md
+  border border-[#9AB8FF]
+  bg-gradient-to-r from-[#80aaf8] via-[#bcd4ff] to-[#E4EEFF]
+  font-bold text-black
+  shadow-sm
+  hover:brightness-105
+  transition
+"
             >
               <PenSquare className="w-4 h-4" />
               <span>글쓰기</span>
