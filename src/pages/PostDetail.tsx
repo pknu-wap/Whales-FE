@@ -152,10 +152,10 @@ export default function PostDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <main className="w-full max-w-[1400px] mx-auto flex p-6 gap-6">
-          <AppSidebar />
-          <section className="flex-1 flex items-center justify-center">
+      <div>
+        <main className="w-full flex p-6 gap-6 items-start">
+      <AppSidebar />
+      <section className="flex-1 flex flex-col gap-12">
             <p className="text-muted-foreground">불러오는 중…</p>
           </section>
         </main>
@@ -165,10 +165,10 @@ export default function PostDetail() {
 
   if (!postData) {
     return (
-      <div className="min-h-screen bg-background">
-        <main className="w-full max-w-[1400px] mx-auto flex p-6 gap-6">
-          <AppSidebar />
-          <section className="flex-1 flex flex-col items-center justify-center">
+      <div>
+      <main className="w-full flex p-6 gap-6 items-start">
+      <AppSidebar />
+      <section className="flex-1 flex flex-col gap-12">
             <p className="text-muted-foreground">
               게시글을 찾을 수 없습니다.
             </p>
@@ -276,10 +276,9 @@ export default function PostDetail() {
 
   return (
     <div>
-      <main className="w-full max-w-7xl mx-auto flex p-6 gap-6 items-start">
-        <AppSidebar />
-
-        <section className="flex-1 flex flex-col gap-6">
+      <main className="w-full flex p-6 gap-6 items-start">
+      <AppSidebar />
+      <section className="flex-1 flex flex-col gap-12">
           <Button variant="ghost" className="w-fit gap-2" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-4 h-4" />
             목록으로

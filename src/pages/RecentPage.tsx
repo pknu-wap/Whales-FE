@@ -82,9 +82,9 @@ export default function RecentPage() {
 
   if (loading) {
     return (
-      <main className="w-full max-w-7xl mx-auto flex p-6 gap-6 items-start">
-        <AppSidebar />
-        <section className="flex-1 flex items-center justify-center">
+      <main className="w-full flex p-6 gap-6 items-start">
+      <AppSidebar />
+      <section className="flex-1 flex flex-col gap-12">
           <div className="text-center text-muted-foreground py-8">
             불러오는 중...
           </div>
@@ -99,9 +99,9 @@ export default function RecentPage() {
   const pagePosts = formattedPosts.slice(start, start + PAGE_SIZE);
 
   return (
-    <main className="w-full max-w-7xl mx-auto flex p-6 gap-6 items-start">
+    <main className="w-full flex p-6 gap-6 items-start">
       <AppSidebar />
-      <section className="flex-1 flex flex-col gap-8">
+      <section className="flex-1 flex flex-col gap-12">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-500 to-sky-500 flex items-center justify-center">
             <Clock className="w-5 h-5 text-white" />

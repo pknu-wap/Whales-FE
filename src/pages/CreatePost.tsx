@@ -42,10 +42,9 @@ export default function CreatePost() {
 
   return (
     <div className="bg-background">
-      <main className="w-full max-w-7xl mx-auto flex p-6 gap-6 items-start">
-        <AppSidebar />
-
-        <section className="flex-1 flex flex-col gap-6">
+      <main className="w-full flex p-6 gap-6 items-start">
+      <AppSidebar />
+      <section className="flex-1 flex flex-col gap-12">
           <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
             <h2 className="text-2xl font-bold mb-6">게시글 작성</h2>
 
