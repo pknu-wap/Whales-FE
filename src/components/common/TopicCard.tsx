@@ -116,7 +116,7 @@ export function TopicCard({
   }, [id]); // ✅ 로그인 여부 같은 건 의존성에 넣지 않음
 
   const previewContent =
-    content.length > 40 ? content.substring(0, 40) + '...' : content;
+    content.length > 30 ? content.substring(0, 30) + '...' : content;
 
   return (
     <Card
