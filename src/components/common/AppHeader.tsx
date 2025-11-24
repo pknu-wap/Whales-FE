@@ -88,7 +88,6 @@ function AppHeader() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-
   // 🔍 검색 실행 (/search?keyword=...)
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -130,21 +129,40 @@ function AppHeader() {
     : [];
 
   // ✅ 닉네임 색상 Tailwind 변환
-  const getNicknameColorClass = (color?: string) => {
-    if (!color) return 'text-gray-700';
+  // 프로필 동그라미 테두리 색 (회원 등급용)
+  const getProfileBorderClass = (color?: string) => {
+    if (!color) return 'border-gray-300'; // 기본: 흰색/기본 회원
+
     switch (color.toLowerCase()) {
-      case 'blue':
-        return 'text-blue-600';
-      case 'green':
-        return 'text-green-600';
-      case 'red':
-        return 'text-red-600';
-      case 'purple':
-        return 'text-purple-600';
+      case 'white': // 신규 / 기본
       case 'gray':
-        return 'text-gray-600';
+        return 'border-gray-300';
+
+      case 'black': // 활동 중 / 검증 전
+        return 'border-neutral-800';
+
+      case 'green': // 초록 - 신뢰 회원
+      case 'emerald':
+        return 'border-emerald-400';
+
+      case 'blue': // 파랑 - 검증된 / 모범 회원
+        return 'border-blue-400';
+
+      case 'purple': // 보라 - 상위 기여자 / 우수 멤버
+        return 'border-purple-400';
+
+      case 'gold': // 금색 - 레전드 / 명예 등급
+      case 'yellow':
+        return 'border-yellow-400';
+
+      case 'orange': // 주황 - 주의 회원
+        return 'border-orange-400';
+
+      case 'red': // 빨강색 - 경고 회원
+        return 'border-red-400';
+
       default:
-        return 'text-gray-700';
+        return 'border-gray-300';
     }
   };
 
@@ -220,8 +238,9 @@ function AppHeader() {
 
   return (
     <header className="w-full border-b border-gray-200 bg-white shadow-sm sticky top-0 z-50">
-      <div className="max-w-[1180px] mx-auto px-6 py-4 flex items-center gap-6">
-        {/* 로고 */}
+      {/* ✅ 전체 폭 1080px + 좌/우 정렬 */}
+      <div className="max-w-[1300px] mx-auto px-6 py-3 flex items-center justify-between gap-6">
+        {/* 로고 - 항상 왼쪽 */}
         <div
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => navigate('/')}
@@ -229,285 +248,289 @@ function AppHeader() {
           <img src={WhalesLogo} alt="Whales 로고" className="h-10 w-auto" />
         </div>
 
-        {/* 🔍 검색창 (폭 줄이기: max-w-xl) + 검색 기록 팝업 */}
-        <form
-          onSubmit={handleSearch}
-          className="flex-[1.4] max-w-[520px] relative"
-        >
-          <div className="relative w-full">
-            {/* 검색바 */}
-            <div
-              className={
-                'flex w-full items-center bg-[#E5F1FF] border border-[#A9C8FF] px-4 py-1 shadow-sm ' +
-                (showHistory
-                  ? 'rounded-t-xl rounded-b-none border-b-0'
-                  : 'rounded-xl')
-              }
-            >
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="게시글 검색하기"
-                onFocus={openHistory}
-                onClick={openHistory}
-                onBlur={handleBlurSearch}
-                className="
+        {/* 오른쪽 영역(검색 + 버튼들) */}
+        <div className="flex items-center gap-4 flex-1 justify-end">
+          {/* 🔍 검색창 + 검색 기록 팝업 */}
+          <form
+            onSubmit={handleSearch}
+            className="flex-1 max-w-[600px] relative"
+          >
+            <div className="relative w-full">
+              {/* 검색바 */}
+              <div
+                className={
+                  'flex w-full items-center bg-[#E5F1FF] border border-[#A9C8FF] px-4 py-1 shadow-sm ' +
+                  (showHistory
+                    ? 'rounded-t-xl rounded-b-none border-b-0'
+                    : 'rounded-xl')
+                }
+              >
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="게시글 검색하기"
+                  onFocus={openHistory}
+                  onClick={openHistory}
+                  onBlur={handleBlurSearch}
+                  className="
                   flex-1 border-none bg-transparent shadow-none
                   focus-visible:ring-0 focus-visible:ring-offset-0
                   text-sm placeholder:text-[#7BA4F5]
                 "
-              />
-              <button type="submit" className="ml-2">
-                <Search className="w-4 h-4 text-[#7BA4F5] cursor-pointer" />
-              </button>
-            </div>
+                />
+                <button type="submit" className="ml-2">
+                  <Search className="w-4 h-4 text-[#7BA4F5] cursor-pointer" />
+                </button>
+              </div>
 
-            {/* 검색 기록 팝업 */}
-            {showHistory && (
-              <div
-                className="
+              {/* 검색 기록 팝업 */}
+              {showHistory && (
+                <div
+                  className="
                   absolute left-0 right-0 top-full z-40
                   bg-[#E5F1FF] border border-[#A9C8FF] border-t-0
                   rounded-b-xl shadow-sm overflow-hidden
                 "
-              >
-                {/* 상단: 입력 중인 키워드 태그/텍스트 칩 */}
-                {keywordParts.length > 0 && (
-                  <div className="px-4 pt-2 pb-1 flex flex-wrap gap-2 text-xs">
-                    {keywordParts.map((part, idx) => {
-                      const isTag = part.startsWith('#') && part.length > 1;
-                      const label = isTag ? part.slice(1) : part;
-                      return (
-                        <span
-                          key={`${part}-${idx}`}
-                          className={
-                            'px-2 py-0.5 rounded-full border ' +
-                            (isTag
-                              ? 'bg-[#C7DBFF] border-[#9AB8FF] text-[#1D4ED8] font-medium'
-                              : 'bg-white border-[#CBD5F5] text-[#4B6FBF]')
-                          }
-                        >
-                          {isTag ? `#${label}` : label}
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
+                >
+                  {/* 상단: 입력 중인 키워드 태그/텍스트 칩 */}
+                  {keywordParts.length > 0 && (
+                    <div className="px-4 pt-2 pb-1 flex flex-wrap gap-2 text-xs">
+                      {keywordParts.map((part, idx) => {
+                        const isTag = part.startsWith('#') && part.length > 1;
+                        const label = isTag ? part.slice(1) : part;
+                        return (
+                          <span
+                            key={`${part}-${idx}`}
+                            className={
+                              'px-2 py-0.5 rounded-full border ' +
+                              (isTag
+                                ? 'bg-[#C7DBFF] border-[#9AB8FF] text-[#1D4ED8] font-medium'
+                                : 'bg-white border-[#CBD5F5] text-[#4B6FBF]')
+                            }
+                          >
+                            {isTag ? `#${label}` : label}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
 
-                {/* 구분선 */}
-                <div className="mx-4 mt-1 mb-1 h-px bg-[#A9C8FF]/50" />
+                  {/* 구분선 */}
+                  <div className="mx-4 mt-1 mb-1 h-px bg-[#A9C8FF]/50" />
 
-                {/* 최근 검색 기록 리스트 */}
-                <ul className="max-h-64 overflow-y-auto">
-                  {history.length === 0 ? (
-                    <li className="px-4 py-2 text-xs text-[#7BA4F5]/70">
-                      최근 검색 기록이 없습니다.
-                    </li>
-                  ) : (
-                    history.map((item) => (
-                      <li
-                        key={item.id}
-                        className="
+                  {/* 최근 검색 기록 리스트 */}
+                  <ul className="max-h-64 overflow-y-auto">
+                    {history.length === 0 ? (
+                      <li className="px-4 py-2 text-xs text-[#7BA4F5]/70">
+                        최근 검색 기록이 없습니다.
+                      </li>
+                    ) : (
+                      history.map((item) => (
+                        <li
+                          key={item.id}
+                          className="
                           flex items-center gap-2 px-4 py-2
                           text-xs sm:text-sm text-[#4B6FBF]
                           hover:bg-[#D7E6FF] cursor-pointer
                         "
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => handleClickHistoryItem(item.keyword)}
-                      >
-                        <Clock className="shrink-0 w-3 h-3 sm:w-4 sm:h-4 opacity-70" />
-                        <span className="truncate">{item.keyword}</span>
-                      </li>
-                    ))
-                  )}
-                </ul>
-              </div>
-            )}
-          </div>
-        </form>
-
-        {/* 우측 영역: 글쓰기 + Chat + Alarm + 프로필/로그인 */}
-        <div className="flex items-center gap-3">
-          {/* ✏️ 글쓰기 버튼 */}
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={handleWriteClick}
-            className="gap-2 rounded-md bg-gradient-to-r from-[#E4EEFF] to-[#C7DBFF] border-[#9AB8FF] text-black hover:opacity-90 transition-opacity"
-          >
-            <PenSquare className="w-4 h-4" />
-            <span>글쓰기</span>
-          </Button>
-
-          {/* 💬 Chat 아이콘 */}
-          <button
-            type="button"
-            onClick={handleChatClick}
-            className="relative flex items-center justify-center w-9 h-9 rounded-full hover:bg-blue-50"
-          >
-            <img src={ChatButton} alt="채팅" className="w-8 h-8" />
-          </button>
-
-          {/* 🔔 Alarm 아이콘 + 뱃지 */}
-          {/* 🔔 Alarm 아이콘 + 드롭다운 */}
-          <div ref={alarmMenuRef} className="relative">
-            <button
-              type="button"
-              onClick={handleAlarmClick}
-              className="relative flex items-center justify-center w-9 h-9 rounded-full hover:bg-blue-50"
-            >
-              <img src={AlarmButton} alt="알림" className="w-8 h-8" />
-              {unreadCount > 0 && (
-                <span
-                  className="
-          absolute -top-1 -right-1
-          min-w-[16px] h-4 px-1
-          rounded-full bg-red-500 text-white
-          text-[10px] flex items-center justify-center
-        "
-                >
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </button>
-
-            {/* 알림 드롭다운 */}
-            {isAlarmOpen && (
-              <div
-                className="
-        absolute right-0 mt-2 w-80
-        rounded-2xl bg-white
-        shadow-lg border border-gray-100
-        py-2 z-50
-      "
-              >
-                <div className="px-3 pb-2 text-xs font-semibold text-gray-500">
-                  알림
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => handleClickHistoryItem(item.keyword)}
+                        >
+                          <Clock className="shrink-0 w-3 h-3 sm:w-4 sm:h-4 opacity-70" />
+                          <span className="truncate">{item.keyword}</span>
+                        </li>
+                      ))
+                    )}
+                  </ul>
                 </div>
+              )}
+            </div>
+          </form>
 
-                <ul className="max-h-80 overflow-y-auto">
-                  {notifications.length === 0 ? (
-                    <li className="px-3 py-3 text-xs text-gray-400">
-                      새 알림이 없습니다.
-                    </li>
-                  ) : (
-                    notifications.map((n) => (
-                      <li
-                        key={n.id}
-                        onClick={() => handleClickNotification(n)}
-                        className="
-                px-3 py-2 cursor-pointer
-                hover:bg-gray-50
-                flex flex-col gap-0.5
-              "
-                      >
-                        <div className="text-xs text-gray-500">
-                          {n.senderName}
-                        </div>
-                        <div className="text-sm text-gray-900">{n.message}</div>
-                        <div className="text-[11px] text-gray-400">
-                          {new Date(n.createdAt).toLocaleString('ko-KR')}
-                        </div>
-                      </li>
-                    ))
-                  )}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          {/* 로그인 상태에 따른 UI */}
-          {!isLoggedIn ? (
+          {/* 우측 영역: 글쓰기 + Chat + Alarm + My + 프로필/로그인 */}
+          <div className="flex items-center gap-3">
+            {/* ✏️ 글쓰기 버튼 */}
             <Button
               size="lg"
-              className="gap-2 rounded-md bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-black hover:brightness-110 transition"
+              variant="outline"
+              onClick={handleWriteClick}
+              className="gap-2 rounded-md bg-gradient-to-r from-[#E4EEFF] to-[#C7DBFF] border-[#9AB8FF] text-black hover:opacity-90 transition-opacity"
             >
-              <LogIn className="w-4 h-4" />
-              <NavLink to="/login" key="login-link">
-                로그인
-              </NavLink>
+              <PenSquare className="w-4 h-4" />
+              <span>글쓰기</span>
             </Button>
-          ) : (
-            <>
-              {/* 🔽 프로필(웨) + 드롭다운 메뉴 */}
-              <div ref={profileMenuRef} className="relative">
-                {/* 위에 보이는 동그란 '웨' 아이콘 */}
-                <button
-                  type="button"
-                  onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-                  className="
-            flex items-center justify-center
-            w-10 h-10 rounded-full
-            border-[5px] border-blue-300
-            bg-white text-gray-900 font-bold
-            shadow-sm hover:bg-gray-50
-          "
-                >
-                  {user?.displayName
-                    ? user.displayName[0]
-                    : user?.email
-                    ? user.email[0].toUpperCase()
-                    : '유'}
-                </button>
 
-                {/* 아래에 뜨는 카드 메뉴 */}
-                {isProfileMenuOpen && (
-                  <div
+            {/* 💬 Chat 아이콘 */}
+            <button
+              type="button"
+              onClick={handleChatClick}
+              className="relative flex items-center justify-center w-9 h-9 rounded-full hover:bg-blue-50"
+            >
+              <img src={ChatButton} alt="채팅" className="w-8 h-8" />
+            </button>
+
+            {/* 🔔 Alarm 아이콘 + 드롭다운 */}
+            <div ref={alarmMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={handleAlarmClick}
+                className="relative flex items-center justify-center w-9 h-9 rounded-full hover:bg-blue-50"
+              >
+                <img src={AlarmButton} alt="알림" className="w-8 h-8" />
+                {unreadCount > 0 && (
+                  <span
                     className="
-              absolute left-0 mt-2 w-40
-              rounded-2xl bg-white
-              shadow-lg border border-gray-100
-              py-2 z-50
-            "
+                    absolute -top-1 -right-1
+                    min-w-[16px] h-4 px-1
+                    rounded-full bg-red-500 text-white
+                    text-[10px] flex items-center justify-center
+                  "
                   >
-                    {/* 마이페이지 */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsProfileMenuOpen(false);
-                        navigate('/mypage');
-                      }}
-                      className="
-                flex w-full items-center
-                px-3 py-2 text-sm text-gray-800
-                hover:bg-gray-50
-              "
-                    >
-                      <span
-                        className="
-                  mr-2 px-1.5 py-0.5
-                  text-[10px] leading-none
-                  border border-gray-400
-                  rounded-md
-                  font-semibold
-                "
-                      >
-                        My
-                      </span>
-                      <span>마이페이지</span>
-                    </button>
-
-                    {/* 로그아웃 */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsProfileMenuOpen(false);
-                        handleLogout();
-                      }}
-                      className="
-                flex w-full items-center
-                px-3 py-2 text-sm text-gray-800
-                hover:bg-gray-50
-              "
-                    >
-                      <LogOut className="mr-2 w-4 h-4" />
-                      <span>로그아웃</span>
-                    </button>
-                  </div>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
                 )}
-              </div>
-            </>
-          )}
+              </button>
+
+              {isAlarmOpen && (
+                <div
+                  className="
+                  absolute right-0 mt-2 w-80
+                  rounded-2xl bg-white
+                  shadow-lg border border-gray-100
+                  py-2 z-50
+                "
+                >
+                  <div className="px-3 pb-2 text-xs font-semibold text-gray-500">
+                    알림
+                  </div>
+                  <ul className="max-h-80 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <li className="px-3 py-3 text-xs text-gray-400">
+                        새 알림이 없습니다.
+                      </li>
+                    ) : (
+                      notifications.map((n) => (
+                        <li
+                          key={n.id}
+                          onClick={() => handleClickNotification(n)}
+                          className="
+                          px-3 py-2 cursor-pointer
+                          hover:bg-gray-50
+                          flex flex-col gap-0.5
+                        "
+                        >
+                          <div className="text-xs text-gray-500">
+                            {n.senderName}
+                          </div>
+                          <div className="text-sm text-gray-900">
+                            {n.message}
+                          </div>
+                          <div className="text-[11px] text-gray-400">
+                            {new Date(n.createdAt).toLocaleString('ko-KR')}
+                          </div>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            {/* 로그인 상태에 따른 UI */}
+            {!isLoggedIn ? (
+              <Button
+                size="lg"
+                className="gap-2 rounded-md bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-black hover:brightness-110 transition"
+              >
+                <LogIn className="w-4 h-4" />
+                <NavLink to="/login" key="login-link">
+                  로그인
+                </NavLink>
+              </Button>
+            ) : (
+              <>
+                {/* 🔽 프로필(웨) + 드롭다운 메뉴 */}
+                <div ref={profileMenuRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+                    className={`
+      flex items-center justify-center
+      w-10 h-10 rounded-full
+      border-[5px] ${getProfileBorderClass(
+        user?.nicknameColor
+      )}  /* ✅ 테두리 색 동적 적용 */
+      bg-white text-gray-900 font-bold
+      shadow-sm hover:bg-gray-50
+    `}
+                  >
+                    {user?.displayName
+                      ? user.displayName[0]
+                      : user?.email
+                      ? user.email[0].toUpperCase()
+                      : '유'}
+                  </button>
+
+                  {isProfileMenuOpen && (
+                    <div
+                      className="
+                      absolute left-0 mt-2 w-40
+                      rounded-2xl bg-white
+                      shadow-lg border border-gray-100
+                      py-2 z-50
+                    "
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          navigate('/mypage');
+                        }}
+                        className="
+                        flex w-full items-center
+                        px-4 py-2 text-sm text-gray-800
+                        hover:bg-gray-50
+                      "
+                      >
+                        <span
+                          className="
+                          mr-2
+    inline-flex items-center justify-center  /* 가운데 정렬 */
+    
+    w-5 h-5                                  /* 정사각형 크기 */
+    text-[8px]
+    border-[1.6px] border-gray-900          /* 진한 테두리 */
+    rounded-md                              
+    font-semibold
+    bg-white
+                        "
+                        >
+                          My
+                        </span>
+                        <span>마이페이지</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          handleLogout();
+                        }}
+                        className="
+                        flex w-full items-center
+                        px-3 py-2 text-sm text-gray-800
+                        hover:bg-gray-50
+                      "
+                      >
+                        <LogOut className="mr-2 w-6 h-4" />
+                        <span>로그아웃</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </header>

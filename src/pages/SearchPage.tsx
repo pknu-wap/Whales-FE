@@ -1,6 +1,6 @@
 // SearchPage.tsx
 import { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { AppSidebar } from '@/components/common';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,7 +35,7 @@ export default function SearchPage() {
   const [posts, setPosts] = useState<SearchResultPost[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   // 검색 조건(tag/query/keyword)이 바뀔 때마다 페이지 1로
   useEffect(() => {
