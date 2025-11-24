@@ -50,6 +50,8 @@ function AppHeader() {
   const { user, clearAuth, initializeAuth } = useAuthStore();
   const isLoggedIn = !!user;
 
+  const hiddenPaths = ["/login", "/auth/callback"];
+
   // ✅ 로그인 상태 복원
   useEffect(() => {
     if (typeof initializeAuth === 'function') {
@@ -158,6 +160,10 @@ function AppHeader() {
       navigate('/create');
     }
   };
+
+  if (hiddenPaths.includes(location.pathname)) {
+    return null;
+  }
 
   return (
     <header className="w-full border-b border-gray-200 bg-white shadow-sm sticky top-0 z-50">
