@@ -49,9 +49,9 @@ export default function PostDetail() {
   const [isDisliked, setIsDisliked] = useState(false);
   const [isScraped, setIsScraped] = useState(false);
 
-  const handleTagClick = (tag: string) => {
-    navigate(`/search?tag=${encodeURIComponent(tag)}`)
-  }
+  // const handleTagClick = (tag: string) => {
+  //   navigate(`/search?tag=${encodeURIComponent(tag)}`)
+  // }
 
   useEffect(() => {
     if (!id) {
