@@ -126,10 +126,8 @@ export function TopicCard({
 
           {/* 내용: 2줄로 고정, 남으면 ... 처리 */}
           <p className="text-sm text-muted-foreground">
-  {previewContent}
-</p>
-
-        </div>
+            {previewContent}
+          </p>
 
         {/* ✅ 우하단 리액션: 항상 맨 아래에 고정되도록 mt-auto + justify-end */}
         <div
