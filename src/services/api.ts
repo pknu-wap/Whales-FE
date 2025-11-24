@@ -374,3 +374,29 @@ export const searchPostsByKeyword = async (keyword: string) => {
 
 
 export default api;
+
+// ✅ 게시글 리액션(좋아요/싫어요) 카운트 조회 – 로그인 필요 없는 공개 API
+export const getPostReactions = async (postId: string) => {
+  const response = await api.get(`/posts/${postId}/reactions`);
+  //  ↑ 여기!!  /posts/${postId} 가 아니라 /posts/${postId}/reactions 여야 해
+  return response.data;   // { likeCount, dislikeCount, myReaction }
+};
+
+
+// 댓글 리액션 조회 (로그인 필요 없음)
+export const getCommentReactions = async (commentId: string) => {
+  const res = await api.get(`/comments/${commentId}/reactions`);
+  return res.data; // { likeCount, dislikeCount, myReaction }
+};
+
+// 댓글 좋아요
+export const likeComment = async (commentId: string) => {
+  const res = await api.post(`/comments/${commentId}/like`);
+  return res.data;
+};
+
+// 댓글 싫어요
+export const dislikeComment = async (commentId: string) => {
+  const res = await api.post(`/comments/${commentId}/dislike`);
+  return res.data;
+};
