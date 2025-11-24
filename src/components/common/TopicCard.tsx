@@ -87,9 +87,14 @@ export function TopicCard({
     fetchCounts();
   }, [id]);
 
+  const previewContent =
+  content.length > 40 ? content.substring(0, 40) + '...' : content;
+
+
   return (
     <Card
-      className="group hover:shadow-lg transition-all duration-300 cursor-pointer border-border bg-gradient-to-b from-card to-secondary/30"
+      className="group hover:shadow-lg transition-all duration-300 cursor-pointer border-border bg-gradient-to-b from-card to-secondary/30
+                 w-full h-60 flex flex-col" // ✅ 카드 가로는 부모에 맞추고, 세로는 고정 (예: h-64)
       onClick={() => navigate(`/post/${id}`)}
     >
       <CardHeader className="pb-3">
@@ -104,7 +109,7 @@ export function TopicCard({
             <p className="text-xs text-muted-foreground">{date}</p>
           </div>
         </div>
-        <h3 className="font-bold text-lg leading-tight group-hover:text-primary transition-colors">
+        <h3 className="font-bold text-lg leading-tight group-hover:text-primary transition-colors line-clamp-2">
           {title}
         </h3>
       </CardHeader>
@@ -119,14 +124,16 @@ export function TopicCard({
           ))}
         </div>
 
-        {/* 내용은 태그 아래로 */}
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-          {content}
-        </p>
+          {/* 내용: 2줄로 고정, 남으면 ... 처리 */}
+          <p className="text-sm text-muted-foreground">
+  {previewContent}
+</p>
 
-        {/* ✅ 우하단 리액션 */}
+        </div>
+
+        {/* ✅ 우하단 리액션: 항상 맨 아래에 고정되도록 mt-auto + justify-end */}
         <div
-          className="mt-2 flex justify-end gap-3 text-xs"
+          className="mt-4 flex justify-end gap-3 text-xs"
           onClick={(e) => e.stopPropagation()}
         >
           {/* 좋아요 */}
