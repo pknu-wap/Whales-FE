@@ -1,56 +1,49 @@
-// src/components/common/AppHeader.tsx (경로는 프로젝트 구조에 맞게)
+// src/components/common/AppHeader.tsx
 
-import { useState, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Button, Input } from '../ui';
-import { Search, LogIn, PenSquare, Clock } from 'lucide-react';
+import { Search, LogIn, PenSquare, Clock, LogOut } from 'lucide-react';
 import useAuthStore from '../../stores/authStore';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+// import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 import WhalesLogo from '@/assets/Whales.svg';
-// import AlarmButton from '@/assets/AlarmButton.svg';
-// import ChatButton from '@/assets/ChatButton.svg';
+import AlarmButton from '@/assets/AlarmButton.svg';
+import ChatButton from '@/assets/ChatButton.svg';
 
-/** 프론트(localStorage)에서만 관리하는 검색 기록 타입 */
-type LocalHistoryItem = {
-  id: string; // 유니크 ID
-  keyword: string; // 검색어
-  searchedAt: string;
-};
-
-const LOCAL_HISTORY_KEY = 'whales_local_search_history';
-const MAX_HISTORY = 10; // 최대 노출/저장 개수
-
-function loadLocalHistory(): LocalHistoryItem[] {
-  try {
-    const raw = localStorage.getItem(LOCAL_HISTORY_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed;
-  } catch {
-    return [];
-  }
-}
-
-function saveLocalHistory(items: LocalHistoryItem[]) {
-  try {
-    localStorage.setItem(LOCAL_HISTORY_KEY, JSON.stringify(items));
-  } catch {
-    // 실패해도 크게 상관 없음
-  }
-}
+// Search API
+import type { SearchHistoryItem } from '@/services/api';
+import type { NotificationItem } from '@/services/api';
+import {
+  getSearchHistory,
+  getUnreadNotificationCount,
+  getUnreadNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+} from '@/services/api';
 
 function AppHeader() {
   const [query, setQuery] = useState('');
-  const [history, setHistory] = useState<LocalHistoryItem[]>([]);
+  const [history, setHistory] = useState<SearchHistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
+  const [unreadCount, setUnreadCount] = useState(0); // 🔔 안 읽은 알림 개수
+
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
+
+  // 🔔 알림 드롭다운용
+  const [isAlarmOpen, setIsAlarmOpen] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const alarmMenuRef = useRef<HTMLDivElement | null>(null);
+
   const navigate = useNavigate();
+  const location = useLocation();
+
   const { user, clearAuth, initializeAuth } = useAuthStore();
   const isLoggedIn = !!user;
 
-  const hiddenPaths = ["/login", "/auth/callback"];
+  const hiddenPaths = ['/login', '/auth/callback'];
 
   // ✅ 로그인 상태 복원
   useEffect(() => {
@@ -59,62 +52,67 @@ function AppHeader() {
     }
   }, [initializeAuth]);
 
-  // ✅ 첫 렌더 시 localStorage 검색 기록 불러오기
+  // ✅ 로그인 상태일 때 알림 개수 가져오기
   useEffect(() => {
-    const loaded = loadLocalHistory();
-    setHistory(loaded);
+    if (!isLoggedIn) {
+      setUnreadCount(0);
+      return;
+    }
+
+    const fetchUnread = async () => {
+      try {
+        const count = await getUnreadNotificationCount();
+        setUnreadCount(count);
+      } catch (e) {
+        console.error('unread notifications 불러오기 실패', e);
+      }
+    };
+
+    fetchUnread();
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+
+      // 프로필 메뉴 안이면 무시
+      if (profileMenuRef.current?.contains(target)) return;
+      // 알림 메뉴 안이면 무시
+      if (alarmMenuRef.current?.contains(target)) return;
+
+      setIsProfileMenuOpen(false);
+      setIsAlarmOpen(false);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // ✅ history 변경 시 localStorage에 저장
-  useEffect(() => {
-    saveLocalHistory(history);
-  }, [history]);
 
-  // 🔍 검색 실행
+  // 🔍 검색 실행 (/search?keyword=...)
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const keyword = query.trim();
     if (!keyword) return;
 
-    const now = new Date().toISOString();
-
-    // 1) 새 검색 기록 객체 생성
-    const newItem: LocalHistoryItem = {
-      id: `${now}-${Math.random()}`,
-      keyword,
-      searchedAt: now,
-    };
-
-    // 2) 기존 history를 Set 기반 중복 제거 Struct로 변환
-    const map = new Map<string, LocalHistoryItem>();
-
-    // 기존 기록을 먼저 넣음 (뒤로 밀림)
-    history.forEach((item) => {
-      map.set(item.keyword, item);
-    });
-
-    // 3) 새 검색어는 덮어쓰기 → 결과적으로 최신 검색이 먼저 오도록
-    map.set(keyword, newItem);
-
-    // 4) 다시 배열로 만들고 최신순으로 정렬
-    const updated = Array.from(map.values())
-      .sort((a, b) => (a.searchedAt < b.searchedAt ? 1 : -1))
-      .slice(0, MAX_HISTORY); // 최대 개수 유지
-
-    // 5) 상태 업데이트 + 저장
-    setHistory(updated);
-    saveLocalHistory(updated);
-
     navigate(`/search?keyword=${encodeURIComponent(keyword)}`);
     setShowHistory(false);
   };
 
-  // ✅ 검색창 포커스/클릭 시 팝업 열기
-  const openHistory = () => {
+  // ✅ 검색창 포커스/클릭 시 기록 팝업 + history 호출
+  const openHistory = async () => {
     setShowHistory(true);
+    if (!isLoggedIn) return;
+
+    try {
+      const items = await getSearchHistory();
+      setHistory(items);
+    } catch (err) {
+      console.error('검색 기록 불러오기 실패', err);
+    }
   };
 
-  // ✅ blur 시 살짝 딜레이 후 닫기 (클릭 가능하도록)
+  // ✅ blur 시 살짝 딜레이 후 닫기
   const handleBlurSearch = () => {
     setTimeout(() => setShowHistory(false), 120);
   };
@@ -126,10 +124,12 @@ function AppHeader() {
     navigate(`/search?keyword=${encodeURIComponent(keyword)}`);
   };
 
-  // ✅ 필터링 없이 최근 MAX_HISTORY개만 사용 (필요하면 필터 로직 추가 가능)
-  const filteredHistory = history.slice(0, MAX_HISTORY);
+  // ✅ 입력된 키워드를 토큰으로 쪼개서 태그/텍스트 칩 표시
+  const keywordParts = query.trim().length
+    ? query.trim().split(/\s+/).filter(Boolean)
+    : [];
 
-  // ✅ 닉네임 색상 Tailwind 변환 유틸
+  // ✅ 닉네임 색상 Tailwind 변환
   const getNicknameColorClass = (color?: string) => {
     if (!color) return 'text-gray-700';
     switch (color.toLowerCase()) {
@@ -161,13 +161,66 @@ function AppHeader() {
     }
   };
 
+  // 🔔 알림 버튼 클릭 – 일단 알림 페이지로 이동(추후 드롭다운으로 바꿔도 됨)
+  const handleAlarmClick = async () => {
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
+
+    // 이미 열려 있으면 닫기
+    if (isAlarmOpen) {
+      setIsAlarmOpen(false);
+      return;
+    }
+
+    // 열면서 알림 불러오기
+    setIsAlarmOpen(true);
+    try {
+      // 내 글/댓글에 달린 댓글 알림은 백엔드에서 필터해 주는 걸 전제로 함
+      const list = await getUnreadNotifications(); // 또는 getNotifications()
+      setNotifications(list);
+
+      // 열면서 모두 읽음 처리 (원하면 주석 처리해도 됨)
+      if (list.length > 0) {
+        await markAllNotificationsRead();
+        setUnreadCount(0);
+      }
+    } catch (e) {
+      console.error('알림 불러오기 실패', e);
+    }
+  };
+
+  const handleClickNotification = async (item: NotificationItem) => {
+    try {
+      if (!item.read) {
+        await markNotificationRead(item.id);
+      }
+    } catch (e) {
+      console.error('알림 읽음 처리 실패', e);
+    }
+
+    setIsAlarmOpen(false);
+
+    // 내 댓글에 달린 댓글이니까 해당 게시글로 이동
+    // 필요하면 #comment-아이디 같은 앵커는 나중에 댓글 컴포넌트에서 맞춰주면 됨
+    navigate(`/post/${item.postId}`);
+  };
+
+  // 💬 채팅 버튼 클릭 – 지금은 이미지만, 나중에 /chat 같은 라우트 연결 가능
+  const handleChatClick = () => {
+    // 예: navigate('/chat');
+    console.log('chat button clicked');
+  };
+
+  // 로그인 페이지 등에서는 헤더 숨김
   if (hiddenPaths.includes(location.pathname)) {
     return null;
   }
 
   return (
     <header className="w-full border-b border-gray-200 bg-white shadow-sm sticky top-0 z-50">
-      <div className="max-w-[1400px] mx-auto px-6 py-4 flex items-center gap-6">
+      <div className="max-w-[1180px] mx-auto px-6 py-4 flex items-center gap-6">
         {/* 로고 */}
         <div
           className="flex items-center gap-2 cursor-pointer"
@@ -176,8 +229,11 @@ function AppHeader() {
           <img src={WhalesLogo} alt="Whales 로고" className="h-10 w-auto" />
         </div>
 
-        {/* 🔍 검색창 + 검색 기록 팝업 */}
-        <form onSubmit={handleSearch} className="flex-1 max-w-2xl relative">
+        {/* 🔍 검색창 (폭 줄이기: max-w-xl) + 검색 기록 팝업 */}
+        <form
+          onSubmit={handleSearch}
+          className="flex-[1.4] max-w-[520px] relative"
+        >
           <div className="relative w-full">
             {/* 검색바 */}
             <div
@@ -193,7 +249,7 @@ function AppHeader() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="게시글 검색하기"
                 onFocus={openHistory}
-                onClick={openHistory} // 포커스 유지 상태에서 다시 클릭해도 열리도록
+                onClick={openHistory}
                 onBlur={handleBlurSearch}
                 className="
                   flex-1 border-none bg-transparent shadow-none
@@ -215,19 +271,40 @@ function AppHeader() {
                   rounded-b-xl shadow-sm overflow-hidden
                 "
               >
-                {/* '최근 검색 기록' + 오른쪽으로 이어지는 구분선 */}
-                <div className="flex items-center px-4 py-1 text-[11px] text-[#7BA4F5] border-b border-[#A9C8FF]/40">
-                  {/* <span className="mr-2 whitespace-nowrap">최근 검색 기록</span> */}
-                  <div className="flex-1 h-px bg-[#A9C8FF]/50" />
-                </div>
+                {/* 상단: 입력 중인 키워드 태그/텍스트 칩 */}
+                {keywordParts.length > 0 && (
+                  <div className="px-4 pt-2 pb-1 flex flex-wrap gap-2 text-xs">
+                    {keywordParts.map((part, idx) => {
+                      const isTag = part.startsWith('#') && part.length > 1;
+                      const label = isTag ? part.slice(1) : part;
+                      return (
+                        <span
+                          key={`${part}-${idx}`}
+                          className={
+                            'px-2 py-0.5 rounded-full border ' +
+                            (isTag
+                              ? 'bg-[#C7DBFF] border-[#9AB8FF] text-[#1D4ED8] font-medium'
+                              : 'bg-white border-[#CBD5F5] text-[#4B6FBF]')
+                          }
+                        >
+                          {isTag ? `#${label}` : label}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
 
+                {/* 구분선 */}
+                <div className="mx-4 mt-1 mb-1 h-px bg-[#A9C8FF]/50" />
+
+                {/* 최근 검색 기록 리스트 */}
                 <ul className="max-h-64 overflow-y-auto">
-                  {filteredHistory.length === 0 ? (
+                  {history.length === 0 ? (
                     <li className="px-4 py-2 text-xs text-[#7BA4F5]/70">
                       최근 검색 기록이 없습니다.
                     </li>
                   ) : (
-                    filteredHistory.map((item) => (
+                    history.map((item) => (
                       <li
                         key={item.id}
                         className="
@@ -235,10 +312,9 @@ function AppHeader() {
                           text-xs sm:text-sm text-[#4B6FBF]
                           hover:bg-[#D7E6FF] cursor-pointer
                         "
-                        onMouseDown={(e) => e.preventDefault()} // blur 방지
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => handleClickHistoryItem(item.keyword)}
                       >
-                        {/* 이모티콘(Clock)도 반응형 크기로 고정 */}
                         <Clock className="shrink-0 w-3 h-3 sm:w-4 sm:h-4 opacity-70" />
                         <span className="truncate">{item.keyword}</span>
                       </li>
@@ -250,7 +326,7 @@ function AppHeader() {
           </div>
         </form>
 
-        {/* 우측 버튼들 */}
+        {/* 우측 영역: 글쓰기 + Chat + Alarm + 프로필/로그인 */}
         <div className="flex items-center gap-3">
           {/* ✏️ 글쓰기 버튼 */}
           <Button
@@ -263,58 +339,173 @@ function AppHeader() {
             <span>글쓰기</span>
           </Button>
 
-          {!isLoggedIn ? (
-            <>
-              {/* 🔑 로그인 버튼 */}
-              <Button
-                size="lg"
-                className="gap-2 rounded-md bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-black hover:brightness-110 transition"
+          {/* 💬 Chat 아이콘 */}
+          <button
+            type="button"
+            onClick={handleChatClick}
+            className="relative flex items-center justify-center w-9 h-9 rounded-full hover:bg-blue-50"
+          >
+            <img src={ChatButton} alt="채팅" className="w-8 h-8" />
+          </button>
+
+          {/* 🔔 Alarm 아이콘 + 뱃지 */}
+          {/* 🔔 Alarm 아이콘 + 드롭다운 */}
+          <div ref={alarmMenuRef} className="relative">
+            <button
+              type="button"
+              onClick={handleAlarmClick}
+              className="relative flex items-center justify-center w-9 h-9 rounded-full hover:bg-blue-50"
+            >
+              <img src={AlarmButton} alt="알림" className="w-8 h-8" />
+              {unreadCount > 0 && (
+                <span
+                  className="
+          absolute -top-1 -right-1
+          min-w-[16px] h-4 px-1
+          rounded-full bg-red-500 text-white
+          text-[10px] flex items-center justify-center
+        "
+                >
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* 알림 드롭다운 */}
+            {isAlarmOpen && (
+              <div
+                className="
+        absolute right-0 mt-2 w-80
+        rounded-2xl bg-white
+        shadow-lg border border-gray-100
+        py-2 z-50
+      "
               >
-                <LogIn className="w-4 h-4" />
-                <NavLink to="/login" key="login-link">
-                  로그인
-                </NavLink>
-              </Button>
-            </>
+                <div className="px-3 pb-2 text-xs font-semibold text-gray-500">
+                  알림
+                </div>
+
+                <ul className="max-h-80 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <li className="px-3 py-3 text-xs text-gray-400">
+                      새 알림이 없습니다.
+                    </li>
+                  ) : (
+                    notifications.map((n) => (
+                      <li
+                        key={n.id}
+                        onClick={() => handleClickNotification(n)}
+                        className="
+                px-3 py-2 cursor-pointer
+                hover:bg-gray-50
+                flex flex-col gap-0.5
+              "
+                      >
+                        <div className="text-xs text-gray-500">
+                          {n.senderName}
+                        </div>
+                        <div className="text-sm text-gray-900">{n.message}</div>
+                        <div className="text-[11px] text-gray-400">
+                          {new Date(n.createdAt).toLocaleString('ko-KR')}
+                        </div>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* 로그인 상태에 따른 UI */}
+          {!isLoggedIn ? (
+            <Button
+              size="lg"
+              className="gap-2 rounded-md bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-black hover:brightness-110 transition"
+            >
+              <LogIn className="w-4 h-4" />
+              <NavLink to="/login" key="login-link">
+                로그인
+              </NavLink>
+            </Button>
           ) : (
             <>
-              {/* 프로필 + 닉네임 */}
-              <div
-                className="flex items-center gap-3 px-3 py-2 rounded-md bg-blue-50 hover:bg-blue-100 cursor-pointer"
-                onClick={() => navigate('/mypage')}
-              >
-                <Avatar className="w-8 h-8 border border-blue-300">
-                  {user?.avatarUrl ? (
-                    <AvatarImage
-                      src={user.avatarUrl}
-                      alt={user?.displayName ?? ''}
-                    />
-                  ) : (
-                    <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
-                      {user?.displayName
-                        ? user.displayName[0].toUpperCase()
-                        : '유'}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <span
-                  className={`font-semibold ${getNicknameColorClass(
-                    user?.nicknameColor
-                  )}`}
+              {/* 🔽 프로필(웨) + 드롭다운 메뉴 */}
+              <div ref={profileMenuRef} className="relative">
+                {/* 위에 보이는 동그란 '웨' 아이콘 */}
+                <button
+                  type="button"
+                  onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+                  className="
+            flex items-center justify-center
+            w-10 h-10 rounded-full
+            border-[5px] border-blue-300
+            bg-white text-gray-900 font-bold
+            shadow-sm hover:bg-gray-50
+          "
                 >
-                  {user?.displayName || user?.email}
-                </span>
-              </div>
+                  {user?.displayName
+                    ? user.displayName[0]
+                    : user?.email
+                    ? user.email[0].toUpperCase()
+                    : '유'}
+                </button>
 
-              {/* 로그아웃 버튼 */}
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleLogout}
-                className="gap-2 border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700"
-              >
-                로그아웃
-              </Button>
+                {/* 아래에 뜨는 카드 메뉴 */}
+                {isProfileMenuOpen && (
+                  <div
+                    className="
+              absolute left-0 mt-2 w-40
+              rounded-2xl bg-white
+              shadow-lg border border-gray-100
+              py-2 z-50
+            "
+                  >
+                    {/* 마이페이지 */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsProfileMenuOpen(false);
+                        navigate('/mypage');
+                      }}
+                      className="
+                flex w-full items-center
+                px-3 py-2 text-sm text-gray-800
+                hover:bg-gray-50
+              "
+                    >
+                      <span
+                        className="
+                  mr-2 px-1.5 py-0.5
+                  text-[10px] leading-none
+                  border border-gray-400
+                  rounded-md
+                  font-semibold
+                "
+                      >
+                        My
+                      </span>
+                      <span>마이페이지</span>
+                    </button>
+
+                    {/* 로그아웃 */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsProfileMenuOpen(false);
+                        handleLogout();
+                      }}
+                      className="
+                flex w-full items-center
+                px-3 py-2 text-sm text-gray-800
+                hover:bg-gray-50
+              "
+                    >
+                      <LogOut className="mr-2 w-4 h-4" />
+                      <span>로그아웃</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>

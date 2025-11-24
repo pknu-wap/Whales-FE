@@ -371,6 +371,52 @@ export const searchPostsByKeyword = async (keyword: string) => {
   }));
 };
 
+// ========================================
+// 🔗 Notifications API
+// ========================================
+
+export interface NotificationItem {
+  id: string;
+  postId: string | null;
+  commentId: string | null;
+  senderName: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
+
+// GET /notifications - 내 알림 전체 조회
+export const getNotifications = async (): Promise<NotificationItem[]> => {
+  const res = await api.get('/notifications');
+  return res.data;
+};
+
+// GET /notifications/unread - 내가 안 읽은 알림 조회
+export const getUnreadNotifications = async (): Promise<NotificationItem[]> => {
+  const res = await api.get('/notifications/unread');
+  return res.data;
+};
+
+// GET /notifications/unread-count - 안 읽은 알림 개수
+export const getUnreadNotificationCount = async (): Promise<number> => {
+  const res = await api.get('/notifications/unread-count');
+  // 응답이 숫자라고 문서에 적혀 있으니 그대로 반환
+  return res.data;
+};
+
+// PATCH /notifications/{id}/read - 단일 알림 읽음 처리
+export const markNotificationRead = async (id: string) => {
+  const res = await api.patch(`/notifications/${id}/read`);
+  return res.data;
+};
+
+// PATCH /notifications/read/unread - 읽지 않은 알림 모두 읽음 처리
+export const markAllNotificationsRead = async () => {
+  const res = await api.patch('/notifications/read/unread');
+  return res.data;
+};
+
+
 
 
 export default api;
