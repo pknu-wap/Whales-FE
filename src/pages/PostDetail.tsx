@@ -275,8 +275,8 @@ export default function PostDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="w-full max-w-[1400px] mx-auto flex p-6 gap-6">
+    <div>
+      <main className="w-full max-w-7xl mx-auto flex p-6 gap-6 items-start">
         <AppSidebar />
 
         <section className="flex-1 flex flex-col gap-6">

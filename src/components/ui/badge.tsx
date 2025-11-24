@@ -4,6 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const badgeVariants = cva(
+  // ✔ 기존 구조 그대로 (border 클래스 유지)
   'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
   {
     variants: {
@@ -15,9 +16,9 @@ const badgeVariants = cva(
         destructive:
           'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80',
 
-        // ✅ outline 스타일을 연한 파란색으로 변경
+        // ✅ 태그용 outline 스타일 (테두리 안 보이게 + 연파랑 배경 + 글자 검정)
         outline:
-          'border-blue-300 text-blue-600 bg-blue-50 hover:bg-blue-100',
+          'border-transparent bg-blue-200 text-black hover:bg-blue-300',
       },
     },
     defaultVariants: {
