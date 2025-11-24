@@ -21,12 +21,15 @@ export default function AuthCallback() {
       try {
         const redirectUri = 'http://localhost:5173/auth/callback';
 
+
+
         // ✅ 공통 api 인스턴스 사용
         //    (baseURL 이 http://3.27.115.110:8080/api 라고 가정)
         const response = await api.post('/auth/login/google', {
           code,
           redirectUri,
         });
+
 
         const { accessToken, user } = response.data;
 

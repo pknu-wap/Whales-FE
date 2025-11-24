@@ -5,7 +5,7 @@ import { AppSidebar } from '@/components/common';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { getPostsByTags, searchPosts } from '@/services/api';
+import { getPostsByTags, searchPosts, searchPostsByKeyword } from '@/services/api';
 
 interface PostSummary {
   id: string;
@@ -22,8 +22,9 @@ const PAGE_SIZE = 4;
 
 export default function SearchPage() {
   const [searchParams] = useSearchParams();
-  const tag = searchParams.get('tag');      // /search?tag=리액트
-  const query = searchParams.get('query');  // /search?query=리액트
+  const tag = searchParams.get('tag'); // /search?tag=리액트
+  const query = searchParams.get('query'); // /search?query=리액트
+  const keyword = searchParams.get('keyword');
   const [posts, setPosts] = useState<PostSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -32,11 +33,11 @@ export default function SearchPage() {
   // 검색 조건(tag/query)이 바뀔 때마다 페이지 1로
   useEffect(() => {
     setPage(1);
-  }, [tag, query]);
+  }, [tag, query, keyword]);
 
   useEffect(() => {
     // tag도 query도 없으면 초기화
-    if (!tag && !query) {
+    if (!tag && !query && !keyword) {
       setPosts([]);
       return;
     }
@@ -55,8 +56,12 @@ export default function SearchPage() {
             : Array.isArray(raw?.content)
             ? raw.content
             : [];
+        } // ✅ [추가] /api/search?keyword=... 고급 검색 + 검색기록 저장
+        else if (keyword) {
+          const raw = await searchPostsByKeyword(keyword);
+          list = Array.isArray(raw) ? raw : [];
         } else if (query) {
-          // ✅ 제목/내용 검색
+          // ✅ 제목/내용 검색 (기존 /posts/search 유지)
           const raw = await searchPosts(query);
           list = Array.isArray(raw) ? raw : [];
         }
@@ -65,9 +70,9 @@ export default function SearchPage() {
           id: p.id,
           title: p.title ?? '',
           tags: Array.isArray(p.tags)
-            ? p.tags.map((t: any) =>
-                typeof t === 'string' ? t : t?.name ?? ''
-              ).filter(Boolean)
+            ? p.tags
+                .map((t: any) => (typeof t === 'string' ? t : t?.name ?? ''))
+                .filter(Boolean)
             : [],
           createdAt: p.createdAt ?? new Date().toISOString(),
           reactions: p.reactions,
@@ -83,14 +88,17 @@ export default function SearchPage() {
     };
 
     fetch();
-  }, [tag, query]);
+  }, [tag, query, keyword]);
 
   const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
   const start = (page - 1) * PAGE_SIZE;
   const pagePosts = posts.slice(start, start + PAGE_SIZE);
 
+  // ✅ [변경] 제목에 keyword도 반영
   const titleText = tag
     ? `태그: ${tag}`
+    : keyword
+    ? `"${keyword}" 검색 결과`
     : query
     ? `"${query}" 검색 결과`
     : '검색';
@@ -107,7 +115,7 @@ export default function SearchPage() {
             <p className="text-muted-foreground">불러오는 중…</p>
           ) : pagePosts.length === 0 ? (
             <p className="text-muted-foreground">
-              {tag || query
+              {tag || keyword || query 
                 ? '해당 조건에 맞는 게시글이 없습니다.'
                 : '검색어나 태그를 입력해 주세요.'}
             </p>
@@ -169,9 +177,7 @@ export default function SearchPage() {
                     variant="outline"
                     size="sm"
                     disabled={page === totalPages}
-                    onClick={() =>
-                      setPage((p) => Math.min(totalPages, p + 1))
-                    }
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   >
                     다음
                   </Button>

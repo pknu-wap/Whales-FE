@@ -2,7 +2,9 @@ import axios from 'axios';
 import useAuthStore from '@/stores/authStore';
 
 // API 기본 URL 설정
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://3.27.115.110:8080/api';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+
 
 // axios 인스턴스 생성
 const api = axios.create({
@@ -334,5 +336,41 @@ export const getIsScraped = async (postId: string) => {
 // ========================================
 // 🔗 Favorite Tags API (내 즐겨찾기 태그)
 // ========================================
+
+
+
+// ========================================
+// 🔗 Search API (/api/search)
+// ========================================
+
+// 백엔드 SearchHistoryResponse 그대로 매핑
+export interface SearchHistoryItem {
+  id: string;        // UUID
+  keyword: string;   // 사용자가 검색한 원본 키워드
+  searchedAt: string;
+}
+
+// GET /api/search/history - 내 검색 기록 조회
+export const getSearchHistory = async (): Promise<SearchHistoryItem[]> => {
+  const res = await api.get("/search/history");
+  console.log("[getSearchHistory] /search/history 응답:", res.data);
+  return res.data;
+};
+
+// GET /api/search?keyword=... - 검색 + 검색기록 자동 저장
+// (기존 /posts/search 를 건드리지 않기 위해 이름 다르게)
+export const searchPostsByKeyword = async (keyword: string) => {
+  const res = await api.get("/search", { params: { keyword } });
+
+  // PostResponse 안의 tags 정규화 (기존 searchPosts랑 로직 맞추기)
+  return res.data.map((post: any) => ({
+    ...post,
+    tags: Array.isArray(post.tags)
+      ? post.tags.map((t: any) => (typeof t === "object" ? t.name : t))
+      : [],
+  }));
+};
+
+
 
 export default api;
