@@ -126,11 +126,10 @@ export default function SearchPage() {
     : '검색';
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="w-full max-w-[1400px] mx-auto flex p-6 gap-6">
-        <AppSidebar />
-
-        <section className="flex-1 flex flex-col gap-4">
+    <div>
+      <main className="w-full flex p-6 gap-6 items-start">
+      <AppSidebar />
+      <section className="flex-1 flex flex-col gap-12">
           <h1 className="text-2xl font-bold">{titleText}</h1>
 
           {loading ? (
