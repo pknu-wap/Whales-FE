@@ -28,29 +28,18 @@ export function AppSidebar(): React.ReactElement {
     hydrate();
   }, [hydrate]);
 
-  const defaultFavoriteTags = ['리액트', '스프링부트', '채용'];
-
-  const favoriteTags = (subscribedTags.length > 0
-    ? subscribedTags
-    : defaultFavoriteTags
-  ).slice(0, 4);
+  // 🔥 디폴트 태그 제거 → 유저가 구독한 태그만 사용
+  const favoriteTags = subscribedTags.slice(0, 4);
 
   const navLinkBaseStyle =
     'flex items-center gap-3 font-medium w-full px-3 py-2 rounded-md transition-colors';
-
-  // 활성 상태
   const navLinkActiveStyle = 'bg-blue-200 text-black';
-
-  // 비활성 상태
   const navLinkInactiveStyle =
     'text-black/80 hover:bg-blue-100 hover:text-black';
 
   const tagLinkBaseStyle =
     'flex items-center gap-2 text-sm w-full px-3 py-1.5 rounded-md transition-colors';
-
-  // ✅ 태그 활성 상태에서도 폰트 굵게(X)
   const tagLinkActiveStyle = 'bg-blue-200 text-black';
-
   const tagLinkInactiveStyle =
     'text-black/70 hover:bg-blue-100 hover:text-black';
 
@@ -67,7 +56,7 @@ export function AppSidebar(): React.ReactElement {
         </button>
       </div>
 
-      {/* 사이드바 패널 */}
+      {/* 사이드바 */}
       <aside
         className={`flex flex-col gap-4 rounded-lg shadow-sm transition-all duration-300 ease-in-out
         ${
@@ -79,9 +68,7 @@ export function AppSidebar(): React.ReactElement {
         {/* 로고 */}
         <div>
           <NavLink to="/">
-            <h2 className="text-xl font-bold text-black">
-              카테고리
-            </h2>
+            <h2 className="text-xl font-bold text-black">카테고리</h2>
           </NavLink>
         </div>
 
@@ -127,29 +114,43 @@ export function AppSidebar(): React.ReactElement {
 
         <TailwindSeparator />
 
-        {/* 즐겨찾기 */}
-        {favoriteTags.length > 0 && (
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-black">
-                즐겨찾기
-              </h3>
-              <NavLink
-                to="/settings/tags"
-                className={({ isActive }) =>
-                  `rounded-md transition-colors flex items-center justify-center
-                  ${
-                    isActive
-                      ? 'bg-blue-200 text-black'
-                      : 'text-black/80 hover:bg-blue-100 hover:text-black'
-                  } px-2 py-1`
-                }
-                aria-label="구독 태그 설정"
-              >
-                <Settings className="w-6 h-6" />
-              </NavLink>
-            </div>
+        {/* ⭐ 즐겨찾기 - 항상 표시, 태그 없으면 안내 문구 */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-black">
+              즐겨찾기
+            </h3>
 
+            <NavLink
+              to="/settings/tags"
+              className={({ isActive }) =>
+                `rounded-md transition-colors flex items-center justify-center
+                ${
+                  isActive
+                    ? 'bg-blue-200 text-black'
+                    : 'text-black/80 hover:bg-blue-100 hover:text-black'
+                } px-2 py-1`
+              }
+              aria-label="구독 태그 설정"
+            >
+              <Settings className="w-6 h-6" />
+            </NavLink>
+          </div>
+
+          {favoriteTags.length === 0 ? (
+            // ✅ 구독한 태그가 없을 때
+            <button
+              onClick={() => {
+                // 필요하면 여기서도 페이지 이동
+                // navigate('/settings/tags') 같은 거 쓸 수도 있음
+              }}
+              className="text-xs text-black/60 px-0 py-1 rounded-md bg-gray-100"
+            >
+              아직 즐겨찾기 태그가 없습니다.{' '}
+              <span className="underline">태그 설정에서 추가해 보아요.</span>
+            </button>
+          ) : (
+            // ✅ 구독한 태그가 있을 때
             <div className="flex flex-col gap-1">
               {favoriteTags.map((tag) => (
                 <NavLink
@@ -168,8 +169,8 @@ export function AppSidebar(): React.ReactElement {
                 </NavLink>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </aside>
     </div>
   );
