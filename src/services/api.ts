@@ -35,20 +35,14 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // error.response, error.config 둘 다 있어야 인터셉터 실행
-    if (!error.response || !error.config) {
-      return Promise.reject(error);
-    }
+    if (!error.response || !error.config) return Promise.reject(error);
 
-    // 원래 요청 설정
-    const original = error.config as any;
+    const original = error.config;
 
     // ★ Access Token 만료 → 401 처리 (재시도 플래그로 무한루프 방지)
     if (error.response.status === 401 && !original._retry) {
       original._retry = true;
-
       try {
-        // 1) Refresh API 호출 (api가 아니라 axios 기본 인스턴스 사용!)
         const refreshResponse = await axios.post(
           `${API_BASE_URL}/auth/refresh`,
           {},
@@ -60,20 +54,16 @@ api.interceptors.response.use(
         // 2) Zustand에 Access Token & User 갱신
         useAuthStore.getState().setAuth(accessToken, user);
 
-        // 3) 원래 요청에 새 토큰 붙여서 재전송
-        original.headers = original.headers || {};
+        // 기존 요청 재전송
         original.headers.Authorization = `Bearer ${accessToken}`;
-
         return api(original);
       } catch (refreshError) {
-        // RefreshToken도 만료 → 강제 로그아웃
         useAuthStore.getState().clearAuth();
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }
 
-    // 그 외 에러는 그대로 throw
     return Promise.reject(error);
   }
 );
@@ -154,10 +144,20 @@ export const deletePost = async (id: string) => {
 
 export const searchPosts = async (query: string) => {
   const response = await api.get(`/posts/search`, { params: { query } });
-  return response.data.map((post: any) => ({
+
+  type ApiTag = string | { name: string };
+
+  type ApiPost = {
+    tags?: ApiTag[] | null;
+    [key: string]: unknown; // 나머지 필드는 뭐가 오든 허용
+  };
+
+  return response.data.map((post: ApiPost) => ({
     ...post,
     tags: Array.isArray(post.tags)
-      ? post.tags.map((t: any) => (typeof t === 'object' ? t.name : t))
+      ? post.tags.map((t) =>
+          typeof t === 'object' && t !== null ? t.name : t
+        )
       : [],
   }));
 };
@@ -249,6 +249,36 @@ export const deleteComment = async (id: string, hard: boolean = false) => {
   const response = await api.delete(`/comments/${id}`, {
     params: { hard },
   });
+  return response.data;
+};
+
+// GET /comments/me - 내가 쓴 댓글 조회  ← ★ 새로 추가된 기능
+export interface CommentReactions {
+  likeCount: number;
+  dislikeCount: number;
+  myReaction: 'LIKE' | 'DISLIKE' | null;
+}
+
+export interface CommentAuthor {
+  id: string;
+  displayName: string;
+  email: string;
+  nicknameColor: string;
+}
+
+export interface MyComment {
+  id: string;
+  postId: string;
+  content: string;
+  status: 'ACTIVE' | 'DELETED';
+  createdAt: string;
+  updatedAt: string;
+  reactions: CommentReactions;
+  author: CommentAuthor;
+}
+
+export const getMyComments = async (): Promise<MyComment[]> => {
+  const response = await api.get('/comments/me');
   return response.data;
 };
 

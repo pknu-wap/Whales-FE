@@ -1,5 +1,3 @@
-// src/components/common/TopicCard.tsx
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -37,8 +35,8 @@ interface TopicCardProps {
 }
 
 type ReactionSummary = {
-  likeCount: number;
-  dislikeCount: number;
+  likeCount?: number;
+  dislikeCount?: number;
   myReaction?: 'LIKE' | 'DISLIKE' | null;
 };
 
@@ -121,6 +119,10 @@ export function TopicCard({
 
   const previewContent =
     content.length > 40 ? content.substring(0, 40) + '...' : content;
+
+  const previewContent =
+  content.length > 40 ? content.substring(0, 40) + '...' : content;
+
 
   return (
     <Card
