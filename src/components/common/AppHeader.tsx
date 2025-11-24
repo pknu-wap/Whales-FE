@@ -8,8 +8,8 @@ import useAuthStore from '../../stores/authStore';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 import WhalesLogo from '@/assets/Whales.svg';
-import AlarmButton from '@/assets/AlarmButton.svg';
-import ChatButton from '@/assets/ChatButton.svg';
+// import AlarmButton from '@/assets/AlarmButton.svg';
+// import ChatButton from '@/assets/ChatButton.svg';
 
 /** 프론트(localStorage)에서만 관리하는 검색 기록 타입 */
 type LocalHistoryItem = {

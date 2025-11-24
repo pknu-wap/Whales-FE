@@ -1,11 +1,11 @@
-import { StrictMode } from 'react';
+
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from "react-router";
 import './index.css'
 //파일 경로를 줄여서 써도 동작하는 건 바로 모듈 해석(Module Resolution) 규칙
 import App from './pages/' // 메인 페이지
 // 그러나 회원가입 페이지는 필요가 없다
-import SignIn from "./pages/sign-in" // 회원가입 페이지
+// import SignIn from "./pages/sign-in" // 회원가입 페이지
 import RootLayout from "./pages/layout.tsx";
 import CreatePost from "./pages/CreatePost.tsx";
 import PostDetail from "./pages/PostDetail.tsx";
@@ -31,7 +31,6 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/post/:id" element={<PostDetail />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/sign-in" element={<SignIn />} />
           <Route path="/recent" element={<RecentPage />} />
           <Route path="/trending" element={<TrendingPage />} />
           <Route path="/search" element={<SearchPage />} />
