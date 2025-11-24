@@ -149,21 +149,30 @@ export default function CreatePost() {
 
               {/* 액션 버튼 (취소 / 작성) */}
               <div className="flex gap-4 justify-end mt-4">
-                <button
-                  type="button"
-                  onClick={() => navigate(-1)}
-                  className="p-2 rounded-full transition cursor-pointer"
-                >
-                  <img src={cancelIcon} alt="취소" className="w-20 h-20" />
-                </button>
+               <button
+  type="button"
+  onClick={() => navigate(-1)}
+  className="p-2 rounded-full transition cursor-pointer"
+>
+  <img
+    src={cancelIcon}
+    alt="취소"
+    className="w-20 h-20 transition hover:brightness-90"
+  />
+</button>
 
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  className="p-2 rounded-full  transition cursor-pointer"
-                >
-                  <img src={submitIcon} alt="게시글 작성" className="w-36 h-36" />
-                </button>
+<button
+  type="button"
+  onClick={handleSubmit}
+  className="p-2 rounded-full transition cursor-pointer"
+>
+  <img
+    src={submitIcon}
+    alt="게시글 작성"
+    className="w-36 h-36 transition hover:brightness-90"
+  />
+</button>
+
               </div>
 
             </div>
