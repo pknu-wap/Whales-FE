@@ -78,9 +78,9 @@ function App() {
   // 🔹 로딩 화면
   if (loading) {
     return (
-      <main className="w-full h-full min-h-screen flex p-6 gap-6">
-        <AppSidebar />
-        <section className="flex-1 flex items-center justify-center">
+      <main className="w-full flex p-6 gap-6 items-start">
+      <AppSidebar />
+      <section className="flex-1 flex flex-col gap-12">
           <p className="text-muted-foreground">불러오는 중...</p>
         </section>
       </main>

@@ -5,10 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { ThumbsUp, MessageCircle, ArrowLeft } from 'lucide-react';
+import { ThumbsUp, MessageCircle, ArrowLeft, MoreVertical } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { getPost, getPostComments, createComment } from '@/services/api';
 import { togglePostLike, togglePostDislike, togglePostScrap, getIsScraped } from '@/services/api';
+import scrapIcon from '@/assets/scrap.svg';
+import reportIcon from '@/assets/report.svg';
+import writeCommentIcon from '@/assets/writecomment.svg';
 
 type ReactionSummary = {
   likeCount: number;
@@ -48,6 +51,7 @@ export default function PostDetail() {
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
   const [isScraped, setIsScraped] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // ⬅ 추가
 
   // const handleTagClick = (tag: string) => {
   //   navigate(`/search?tag=${encodeURIComponent(tag)}`)
@@ -287,19 +291,55 @@ export default function PostDetail() {
           {/* 본문 */}
           <div className="bg-card rounded-lg border border-border p-8">
             <div className="flex items-start justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <Avatar className="w-14 h-14 border-2 border-primary/20">
-                  <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
-                    {postData.authorInitial}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-bold text-lg">{postData.authorName}</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{postData.date}</p>
-                </div>
+          {/* 왼쪽: 프로필 */}
+          <div className="flex items-center gap-3">
+            <Avatar className="w-14 h-14 border-2 border-primary/20">
+              <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
+                {postData.authorInitial}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <p className="font-bold text-lg">{postData.authorName}</p>
               </div>
+              <p className="text-sm text-muted-foreground">{postData.date}</p>
+            </div>
+          </div>
+
+  {/* 오른쪽: 스크랩/신고 메뉴 */}
+  <div className="relative">
+    <button
+      type="button"
+      onClick={() => setIsMenuOpen((prev) => !prev)}
+      className="p-2 rounded-full hover:bg-muted transition"
+    >
+      <MoreVertical className="w-5 h-5 text-muted-foreground" />
+    </button>
+
+    {isMenuOpen && (
+      <div className="absolute right-0 mt-2 w-32 bg-gray-100 border border-border rounded-lg shadow-lg py-1 text-sm z-10">
+        <button
+          type="button"
+          onClick={() => {
+            handleScrap();
+            setIsMenuOpen(false);
+          }}
+          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-blue-200 transition"
+        >
+          <img src={scrapIcon} alt="스크랩" className="w-4 h-4" />
+          <span>{isScraped ? '스크랩 취소' : '스크랩'}</span>
+        </button>
+        <button
+          type="button"
+          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-blue-200 transition"
+        >
+          <img src={reportIcon} alt="신고하기" className="w-4 h-4" />
+          <span>신고하기</span>
+        </button>
+      </div>
+    )}
+</div>
+
             </div>
 
             <h1 className="text-2xl font-bold mb-6 leading-tight">{postData.title}</h1>
@@ -315,68 +355,83 @@ export default function PostDetail() {
               {postData.content}
             </div>
 
-            <div className="flex items-center gap-6 text-muted-foreground pt-4 border-t">
-              <button
-                onClick={handleLike}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md border transition-all ${
-                  isLiked
-                    ? 'text-blue-500 border-blue-500 bg-blue-50'
-                    : 'hover:text-blue-500 hover:border-blue-400 border-transparent'
-                }`}
-              >
-                <ThumbsUp className="w-5 h-5" />
-                <span className="font-medium">{postData.likes}</span>
-              </button>
-              <button
-                onClick={handleDislike}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md border transition-all ${
-                  isDisliked
-                    ? 'text-blue-500 border-blue-500 bg-blue-50'
-                    : 'hover:text-blue-500 hover:border-blue-400 border-transparent'
-                }`}
-              >
-                <ThumbsUp className="w-5 h-5 rotate-180" />
-                <span className="font-medium">{postData.reactions?.dislikeCount ?? 0}</span>
-              </button>
-              <button className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-transparent hover:text-blue-500 hover:border-blue-400 transition-all">
-                <MessageCircle className="w-5 h-5" />
-                <span className="font-medium">{comments.length}</span>
-              </button>
-              <button
-                onClick={handleScrap}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md border transition-all ${
-                  isScraped
-                    ? 'text-yellow-500 border-yellow-500 bg-yellow-50'
-                    : 'hover:text-yellow-500 hover:border-yellow-400 border-transparent'
-                }`}
-              >
-                📌 <span className="font-medium">{isScraped ? '스크랩됨' : '스크랩'}</span>
-              </button>
-            </div>
+            <div className="flex items-center justify-end gap-2 pt-4 border-t">
+            {/* 좋아요 */}
+            <button
+              onClick={handleLike}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-muted transition ${
+                isLiked ? 'text-blue-500' : 'text-muted-foreground'
+              }`}
+            >
+              <ThumbsUp className="w-4 h-4 text-black" />
+              <span className="font-medium">{postData.likes}</span>
+            </button>
+
+            {/* 싫어요 */}
+            <button
+              onClick={handleDislike}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-muted transition ${
+                isDisliked ? 'text-blue-500' : 'text-muted-foreground'
+              }`}
+            >
+              <ThumbsUp className="w-4 h-4 rotate-180 text-black" />
+              <span className="font-medium">
+                {postData.reactions?.dislikeCount ?? 0}
+              </span>
+            </button>
+
+            {/* 댓글 */}
+            <button
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-muted text-muted-foreground transition hover:bg-muted/80"
+            >
+              <MessageCircle className="w-4 h-4 text-black" />
+              <span className="font-medium">{comments.length}</span>
+            </button>
+          </div>
           </div>
 
-          {/* 댓글 작성 */}
-          <div className="bg-card rounded-lg border border-border p-6">
-            <h3 className="font-bold text-lg mb-4">댓글 작성</h3>
-            <div className="flex gap-4">
-              <Avatar className="w-12 h-12 border-2 border-primary/20">
-                <AvatarFallback className="bg-primary/10 text-primary font-bold">나</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 flex flex-col gap-3">
-                <Textarea
-                  placeholder="댓글을 입력하세요..."
-                  value={commentInput}
-                  onChange={(e) => setCommentInput(e.target.value)}
-                  className="min-h-[100px] resize-none"
-                />
-                <div className="flex justify-end">
-                  <Button onClick={handleCommentSubmit} disabled={!commentInput.trim()}>
-                    댓글 작성
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
+         {/* 댓글 작성 */}
+<div className="bg-card rounded-lg border border-border p-6">
+  <h3 className="font-bold text-lg mb-4">댓글 작성</h3>
+
+  {/* 아바타 + 입력 영역 한 줄 정렬 */}
+  <div className="flex items-start gap-4">
+    {/* 아바타 */}
+    <Avatar className="w-12 h-12 border-2 border-primary/20">
+      <AvatarFallback className="bg-primary/10 text-primary font-bold">
+        나
+      </AvatarFallback>
+    </Avatar>
+
+    {/* 입력창 + 버튼 */}
+    <div className="flex-1 flex flex-col gap-3">
+      <Textarea
+        placeholder="댓글을 입력하세요..."
+        value={commentInput}
+        onChange={(e) => setCommentInput(e.target.value)}
+        className="min-h-[100px] resize-none bg-gray-100 border-0 rounded-md focus:ring-0 focus:outline-none"
+      />
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={handleCommentSubmit}
+          disabled={!commentInput.trim()}
+          className="inline-flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <img
+            src={writeCommentIcon}
+            alt="댓글 작성"
+            className="w-30 h-30"
+          />
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
 
           {/* 댓글 목록 */}
           <div className="bg-card rounded-lg border border-border p-6">
@@ -400,7 +455,7 @@ export default function PostDetail() {
                       </p>
                       <div className="flex items-center gap-4 text-sm">
                         <button className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors">
-                          <ThumbsUp className="w-4 h-4" />
+                          <ThumbsUp className="w-4 h-4 text-black" />
                           <span className="font-medium">{c.likes}</span>
                         </button>
                       </div>
