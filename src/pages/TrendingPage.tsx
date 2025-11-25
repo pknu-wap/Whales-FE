@@ -104,17 +104,20 @@ export default function TrendingPage() {
     <main className="w-full flex p-6 gap-6 items-start">
       <AppSidebar />
       <section className="flex-1 flex flex-col gap-12">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-orange-500 to-red-500 flex items-center justify-center">
-            <TrendingUp className="w-5 h-5 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900">
-            인기 게시글
-          </h2>
-        </div>
-        <p className="text-gray-600">
-          좋아요 수가 많은 인기 게시글을 확인해보세요.
-        </p>
+        <div>
+  <div className="flex items-center gap-3 mb-1">
+    <div className="w-8 h-8 rounded-lg bg-linear-to-br from-orange-500 to-red-500 flex items-center justify-center">
+      <TrendingUp className="w-5 h-5 text-white" />
+    </div>
+    <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+      인기 게시글
+    </h2>
+  </div>
+
+  <p className="mt-1 text-gray-600">
+    가장 주목받고 있는 댓글을 보세요
+  </p>
+</div>
 
         {pagePosts.length > 0 ? (
           <>

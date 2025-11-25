@@ -353,7 +353,7 @@ export interface SearchHistoryItem {
 // GET /api/search/history - 내 검색 기록 조회
 export const getSearchHistory = async (): Promise<SearchHistoryItem[]> => {
   const res = await api.get("/search/history");
-  console.log("[getSearchHistory] /search/history 응답:", res.data);
+  // console.log("[getSearchHistory] /search/history 응답:", res.data);
   return res.data;
 };
 
