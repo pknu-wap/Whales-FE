@@ -182,7 +182,7 @@ export function TopicCard({
 
               <div className="flex flex-col items-center gap-3">
                 {/* 작은 아바타 */}
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-lg font-semibold text-slate-900 ring-[6px] ring-[#e0c9ff]">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl font-semibold text-slate-900 ring-[11px] ring-[#D89BFF] mb-4">
                   {displayAuthor[0]}
                 </div>
 
