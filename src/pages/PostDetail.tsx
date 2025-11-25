@@ -12,7 +12,6 @@ import { togglePostLike, togglePostDislike, togglePostScrap, getIsScraped } from
 import scrapIcon from '@/assets/scrap.svg';
 import reportIcon from '@/assets/report.svg';
 import writeCommentIcon from '@/assets/writecomment.svg';
-import RookieBadge from '@/assets/rookie.svg';
 import {
   getCommentReactions,
   likeComment,
@@ -51,7 +50,6 @@ interface CommentData {
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const [postData, setPostData] = useState<PostData | null>(null);
   const [comments, setComments] = useState<CommentData[]>([]);
@@ -368,35 +366,20 @@ const handleCommentDislike = async (commentId: string) => {
           {/* 본문 */}
           <div className="bg-card rounded-lg border border-border p-8">
             <div className="flex items-start justify-between mb-6">
-           {/* 왼쪽: 프로필 + 작은 팝업 */}
-              <div className="relative flex items-center gap-3">
-                {/* 아바타 - 클릭 시 팝업 열기 */}
-                <Avatar
-                  className="w-14 h-14 border-2 border-primary/20 cursor-pointer"
-                  onClick={() => setIsProfileOpen((prev) => !prev)}
-                >
-                  <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
-                    {postData.authorInitial}
-                  </AvatarFallback>
-                </Avatar>
-
-                {/* 닉네임/날짜 */}
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <button
-                      type="button"
-                      className="font-bold text-lg text-left hover:underline"
-                      onClick={() =>
-                        setIsProfileOpen((prev) => !prev)
-                      }
-                    >
-                      {postData.authorName}
-                    </button>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {postData.date}
-                  </p>
-                </div>
+          {/* 왼쪽: 프로필 */}
+          <div className="flex items-center gap-3">
+            <Avatar className="w-14 h-14 border-2 border-primary/20">
+              <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
+                {postData.authorInitial}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <p className="font-bold text-lg">{postData.authorName}</p>
+              </div>
+              <p className="text-sm text-muted-foreground">{postData.date}</p>
+            </div>
+          </div>
 
   {/* 오른쪽: 스크랩/신고 메뉴 */}
   <div className="relative">
@@ -435,7 +418,6 @@ const handleCommentDislike = async (commentId: string) => {
 
       </div>
     )}
-</div>
 </div>
 
             </div>
