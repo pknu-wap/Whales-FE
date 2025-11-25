@@ -12,7 +12,7 @@ import {
   getMyComments,
 } from '@/services/api';
 
-import RookieBadge from '@/assets/Rookie Ver.2.svg';
+import RookieBadge from '@/assets/rookie.svg';
 import EditFieldIcon from '@/assets/글쓰기 수정.svg';
 import EditProfileIcon from '@/assets/프로필 수정.svg';
 
