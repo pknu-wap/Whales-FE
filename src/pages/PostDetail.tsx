@@ -53,7 +53,7 @@ export default function PostDetail() {
   const [isDisliked, setIsDisliked] = useState(false);
   const [isScraped, setIsScraped] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false); // ⬅ 추가
-  const [isProfileOpen, setIsProfileOpen] = useState(false); // ✅ 프로필 팝업
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // const handleTagClick = (tag: string) => {
   //   navigate(`/search?tag=${encodeURIComponent(tag)}`)
