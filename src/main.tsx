@@ -27,6 +27,7 @@ createRoot(document.getElementById('root')!).render(
       <Routes>
         <Route element={<RootLayout />}>
           <Route index element={<App />} />
+          <Route path="/report/post/:postId" element={<ReportPage />} />
           <Route path="/create" element={<CreatePost />} />
           <Route path="/post/:id" element={<PostDetail />} />
           <Route path="/mypage" element={<MyPage />} />
