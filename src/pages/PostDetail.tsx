@@ -13,6 +13,13 @@ import scrapIcon from '@/assets/scrap.svg';
 import reportIcon from '@/assets/report.svg';
 import writeCommentIcon from '@/assets/writecomment.svg';
 import RookieBadge from '@/assets/rookie.svg';
+import {
+  getCommentReactions,
+  likeComment,
+  dislikeComment,
+} from '@/services/api';
+import useAuthStore from '@/stores/authStore';
+
 
 type ReactionSummary = {
   likeCount: number;
@@ -44,6 +51,7 @@ interface CommentData {
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const [postData, setPostData] = useState<PostData | null>(null);
   const [comments, setComments] = useState<CommentData[]>([]);
@@ -57,7 +65,39 @@ export default function PostDetail() {
   const [isDisliked, setIsDisliked] = useState(false);
   const [isScraped, setIsScraped] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false); // ⬅ 추가
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const refreshCommentReaction = async (commentId: string) => {
+  const r = await getCommentReactions(commentId);
+
+  setCommentReactions((prev) => ({
+    ...prev,
+    [commentId]: {
+      likeCount: r.likeCount ?? 0,
+      dislikeCount: r.dislikeCount ?? 0,
+      myReaction: r.myReaction ?? null,
+    },
+  }));
+};
+
+const handleCommentLike = async (commentId: string) => {
+  try {
+    if (!accessToken) return alert('로그인이 필요합니다.');
+    await likeComment(commentId);
+    await refreshCommentReaction(commentId);
+  } catch (e) {
+    console.error('댓글 좋아요 실패:', e);
+  }
+};
+
+const handleCommentDislike = async (commentId: string) => {
+  try {
+    if (!accessToken) return alert('로그인이 필요합니다.');
+    await dislikeComment(commentId);
+    await refreshCommentReaction(commentId);
+  } catch (e) {
+    console.error('댓글 싫어요 실패:', e);
+  }
+};
+
 
   // const handleTagClick = (tag: string) => {
   //   navigate(`/search?tag=${encodeURIComponent(tag)}`)
@@ -328,7 +368,7 @@ export default function PostDetail() {
           {/* 본문 */}
           <div className="bg-card rounded-lg border border-border p-8">
             <div className="flex items-start justify-between mb-6">
-              {/* 왼쪽: 프로필 + 작은 팝업 */}
+           {/* 왼쪽: 프로필 + 작은 팝업 */}
               <div className="relative flex items-center gap-3">
                 {/* 아바타 - 클릭 시 팝업 열기 */}
                 <Avatar
@@ -382,61 +422,22 @@ export default function PostDetail() {
           <span>{isScraped ? '스크랩 취소' : '스크랩'}</span>
         </button>
         <button
-          type="button"
-          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-blue-200 transition"
-        >
-          <img src={reportIcon} alt="신고하기" className="w-4 h-4" />
-          <span>신고하기</span>
-        </button>
+  type="button"
+  onClick={() => {
+    navigate(`/report/post/${id}`);  // 🔥 여기서 신고 페이지로 이동
+    setIsMenuOpen(false);
+  }}
+  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-blue-200 transition"
+>
+  <img src={reportIcon} alt="신고하기" className="w-4 h-4" />
+  <span>신고하기</span>
+</button>
+
       </div>
     )}
 </div>
-                {/* 닉네임 아래에 작게 뜨는 팝업 */}
-                {isProfileOpen && (
-                  <div className="absolute left-0 top-full z-20 mt-2 w-56 rounded-2xl border border-[#c9d8ff] bg-[#eaf2ff] px-4 py-4 shadow-md">
-                    {/* 상단 X 버튼 */}
-                    <button
-                      type="button"
-                      className="ml-auto mb-1 flex h-5 w-5 items-center justify-center text-slate-500 hover:text-slate-700"
-                      onClick={() => setIsProfileOpen(false)}
-                      aria-label="프로필 닫기"
-                    >
-                      <span className="text-base leading-none">×</span>
-                    </button>
+</div>
 
-                    <div className="flex flex-col items-center gap-3">
-                      {/* 작은 아바타 */}
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl font-semibold text-slate-900 ring-[11px] ring-[#D89BFF] mb-4">
-                        {postData.authorInitial}
-                      </div>
-
-                      <div className="flex flex-col items-center gap-1 text-center">
-                        <div className="text-xl font-extrabold text-slate-900">
-                          {postData.authorName}
-                        </div>
-                        <p className="text-xs text-slate-600">
-                          자기소개를 준비 중입니다.
-                        </p>
-                      </div>
-
-                      <img
-                        src={RookieBadge}
-                        alt="Rookie 등급 배지"
-                        className="h-6 w-auto"
-                      />
-
-                      <Button
-                        size="sm"
-                        className="mt-2 flex h-9 w-full items-center justify-center gap-1 rounded-[12px] text-xs font-semibold bg-[#2f6bff] hover:bg-[#2557d4]"
-                        onClick={() => navigate('/chat')}
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                        <span>채팅하기</span>
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
 
             <h1 className="text-2xl font-bold mb-6 leading-tight">{postData.title}</h1>
