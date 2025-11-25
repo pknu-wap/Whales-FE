@@ -405,12 +405,17 @@ const handleCommentDislike = async (commentId: string) => {
           <span>{isScraped ? '스크랩 취소' : '스크랩'}</span>
         </button>
         <button
-          type="button"
-          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-blue-200 transition"
-        >
-          <img src={reportIcon} alt="신고하기" className="w-4 h-4" />
-          <span>신고하기</span>
-        </button>
+  type="button"
+  onClick={() => {
+    navigate(`/report/post/${id}`);  // 🔥 여기서 신고 페이지로 이동
+    setIsMenuOpen(false);
+  }}
+  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-blue-200 transition"
+>
+  <img src={reportIcon} alt="신고하기" className="w-4 h-4" />
+  <span>신고하기</span>
+</button>
+
       </div>
     )}
 </div>
