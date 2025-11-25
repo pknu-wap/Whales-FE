@@ -102,15 +102,21 @@ export default function RecentPage() {
     <main className="w-full flex p-6 gap-6 items-start">
       <AppSidebar />
       <section className="flex-1 flex flex-col gap-12">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-500 to-sky-500 flex items-center justify-center">
-            <Clock className="w-5 h-5 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900">
-            최근 게시글
-          </h2>
-        </div>
-        <p className="text-gray-600">최신순으로 정렬된 게시글을 확인해보세요</p>
+        <div>
+  <div className="flex items-center gap-3 mb-1">
+    <div className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-500 to-sky-500 flex items-center justify-center">
+      <Clock className="w-5 h-5 text-white" />
+    </div>
+    <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+      최근 게시글
+    </h2>
+  </div>
+
+  <p className="mt-1 text-gray-600">
+    주목받을 댓글을 작성하세요!
+  </p>
+</div>
+
 
         {pagePosts.length > 0 ? (
           <>

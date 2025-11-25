@@ -256,10 +256,10 @@ function AppHeader() {
             className="flex-1 max-w-[600px] relative"
           >
             <div className="relative w-full">
-              {/* 검색바 */}
+              {/* 검색바, U를 뒤집은 것 ㅅ을 꾸미기 */}
               <div
                 className={
-                  'flex w-full items-center bg-[#E5F1FF] border border-[#A9C8FF] px-4 py-1 shadow-sm ' +
+                  'flex w-full items-center bg-[#E5F1FF] border border-[#7BA4F5] px-4 py-1 ' +
                   (showHistory
                     ? 'rounded-t-xl rounded-b-none border-b-0'
                     : 'rounded-xl')
@@ -283,13 +283,13 @@ function AppHeader() {
                 </button>
               </div>
 
-              {/* 검색 기록 팝업 */}
+              {/* 검색 기록 팝업, U 페이지 검색바 아래 꾸미기 */}
               {showHistory && (
                 <div
                   className="
                   absolute left-0 right-0 top-full z-40
-                  bg-[#E5F1FF] border border-[#A9C8FF] border-t-0
-                  rounded-b-xl shadow-sm overflow-hidden
+                  bg-[#E5F1FF] border border-[#7BA4F5] border-t-0
+                  rounded-b-xl overflow-hidden
                 "
                 >
                   {/* 상단: 입력 중인 키워드 태그/텍스트 칩 */}
@@ -316,7 +316,7 @@ function AppHeader() {
                   )}
 
                   {/* 구분선 */}
-                  <div className="mx-4 mt-1 mb-1 h-px bg-[#A9C8FF]/50" />
+                  <div className="mx-4 mt-1 mb-1 h-px bg-[#7BA4F5]" />
 
                   {/* 최근 검색 기록 리스트 */}
                   <ul className="max-h-64 overflow-y-auto">

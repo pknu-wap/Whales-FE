@@ -342,7 +342,7 @@ export default function MyPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="w-full flex p-6 gap-6 items-start">
+      <main className="className=w-full max-w-7xl mx-auto flex p-6 gap-6 items-start">
       <AppSidebar />
       <section className="flex-1 flex flex-col gap-12">
           {/* 상단 프로필 영역 */}
