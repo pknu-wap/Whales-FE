@@ -28,11 +28,10 @@ export default function TagSettings() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="w-full max-w-[1400px] mx-auto flex p-6 gap-6">
-        <AppSidebar />
-
-        <section className="flex-1 flex flex-col gap-6">
+    <div>
+      <main className="w-full flex p-6 gap-6 items-start">
+      <AppSidebar />
+      <section className="flex-1 flex flex-col gap-12">
           <header className="flex flex-col gap-2">
             <h1 className="text-2xl font-bold">구독 태그 설정</h1>
             <p className="text-sm text-muted-foreground">

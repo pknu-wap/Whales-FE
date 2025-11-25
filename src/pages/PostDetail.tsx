@@ -47,6 +47,10 @@ export default function PostDetail() {
 
   const [postData, setPostData] = useState<PostData | null>(null);
   const [comments, setComments] = useState<CommentData[]>([]);
+  const [commentReactions, setCommentReactions] = useState<
+  Record<string, { likeCount: number; dislikeCount: number; myReaction: 'LIKE' | 'DISLIKE' | null }>
+>({});
+  const { accessToken } = useAuthStore();
   const [commentInput, setCommentInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
@@ -58,6 +62,37 @@ export default function PostDetail() {
   // const handleTagClick = (tag: string) => {
   //   navigate(`/search?tag=${encodeURIComponent(tag)}`)
   // }
+  useEffect(() => {
+  if (!comments || comments.length === 0) return;
+
+  const fetchReactions = async () => {
+    try {
+      const entries = await Promise.all(
+        comments.map(async (c) => {
+          const r = await getCommentReactions(c.id);
+          return [
+            c.id,
+            {
+              likeCount: r.likeCount ?? 0,
+              dislikeCount: r.dislikeCount ?? 0,
+              myReaction: r.myReaction ?? null,
+            },
+          ] as const;
+        }),
+      );
+
+      const map: typeof commentReactions = {};
+      for (const [id, data] of entries) map[id] = data;
+
+      setCommentReactions(map);
+    } catch (e) {
+      console.error('댓글 리액션 로드 실패:', e);
+    }
+  };
+
+  fetchReactions();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [comments]);
 
   useEffect(() => {
     if (!id) {
@@ -499,39 +534,82 @@ export default function PostDetail() {
           <div className="bg-card rounded-lg border border-border p-6">
             <h3 className="font-bold text-lg mb-6">댓글 {comments.length}개</h3>
             <div className="flex flex-col">
-              {comments.map((c, idx) => (
-                <div key={c.id}>
-                  <div className="flex gap-4 py-4">
-                    <Avatar className="w-12 h-12 border-2 border-primary/20">
-                      <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                        {c.authorInitial}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-bold">{c.authorName}</span>
-                        <span className="text-sm text-muted-foreground">{c.date}</span>
-                      </div>
-                      <p className="text-sm text-foreground mb-3 leading-relaxed whitespace-pre-line">
-                        {c.content}
-                      </p>
-                      <div className="flex items-center gap-4 text-sm">
-                        <button className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors">
-                          <ThumbsUp className="w-4 h-4 text-black" />
-                          <span className="font-medium">{c.likes}</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  {idx < comments.length - 1 && <Separator />}
-                </div>
-              ))}
-              {comments.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  아직 댓글이 없습니다.
-                </p>
-              )}
+  {comments.map((c, idx) => {
+    const r = commentReactions[c.id]; // ✅ 여기서 JS 코드로 선언!
+
+    return (
+      <div key={c.id}>
+        <div className="flex gap-4 py-4">
+          <Avatar className="w-12 h-12 border-2 border-primary/20">
+            <AvatarFallback className="bg-primary/10 text-primary font-bold">
+              {c.authorInitial}
+            </AvatarFallback>
+          </Avatar>
+
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="font-bold">{c.authorName}</span>
+              <span className="text-sm text-muted-foreground">{c.date}</span>
             </div>
+
+            <p className="text-sm text-foreground mb-3 leading-relaxed whitespace-pre-line">
+              {c.content}
+            </p>
+
+            {/* 👍/👎 버튼 영역 */}
+            {/* 좋아요/싫어요 + 대댓글 수 영역 */}
+{/* 좋아요/싫어요 영역 */}
+<div className="flex items-center gap-2 justify-end mt-2">
+
+  {/* 👍 좋아요 */}
+  <button
+    type="button"
+    onClick={() => handleCommentLike(c.id)}
+    className="flex items-center gap-1 px-2 py-1 rounded-full border bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
+  >
+    <ThumbsUp className="w-3 h-3" />
+    <span
+      className={`text-xs font-medium ${
+        r?.myReaction === 'LIKE' ? 'text-blue-500' : ''
+      }`}
+    >
+      {r?.likeCount ?? 0}
+    </span>
+  </button>
+
+  {/* 👎 싫어요 */}
+  <button
+    type="button"
+    onClick={() => handleCommentDislike(c.id)}
+    className="flex items-center gap-1 px-2 py-1 rounded-full border bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
+  >
+    <ThumbsUp className="w-3 h-3 rotate-180" />
+    <span
+      className={`text-xs font-medium ${
+        r?.myReaction === 'DISLIKE' ? 'text-blue-500' : ''
+      }`}
+    >
+      {r?.dislikeCount ?? 0}
+    </span>
+  </button>
+
+</div>
+
+          </div>
+        </div>
+
+        {idx < comments.length - 1 && <Separator />}
+      </div>
+    );
+  })}
+
+  {comments.length === 0 && (
+    <p className="text-sm text-muted-foreground text-center py-4">
+      아직 댓글이 없습니다.
+    </p>
+  )}
+</div>
+
           </div>
         </section>
       </main>

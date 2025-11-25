@@ -353,7 +353,7 @@ export interface SearchHistoryItem {
 // GET /api/search/history - 내 검색 기록 조회
 export const getSearchHistory = async (): Promise<SearchHistoryItem[]> => {
   const res = await api.get("/search/history");
-  console.log("[getSearchHistory] /search/history 응답:", res.data);
+  // console.log("[getSearchHistory] /search/history 응답:", res.data);
   return res.data;
 };
 
@@ -371,6 +371,78 @@ export const searchPostsByKeyword = async (keyword: string) => {
   }));
 };
 
+// ========================================
+// 🔗 Notifications API
+// ========================================
+
+export interface NotificationItem {
+  id: string;
+  postId: string | null;
+  commentId: string | null;
+  senderName: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
+
+// GET /notifications - 내 알림 전체 조회
+export const getNotifications = async (): Promise<NotificationItem[]> => {
+  const res = await api.get('/notifications');
+  return res.data;
+};
+
+// GET /notifications/unread - 내가 안 읽은 알림 조회
+export const getUnreadNotifications = async (): Promise<NotificationItem[]> => {
+  const res = await api.get('/notifications/unread');
+  return res.data;
+};
+
+// GET /notifications/unread-count - 안 읽은 알림 개수
+export const getUnreadNotificationCount = async (): Promise<number> => {
+  const res = await api.get('/notifications/unread-count');
+  // 응답이 숫자라고 문서에 적혀 있으니 그대로 반환
+  return res.data;
+};
+
+// PATCH /notifications/{id}/read - 단일 알림 읽음 처리
+export const markNotificationRead = async (id: string) => {
+  const res = await api.patch(`/notifications/${id}/read`);
+  return res.data;
+};
+
+// PATCH /notifications/read/unread - 읽지 않은 알림 모두 읽음 처리
+export const markAllNotificationsRead = async () => {
+  const res = await api.patch('/notifications/read/unread');
+  return res.data;
+};
+
+
 
 
 export default api;
+
+// ✅ 게시글 리액션(좋아요/싫어요) 카운트 조회 – 로그인 필요 없는 공개 API
+export const getPostReactions = async (postId: string) => {
+  const response = await api.get(`/posts/${postId}/reactions`);
+  //  ↑ 여기!!  /posts/${postId} 가 아니라 /posts/${postId}/reactions 여야 해
+  return response.data;   // { likeCount, dislikeCount, myReaction }
+};
+
+
+// 댓글 리액션 조회 (로그인 필요 없음)
+export const getCommentReactions = async (commentId: string) => {
+  const res = await api.get(`/comments/${commentId}/reactions`);
+  return res.data; // { likeCount, dislikeCount, myReaction }
+};
+
+// 댓글 좋아요
+export const likeComment = async (commentId: string) => {
+  const res = await api.post(`/comments/${commentId}/like`);
+  return res.data;
+};
+
+// 댓글 싫어요
+export const dislikeComment = async (commentId: string) => {
+  const res = await api.post(`/comments/${commentId}/dislike`);
+  return res.data;
+};

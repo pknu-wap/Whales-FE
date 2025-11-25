@@ -21,7 +21,6 @@ interface Author {
   displayName: string;
 }
 
-// ✅ MyPage에서 내려주는 reactions까지 받을 수 있도록 타입 확장
 interface TopicCardProps {
   id: string;
   title: string;
@@ -30,6 +29,7 @@ interface TopicCardProps {
   date: string;
   tags: Tag[] | string[];
   isHot?: boolean;
+  // (마이페이지 등에서 이미 내려주는 경우를 위한 옵션)
   reactions?: {
     likeCount?: number;
     dislikeCount?: number;
@@ -41,7 +41,7 @@ interface TopicCardProps {
 type ReactionSummary = {
   likeCount: number;
   dislikeCount: number;
-  myReaction?: 'LIKE' | 'DISLIKE' | null;
+  myReaction: 'LIKE' | 'DISLIKE' | null;
 };
 
 export function TopicCard({
@@ -51,7 +51,7 @@ export function TopicCard({
   author,
   date,
   tags,
-  reactions: initialReactions, // ✅ props에서 넘어온 reactions
+  reactions: initialReactions,
 }: TopicCardProps) {
   const navigate = useNavigate();
 
@@ -61,18 +61,13 @@ export function TopicCard({
     typeof tag === 'string' ? tag : tag.name,
   );
 
-  // ✅ 초기값을 props.reactions 기준으로 설정 (없으면 null)
-  const [reactions, setReactions] = useState<ReactionSummary | null>(() =>
-    initialReactions
-      ? {
-          likeCount: initialReactions.likeCount ?? 0,
-          dislikeCount: initialReactions.dislikeCount ?? 0,
-          myReaction: initialReactions.myReaction ?? null,
-        }
-      : null,
-  );
+  // 기본값은 props -> 없으면 0
+  const [reactions, setReactions] = useState<ReactionSummary>({
+    likeCount: initialReactions?.likeCount ?? 0,
+    dislikeCount: initialReactions?.dislikeCount ?? 0,
+    myReaction: initialReactions?.myReaction ?? null,
+  });
 
-  // 댓글 개수도 props에 commentCount가 있으면 그걸 기본값으로 사용
   const [commentCount, setCommentCount] = useState(
     initialReactions?.commentCount ?? 0,
   );
@@ -81,51 +76,52 @@ export function TopicCard({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchCounts = async () => {
       try {
-        const p = await getPost(id);
+        // ✅ 이 엔드포인트는 Auth: No 이므로 로그인 상관 없음
+        const r = await getPostReactions(id);
 
-        // 서버에서 내려오는 reactions를 안전하게 캐스팅
-        const r = (p?.reactions ?? null) as
-          | {
-              likeCount?: number;
-              dislikeCount?: number;
-              myReaction?: 'LIKE' | 'DISLIKE' | null;
-            }
-          | null;
+        if (!cancelled) {
+          setReactions({
+            likeCount: r.likeCount ?? 0,
+            dislikeCount: r.dislikeCount ?? 0,
+            myReaction: r.myReaction ?? null,
+          });
+        }
 
-        const likeCount = r?.likeCount ?? p?.likes ?? 0;
-        const dislikeCount = r?.dislikeCount ?? 0;
-
-        setReactions({
-          likeCount,
-          dislikeCount,
-          myReaction: r?.myReaction ?? null,
-        });
-
-        // ❗ props로 commentCount를 안 넘겨줬을 때만 API로 댓글 수 요청
-        if (initialReactions?.commentCount == null) {
+        // 댓글 수를 props로 안 받은 경우에만 서버에서 조회
+        if (!initialReactions?.commentCount) {
           const comments = await getPostComments(id);
-          const count = Array.isArray(comments) ? comments.length : 0;
-          setCommentCount(count);
+          if (!cancelled) {
+            setCommentCount(Array.isArray(comments) ? comments.length : 0);
+          }
         }
       } catch (e) {
-        console.error('TopicCard 리액션/댓글 수 불러오기 실패:', e);
-        setReactions((prev) =>
-          prev ?? { likeCount: 0, dislikeCount: 0, myReaction: null },
-        );
-        if (initialReactions?.commentCount == null) {
-          setCommentCount(0);
+        console.error('리액션/댓글 카운트 로드 실패:', e);
+        if (!cancelled) {
+          // 실패해도 최소한 0으로 표시
+          setReactions((prev) => ({
+            likeCount: prev.likeCount ?? 0,
+            dislikeCount: prev.dislikeCount ?? 0,
+            myReaction: prev.myReaction ?? null,
+          }));
+          if (!initialReactions?.commentCount) {
+            setCommentCount(0);
+          }
         }
       }
     };
 
-    // 항상 최신 데이터를 위해 호출 (props.reactions는 초기값 역할)
     fetchCounts();
-  }, [id, initialReactions]);
+    return () => {
+      cancelled = true;
+    };
+  }, [id]); // ✅ 로그인 여부 같은 건 의존성에 넣지 않음
 
   const previewContent =
-    content.length > 40 ? content.substring(0, 40) + '...' : content;
+    content.length > 30 ? content.substring(0, 30) + '...' : content;
 
   return (
     <Card
@@ -248,13 +244,13 @@ export function TopicCard({
           {/* 좋아요 */}
           <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600">
             <ThumbsUp className="w-4 h-4 text-gray-700" />
-            <span className="font-medium">{reactions?.likeCount ?? 0}</span>
+            <span className="font-medium">{reactions.likeCount}</span>
           </div>
 
           {/* 싫어요 */}
           <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600">
             <ThumbsUp className="w-4 h-4 rotate-180 text-gray-700" />
-            <span className="font-medium">{reactions?.dislikeCount ?? 0}</span>
+            <span className="font-medium">{reactions.dislikeCount}</span>
           </div>
 
           {/* 댓글 */}
