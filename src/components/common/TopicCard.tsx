@@ -9,14 +9,53 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ThumbsUp, MessageCircle } from 'lucide-react';
 import { getPostReactions, getPostComments } from '@/services/api';
 
+// ✅ 프로필 테두리 색 유틸 함수 추가
+const getProfileBorderClass = (color?: string) => {
+  if (!color) return 'border-gray-300'; // 기본: 흰색/기본 회원
+
+  switch (color.toLowerCase()) {
+    case 'white': // 신규 / 기본
+    case 'gray':
+      return 'border-gray-300';
+
+    case 'black': // 활동 중 / 검증 전
+      return 'border-neutral-800';
+
+    case 'green': // 초록 - 신뢰 회원
+    case 'emerald':
+      return 'border-emerald-400';
+
+    case 'blue': // 파랑 - 검증된 / 모범 회원
+      return 'border-blue-400';
+
+    case 'purple': // 보라 - 상위 기여자 / 우수 멤버
+      return 'border-purple-400';
+
+    case 'gold': // 금색 - 레전드 / 명예 등급
+    case 'yellow':
+      return 'border-yellow-400';
+
+    case 'orange': // 주황 - 주의 회원
+      return 'border-orange-400';
+
+    case 'red': // 빨강색 - 경고 회원
+      return 'border-red-400';
+
+    default:
+      return 'border-gray-300';
+  }
+};
+
 interface Tag {
   id: string;
   name: string;
 }
 
+// ✅ 작성자에 색 정보 필드 추가 (백엔드에서 내려준다고 가정)
 interface Author {
   id: string;
   displayName: string;
+  nicknameColor?: string; // 🔹 여기에 색 정보
 }
 
 interface TopicCardProps {
@@ -58,6 +97,10 @@ export function TopicCard({
   const displayTags = tags.map((tag) =>
     typeof tag === 'string' ? tag : tag.name,
   );
+
+  // ✅ 작성자 프로필 색 (문자열 author일 땐 색 없음)
+  const authorColor =
+    typeof author === 'string' ? undefined : author.nicknameColor;
 
   // 기본값은 props -> 없으면 0
   const [reactions, setReactions] = useState<ReactionSummary>({
@@ -126,11 +169,21 @@ export function TopicCard({
     >
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3 mb-3">
-          <Avatar className="w-10 h-10 border-2 border-primary/10">
-            <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+          {/* ✅ 여기서 프로필 테두리 색 동적 적용 */}
+          <Avatar
+            className={`
+              w-10 h-10 rounded-full
+              border-[5px] ${getProfileBorderClass(authorColor)}  /* ✅ 테두리 색 동적 적용 */
+              bg-white text-gray-900 font-bold
+              shadow-sm group-hover:bg-gray-50
+            `}
+          >
+            <AvatarFallback className="text-sm font-semibold">
               {displayAuthor[0]}
             </AvatarFallback>
           </Avatar>
+
+
           <div className="flex-1">
             <p className="font-semibold text-sm">{displayAuthor}</p>
             <p className="text-xs text-muted-foreground">{date}</p>
