@@ -17,6 +17,7 @@ import RecentPage from "./pages/RecentPage";
 import TrendingPage from "./pages/TrendingPage";
 import SearchPage from "./pages/SearchPage";
 import TagSettings from './pages/TagSettings.tsx';
+import ReportPage from "./pages/ReportPage.tsx";
 
 // App.tsx -> index.tsx로 수정하였고 -> pages 폴더에 넣어서 관리하고 있다
 
@@ -26,6 +27,7 @@ createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <Routes>
         <Route element={<RootLayout />}>
+          <Route path="/report/post/:postId" element={<ReportPage />} />
           <Route index element={<App />} />
           <Route path="/create" element={<CreatePost />} />
           <Route path="/post/:id" element={<PostDetail />} />
