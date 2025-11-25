@@ -1,5 +1,6 @@
 import { X, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import RookieBadge from '@/assets/rookie.svg';
 
 interface UserProfilePopupProps {
   isOpen: boolean;
@@ -63,6 +64,24 @@ export function UserProfilePopup({
             )}
           </div>
 
+          {/* 등급 배지 */}
+          <div className="mt-2 inline-flex items-center">
+            <img
+              src={RookieBadge}
+              alt="등급 배지"
+              className="h-6 w-auto"
+            />
+          </div>
+
+          {/* 채팅하기 버튼 */}
+          <Button
+            className="mt-6 h-12 w-full rounded-[14px] text-base font-semibold flex items-center justify-center gap-2 bg-[#2f6bff] hover:bg-[#2557d4]"
+            onClick={onStartChat}
+          >
+            <MessageCircle className="h-5 w-5" />
+            <span>채팅하기</span>
+          </Button>
+        </div>
       </div>
     </div>
   );
