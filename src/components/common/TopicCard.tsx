@@ -11,14 +11,53 @@ import { ThumbsUp, MessageCircle, X } from 'lucide-react';
 import { getPostComments } from '@/services/api';
 import RookieBadge from '@/assets/rookie.svg';
 
+// ✅ 프로필 테두리 색 유틸 함수 추가
+const getProfileBorderClass = (color?: string) => {
+  if (!color) return 'border-gray-300'; // 기본: 흰색/기본 회원
+
+  switch (color.toLowerCase()) {
+    case 'white': // 신규 / 기본
+    case 'gray':
+      return 'border-gray-300';
+
+    case 'black': // 활동 중 / 검증 전
+      return 'border-neutral-800';
+
+    case 'green': // 초록 - 신뢰 회원
+    case 'emerald':
+      return 'border-emerald-400';
+
+    case 'blue': // 파랑 - 검증된 / 모범 회원
+      return 'border-blue-400';
+
+    case 'purple': // 보라 - 상위 기여자 / 우수 멤버
+      return 'border-purple-400';
+
+    case 'gold': // 금색 - 레전드 / 명예 등급
+    case 'yellow':
+      return 'border-yellow-400';
+
+    case 'orange': // 주황 - 주의 회원
+      return 'border-orange-400';
+
+    case 'red': // 빨강색 - 경고 회원
+      return 'border-red-400';
+
+    default:
+      return 'border-gray-300';
+  }
+};
+
 interface Tag {
   id: string;
   name: string;
 }
 
+// ✅ 작성자에 색 정보 필드 추가 (백엔드에서 내려준다고 가정)
 interface Author {
   id: string;
   displayName: string;
+  nicknameColor?: string; // 🔹 여기에 색 정보
 }
 
 interface TopicCardProps {
@@ -60,6 +99,10 @@ export function TopicCard({
   const displayTags = tags.map((tag) =>
     typeof tag === 'string' ? tag : tag.name,
   );
+
+  // ✅ 작성자 프로필 색 (문자열 author일 땐 색 없음)
+  const authorColor =
+    typeof author === 'string' ? undefined : author.nicknameColor;
 
   // 기본값은 props -> 없으면 0
   const [reactions, setReactions] = useState<ReactionSummary>({
@@ -143,6 +186,8 @@ export function TopicCard({
               {displayAuthor[0]}
             </AvatarFallback>
           </Avatar>
+
+
           <div className="flex-1">
             {/* 닉네임 - 클릭 시 팝업 열기 */}
             <button

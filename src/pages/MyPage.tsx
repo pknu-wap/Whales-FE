@@ -10,6 +10,7 @@ import {
   getMyScraps,
   getPosts,
   getMyComments,
+  getPost,              // ⭐ 추가: postId로 게시글 불러오기
 } from '@/services/api';
 
 import RookieBadge from '@/assets/rookie.svg';
@@ -42,6 +43,7 @@ type AuthorLike = {
   displayName?: string;
   nickname?: string;
 };
+
 interface PostItem {
   id: number;
   title: string;
@@ -165,6 +167,9 @@ export default function MyPage() {
   const [myComments, setMyComments] = useState<MyComment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(true);
 
+  // ⭐ 내가 댓글 단 게시물 목록 (TopicCard로 보여줄 것)
+  const [myCommentPosts, setMyCommentPosts] = useState<PostItem[]>([]);
+
   // 프로필 인라인 편집 모드 상태
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editName, setEditName] = useState('');
@@ -209,18 +214,70 @@ export default function MyPage() {
   }, [profileName, profileBio]);
 
   // 내가 쓴 글 목록 불러오기
-  useEffect(() => {
-    setPostsLoading(true);
-    getPosts()
-      .then((data: PostItem[]) => {
-        const normalizedPosts: PostItem[] = data.map((p) => ({
-          ...p,
-          tags: normalizeTags(p.tags),
-        }));
-        setMyPosts(normalizedPosts);
-      })
-      .finally(() => setPostsLoading(false));
-  }, []);
+// 내가 쓴 글 목록 불러오기 (내 글만 필터링)
+useEffect(() => {
+  // 아직 프로필을 못 불러왔으면 그냥 전체 글도 안 불러옴
+  if (!profile) return;
+
+  setPostsLoading(true);
+
+  getPosts()
+    .then((data: PostItem[]) => {
+      // 1) 태그 정규화
+      const normalizedPosts: PostItem[] = data.map((p) => ({
+        ...p,
+        tags: normalizeTags(p.tags),
+      }));
+
+      // 2) 내 이름 (displayName 우선, 없으면 nickname)
+      const myName =
+        profile.displayName ||
+        profile.nickname ||
+        '';
+
+      // 3) 작성자 "이름" 기준으로 내 글만 필터링
+      const onlyMyPosts = normalizedPosts.filter((post) => {
+        const rawAuthor = post.author as any;
+
+        // ✅ 리스트 응답에 자주 있는 authorName / writerName 도 같이 본다
+        const authorNameField =
+          typeof (post as any).authorName === 'string'
+            ? (post as any).authorName
+            : typeof (post as any).writerName === 'string'
+            ? (post as any).writerName
+            : undefined;
+
+        // author가 문자열인 경우
+        if (typeof rawAuthor === 'string') {
+          return rawAuthor === myName;
+        }
+
+        // authorName 필드가 있는 경우
+        if (authorNameField) {
+          return authorNameField === myName;
+        }
+
+        // author가 객체인 경우
+        if (rawAuthor && typeof rawAuthor === 'object') {
+          const displayName =
+            rawAuthor.displayName ??
+            rawAuthor.nickname ??
+            rawAuthor.name;
+          if (!displayName) return false;
+
+          return displayName === myName;
+        }
+
+        // 어떤 경우에도 매칭 안 되면 내 글이 아님
+        return false;
+      });
+
+      setMyPosts(onlyMyPosts);
+    })
+    .finally(() => setPostsLoading(false));
+}, [profile]);
+
+
 
   // 스크랩한 글 목록 불러오기
   useEffect(() => {
@@ -236,22 +293,53 @@ export default function MyPage() {
       .finally(() => setScrapsLoading(false));
   }, []);
 
-  // 내가 쓴 댓글 조회 (추후 페이징/무한스크롤 생기면 이쪽에서 로직 확장)
+  // ⭐ 내가 쓴 댓글 + 그 댓글이 달린 게시물 목록 불러오기
   useEffect(() => {
-    setCommentsLoading(true);
-    getMyComments()
-      .then((data: MyComment[]) => {
-        setMyComments(data);
-      })
-      .finally(() => setCommentsLoading(false));
+    const fetchCommentsAndPosts = async () => {
+      setCommentsLoading(true);
+      try {
+        // 1) 내 댓글 목록
+        const comments = await getMyComments();
+        setMyComments(comments);
+
+        // 2) postId만 모아서 중복 제거
+        const postIds = Array.from(
+          new Set(
+            comments
+              .map((c) => c.postId)
+              .filter((id): id is string => !!id),
+          ),
+        );
+
+        if (postIds.length === 0) {
+          setMyCommentPosts([]);
+          return;
+        }
+
+        // 3) 각 postId에 대한 게시글 데이터 가져오기
+        const posts = await Promise.all(postIds.map((pid) => getPost(pid)));
+
+        // 4) TopicCard에서 쓰기 좋은 PostItem 형태로 정규화
+        const normalizedCommentPosts: PostItem[] = posts.map((p: any) => ({
+          ...p,
+          tags: normalizeTags(p.tags),
+        }));
+
+        setMyCommentPosts(normalizedCommentPosts);
+      } finally {
+        setCommentsLoading(false);
+      }
+    };
+
+    fetchCommentsAndPosts();
   }, []);
 
   // 각 탭별 카운트
   const postsCount = myPosts.length;
-  const commentsCount = myComments.length;
+  const commentsCount = myComments.length;  // 🔸 카운트는 "내 댓글 개수"
   const scrapCount = myScraps.length;
 
-  // 프로필 이니셜 (이름 없을 때 대비해서 '유' 기본값)
+  // 프로필 이니셜
   const profileInitial =
     profileName && profileName.length > 0 ? profileName[0] : '유';
 
@@ -276,27 +364,49 @@ export default function MyPage() {
   };
 
   // TopicCard에 내려줄 author 정보 정규화
-  const getPostAuthor = (
-    post: PostItem,
-  ): string | { id: string; displayName: string } => {
-    const rawAuthor = post.author;
+  // TopicCard에 내려줄 author 정보 정규화
+const getPostAuthor = (
+  post: PostItem,
+): string | { id: string; displayName: string } => {
+  const rawAuthor = post.author;
 
-    if (!rawAuthor) return profileName;
-
+  // 1️⃣ post.author 가 있는 경우 (단건 조회 getPost 응답 등)
+  if (rawAuthor) {
+    // 문자열이면 그대로 사용
     if (typeof rawAuthor === 'string') {
       return rawAuthor;
     }
 
+    // 객체이면 id + displayName 구성
     const id = rawAuthor.id ?? rawAuthor.userId ?? '';
-    const displayName = rawAuthor.displayName ?? rawAuthor.nickname ?? profileName;
+    const displayName =
+      rawAuthor.displayName ??
+      rawAuthor.nickname ??
+      '작성자';
 
     return {
       id: String(id),
       displayName,
     };
-  };
+  }
 
-  // 공통 글 카드 렌더러 (내 글 + 스크랩에서 재사용)
+  // 2️⃣ post.author 는 없고 authorName 만 있는 경우 (getPosts, getMyScraps 응답)
+  const authorName =
+    (post as any).authorName ??
+    (post as any).writerName ??
+    (post as any).author_nickname;
+
+  if (typeof authorName === 'string' && authorName.trim().length > 0) {
+    // TopicCard 는 author 가 string 이어도 되니까 그대로 넘김
+    return authorName;
+  }
+
+  // 3️⃣ 진짜 아무 정보도 없으면 마지막 fallback
+  return '작성자';
+};
+
+
+  // 공통 글 카드 렌더러 (내 글 + 스크랩 + 내가 댓글 단 글)
   const renderPostCard = (post: PostItem) => {
     const rawContent =
       (post.content as string | undefined) ??
@@ -315,34 +425,17 @@ export default function MyPage() {
         author={getPostAuthor(post)}
         date={formatDate(post.createdAt)}
         tags={post.tags ?? []}
-        reactions={post.reactions} // 게시글에 달린 반응 정보 그대로 전달
+        reactions={post.reactions}
       />
     );
   };
 
-  // 내가 쓴 댓글 카드 (postId 기준으로 원본 글 상세로 이동)
-  const renderCommentCard = (comment: MyComment) => {
-    return (
-      <TopicCard
-        key={comment.id}
-        id={comment.postId} // TopicCard 클릭 시 /post/{postId}로 이동
-        title="내가 댓글을 단 글"
-        content={comment.content}
-        author={comment.author.displayName}
-        date={formatDate(comment.createdAt)}
-        tags={[]} // 댓글 API에 태그 정보 없음 → 일단 빈 배열
-        reactions={{
-          likeCount: comment.reactions?.likeCount ?? 0,
-          dislikeCount: comment.reactions?.dislikeCount ?? 0,
-          // 댓글에는 commentCount 없음
-        }}
-      />
-    );
-  };
+  // ⭐ 댓글 탭에서 쓸 카드: 사실 renderPostCard 재사용
+  const renderCommentCard = (post: PostItem) => renderPostCard(post);
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="className=w-full max-w-7xl mx-auto flex p-6 gap-6 items-start">
+      <main className="w-full flex p-6 gap-6 items-start">
       <AppSidebar />
       <section className="flex-1 flex flex-col gap-12">
           {/* 상단 프로필 영역 */}
@@ -366,7 +459,9 @@ export default function MyPage() {
                           <h1 className="text-2xl font-bold text-slate-900">
                             {profileName}
                           </h1>
-                          <p className="text-sm text-slate-700">{profileBio}</p>
+                          <p className="text-sm text-slate-700">
+                            {profileBio}
+                          </p>
                         </>
                       ) : (
                         <div className="flex flex-col gap-2">
@@ -466,7 +561,7 @@ export default function MyPage() {
 
                   <TabsTrigger
                     value="comments"
-                    className="px-5 py-2.5 text-sm font-semibold rounded-[14px] bg-[#f3f4f6] text-slate-700 shadow-[0_1px_2px_rgba(0,0,0,0.06)] data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white"
+                    className="px-5 py-2.5 text-sm font-semibold rounded-[14px] bg-[#f3f4f6] text-slate-700 shadow-[0_1px_2px_rgqa(0,0,0,0.06)] data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white"
                   >
                     내가 쓴 댓글 ({commentsCount})
                   </TabsTrigger>
@@ -496,19 +591,19 @@ export default function MyPage() {
                   )}
                 </TabsContent>
 
-                {/* 내가 쓴 댓글 탭 */}
+                {/* 내가 쓴 댓글 탭 – ⭐ 이제 "댓글 내용"이 아니라 내가 댓글 단 게시물 TopicCard */}
                 <TabsContent value="comments" className="mt-2">
                   {commentsLoading ? (
                     <div className="text-center py-16 text-slate-400">
                       로딩 중…
                     </div>
-                  ) : myComments.length === 0 ? (
+                  ) : myCommentPosts.length === 0 ? (
                     <div className="text-center py-16 text-slate-400">
-                      작성한 댓글이 없습니다.
+                      댓글을 단 게시글이 없습니다.
                     </div>
                   ) : (
                     <div className="flex flex-col gap-4">
-                      {myComments.map((comment) => renderCommentCard(comment))}
+                      {myCommentPosts.map((post) => renderCommentCard(post))}
                     </div>
                   )}
                 </TabsContent>
