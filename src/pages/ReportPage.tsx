@@ -42,12 +42,12 @@ export default function ReportPage() {
   }
 
   // 🔹 2) 지금 어떤 값이 나가는지 먼저 로그 찍기
-  console.log('📤 신고 요청 준비', {
-    targetType,
-    postId,
-    commentId,
-    body: { reason, detail },
-  });
+  // console.log('📤 신고 요청 준비', {
+  //   targetType,
+  //   postId,
+  //   commentId,
+  //   body: { reason, detail },
+  // });
 
   try {
     setIsSubmitting(true);
@@ -65,13 +65,13 @@ export default function ReportPage() {
       navigate(-1);
     }, 800);
   } catch (err: any) {
-    console.error('❌ 신고 실패', err);
-    console.log(
-      'status =',
-      err?.response?.status,
-      'data =',
-      err?.response?.data,
-    );
+    //console.error('❌ 신고 실패', err);
+    // console.log(
+    //   'status =',
+    //   err?.response?.status,
+    //   'data =',
+    //   err?.response?.data,
+    // );
 
     setErrorMsg(
       err?.response?.data?.message ??
