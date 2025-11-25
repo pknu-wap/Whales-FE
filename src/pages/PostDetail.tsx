@@ -5,10 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { ThumbsUp, MessageCircle, ArrowLeft } from 'lucide-react';
+import { ThumbsUp, MessageCircle, ArrowLeft, MoreVertical } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { getPost, getPostComments, createComment } from '@/services/api';
 import { togglePostLike, togglePostDislike, togglePostScrap, getIsScraped } from '@/services/api';
+import scrapIcon from '@/assets/scrap.svg';
+import reportIcon from '@/assets/report.svg';
+import writeCommentIcon from '@/assets/writecomment.svg';
+import RookieBadge from '@/assets/rookie.svg';
 
 type ReactionSummary = {
   likeCount: number;
@@ -43,15 +47,52 @@ export default function PostDetail() {
 
   const [postData, setPostData] = useState<PostData | null>(null);
   const [comments, setComments] = useState<CommentData[]>([]);
+  const [commentReactions, setCommentReactions] = useState<
+  Record<string, { likeCount: number; dislikeCount: number; myReaction: 'LIKE' | 'DISLIKE' | null }>
+>({});
+  const { accessToken } = useAuthStore();
   const [commentInput, setCommentInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
   const [isScraped, setIsScraped] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // ⬅ 추가
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  const handleTagClick = (tag: string) => {
-    navigate(`/search?tag=${encodeURIComponent(tag)}`)
-  }
+  // const handleTagClick = (tag: string) => {
+  //   navigate(`/search?tag=${encodeURIComponent(tag)}`)
+  // }
+  useEffect(() => {
+  if (!comments || comments.length === 0) return;
+
+  const fetchReactions = async () => {
+    try {
+      const entries = await Promise.all(
+        comments.map(async (c) => {
+          const r = await getCommentReactions(c.id);
+          return [
+            c.id,
+            {
+              likeCount: r.likeCount ?? 0,
+              dislikeCount: r.dislikeCount ?? 0,
+              myReaction: r.myReaction ?? null,
+            },
+          ] as const;
+        }),
+      );
+
+      const map: typeof commentReactions = {};
+      for (const [id, data] of entries) map[id] = data;
+
+      setCommentReactions(map);
+    } catch (e) {
+      console.error('댓글 리액션 로드 실패:', e);
+    }
+  };
+
+  fetchReactions();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [comments]);
 
   useEffect(() => {
     if (!id) {
@@ -152,10 +193,10 @@ export default function PostDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <main className="w-full max-w-[1400px] mx-auto flex p-6 gap-6">
-          <AppSidebar />
-          <section className="flex-1 flex items-center justify-center">
+      <div>
+        <main className="w-full flex p-6 gap-6 items-start">
+      <AppSidebar />
+      <section className="flex-1 flex flex-col gap-12">
             <p className="text-muted-foreground">불러오는 중…</p>
           </section>
         </main>
@@ -165,10 +206,10 @@ export default function PostDetail() {
 
   if (!postData) {
     return (
-      <div className="min-h-screen bg-background">
-        <main className="w-full max-w-[1400px] mx-auto flex p-6 gap-6">
-          <AppSidebar />
-          <section className="flex-1 flex flex-col items-center justify-center">
+      <div>
+      <main className="w-full flex p-6 gap-6 items-start">
+      <AppSidebar />
+      <section className="flex-1 flex flex-col gap-12">
             <p className="text-muted-foreground">
               게시글을 찾을 수 없습니다.
             </p>
@@ -276,10 +317,9 @@ export default function PostDetail() {
 
   return (
     <div>
-      <main className="w-full max-w-7xl mx-auto flex p-6 gap-6 items-start">
-        <AppSidebar />
-
-        <section className="flex-1 flex flex-col gap-6">
+      <main className="w-full flex p-6 gap-6 items-start">
+      <AppSidebar />
+      <section className="flex-1 flex flex-col gap-12">
           <Button variant="ghost" className="w-fit gap-2" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-4 h-4" />
             목록으로
@@ -288,18 +328,119 @@ export default function PostDetail() {
           {/* 본문 */}
           <div className="bg-card rounded-lg border border-border p-8">
             <div className="flex items-start justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <Avatar className="w-14 h-14 border-2 border-primary/20">
+              {/* 왼쪽: 프로필 + 작은 팝업 */}
+              <div className="relative flex items-center gap-3">
+                {/* 아바타 - 클릭 시 팝업 열기 */}
+                <Avatar
+                  className="w-14 h-14 border-2 border-primary/20 cursor-pointer"
+                  onClick={() => setIsProfileOpen((prev) => !prev)}
+                >
                   <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
                     {postData.authorInitial}
                   </AvatarFallback>
                 </Avatar>
+
+                {/* 닉네임/날짜 */}
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <p className="font-bold text-lg">{postData.authorName}</p>
+                    <button
+                      type="button"
+                      className="font-bold text-lg text-left hover:underline"
+                      onClick={() =>
+                        setIsProfileOpen((prev) => !prev)
+                      }
+                    >
+                      {postData.authorName}
+                    </button>
                   </div>
-                  <p className="text-sm text-muted-foreground">{postData.date}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {postData.date}
+                  </p>
                 </div>
+
+  {/* 오른쪽: 스크랩/신고 메뉴 */}
+  <div className="relative">
+    <button
+      type="button"
+      onClick={() => setIsMenuOpen((prev) => !prev)}
+      className="p-2 rounded-full hover:bg-muted transition"
+    >
+      <MoreVertical className="w-5 h-5 text-muted-foreground" />
+    </button>
+
+    {isMenuOpen && (
+      <div className="absolute right-0 mt-2 w-32 bg-gray-100 border border-border rounded-lg shadow-lg py-1 text-sm z-10">
+        <button
+          type="button"
+          onClick={() => {
+            handleScrap();
+            setIsMenuOpen(false);
+          }}
+          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-blue-200 transition"
+        >
+          <img src={scrapIcon} alt="스크랩" className="w-4 h-4" />
+          <span>{isScraped ? '스크랩 취소' : '스크랩'}</span>
+        </button>
+        <button
+  type="button"
+  onClick={() => {
+    navigate(`/report/post/${id}`);  // 🔥 여기서 신고 페이지로 이동
+    setIsMenuOpen(false);
+  }}
+  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-blue-200 transition"
+>
+  <img src={reportIcon} alt="신고하기" className="w-4 h-4" />
+  <span>신고하기</span>
+</button>
+
+      </div>
+    )}
+</div>
+                {/* 닉네임 아래에 작게 뜨는 팝업 */}
+                {isProfileOpen && (
+                  <div className="absolute left-0 top-full z-20 mt-2 w-56 rounded-2xl border border-[#c9d8ff] bg-[#eaf2ff] px-4 py-4 shadow-md">
+                    {/* 상단 X 버튼 */}
+                    <button
+                      type="button"
+                      className="ml-auto mb-1 flex h-5 w-5 items-center justify-center text-slate-500 hover:text-slate-700"
+                      onClick={() => setIsProfileOpen(false)}
+                      aria-label="프로필 닫기"
+                    >
+                      <span className="text-base leading-none">×</span>
+                    </button>
+
+                    <div className="flex flex-col items-center gap-3">
+                      {/* 작은 아바타 */}
+                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl font-semibold text-slate-900 ring-[11px] ring-[#D89BFF] mb-4">
+                        {postData.authorInitial}
+                      </div>
+
+                      <div className="flex flex-col items-center gap-1 text-center">
+                        <div className="text-xl font-extrabold text-slate-900">
+                          {postData.authorName}
+                        </div>
+                        <p className="text-xs text-slate-600">
+                          자기소개를 준비 중입니다.
+                        </p>
+                      </div>
+
+                      <img
+                        src={RookieBadge}
+                        alt="Rookie 등급 배지"
+                        className="h-6 w-auto"
+                      />
+
+                      <Button
+                        size="sm"
+                        className="mt-2 flex h-9 w-full items-center justify-center gap-1 rounded-[12px] text-xs font-semibold bg-[#2f6bff] hover:bg-[#2557d4]"
+                        onClick={() => navigate('/chat')}
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        <span>채팅하기</span>
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -316,106 +457,164 @@ export default function PostDetail() {
               {postData.content}
             </div>
 
-            <div className="flex items-center gap-6 text-muted-foreground pt-4 border-t">
-              <button
-                onClick={handleLike}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md border transition-all ${
-                  isLiked
-                    ? 'text-blue-500 border-blue-500 bg-blue-50'
-                    : 'hover:text-blue-500 hover:border-blue-400 border-transparent'
-                }`}
-              >
-                <ThumbsUp className="w-5 h-5" />
-                <span className="font-medium">{postData.likes}</span>
-              </button>
-              <button
-                onClick={handleDislike}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md border transition-all ${
-                  isDisliked
-                    ? 'text-blue-500 border-blue-500 bg-blue-50'
-                    : 'hover:text-blue-500 hover:border-blue-400 border-transparent'
-                }`}
-              >
-                <ThumbsUp className="w-5 h-5 rotate-180" />
-                <span className="font-medium">{postData.reactions?.dislikeCount ?? 0}</span>
-              </button>
-              <button className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-transparent hover:text-blue-500 hover:border-blue-400 transition-all">
-                <MessageCircle className="w-5 h-5" />
-                <span className="font-medium">{comments.length}</span>
-              </button>
-              <button
-                onClick={handleScrap}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md border transition-all ${
-                  isScraped
-                    ? 'text-yellow-500 border-yellow-500 bg-yellow-50'
-                    : 'hover:text-yellow-500 hover:border-yellow-400 border-transparent'
-                }`}
-              >
-                📌 <span className="font-medium">{isScraped ? '스크랩됨' : '스크랩'}</span>
-              </button>
-            </div>
+            <div className="flex items-center justify-end gap-2 pt-4 border-t">
+            {/* 좋아요 */}
+            <button
+              onClick={handleLike}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-muted transition ${
+                isLiked ? 'text-blue-500' : 'text-muted-foreground'
+              }`}
+            >
+              <ThumbsUp className="w-4 h-4 text-black" />
+              <span className="font-medium">{postData.likes}</span>
+            </button>
+
+            {/* 싫어요 */}
+            <button
+              onClick={handleDislike}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-muted transition ${
+                isDisliked ? 'text-blue-500' : 'text-muted-foreground'
+              }`}
+            >
+              <ThumbsUp className="w-4 h-4 rotate-180 text-black" />
+              <span className="font-medium">
+                {postData.reactions?.dislikeCount ?? 0}
+              </span>
+            </button>
+
+            {/* 댓글 */}
+            <button
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-muted text-muted-foreground transition hover:bg-muted/80"
+            >
+              <MessageCircle className="w-4 h-4 text-black" />
+              <span className="font-medium">{comments.length}</span>
+            </button>
+          </div>
           </div>
 
-          {/* 댓글 작성 */}
-          <div className="bg-card rounded-lg border border-border p-6">
-            <h3 className="font-bold text-lg mb-4">댓글 작성</h3>
-            <div className="flex gap-4">
-              <Avatar className="w-12 h-12 border-2 border-primary/20">
-                <AvatarFallback className="bg-primary/10 text-primary font-bold">나</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 flex flex-col gap-3">
-                <Textarea
-                  placeholder="댓글을 입력하세요..."
-                  value={commentInput}
-                  onChange={(e) => setCommentInput(e.target.value)}
-                  className="min-h-[100px] resize-none"
-                />
-                <div className="flex justify-end">
-                  <Button onClick={handleCommentSubmit} disabled={!commentInput.trim()}>
-                    댓글 작성
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
+         {/* 댓글 작성 */}
+<div className="bg-card rounded-lg border border-border p-6">
+  <h3 className="font-bold text-lg mb-4">댓글 작성</h3>
+
+  {/* 아바타 + 입력 영역 한 줄 정렬 */}
+  <div className="flex items-start gap-4">
+    {/* 아바타 */}
+    <Avatar className="w-12 h-12 border-2 border-primary/20">
+      <AvatarFallback className="bg-primary/10 text-primary font-bold">
+        나
+      </AvatarFallback>
+    </Avatar>
+
+    {/* 입력창 + 버튼 */}
+    <div className="flex-1 flex flex-col gap-3">
+      <Textarea
+        placeholder="댓글을 입력하세요..."
+        value={commentInput}
+        onChange={(e) => setCommentInput(e.target.value)}
+        className="min-h-[100px] resize-none bg-gray-100 border-0 rounded-md focus:ring-0 focus:outline-none"
+      />
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={handleCommentSubmit}
+          disabled={!commentInput.trim()}
+          className="inline-flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <img
+            src={writeCommentIcon}
+            alt="댓글 작성"
+            className="w-30 h-30"
+          />
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
 
           {/* 댓글 목록 */}
           <div className="bg-card rounded-lg border border-border p-6">
             <h3 className="font-bold text-lg mb-6">댓글 {comments.length}개</h3>
             <div className="flex flex-col">
-              {comments.map((c, idx) => (
-                <div key={c.id}>
-                  <div className="flex gap-4 py-4">
-                    <Avatar className="w-12 h-12 border-2 border-primary/20">
-                      <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                        {c.authorInitial}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-bold">{c.authorName}</span>
-                        <span className="text-sm text-muted-foreground">{c.date}</span>
-                      </div>
-                      <p className="text-sm text-foreground mb-3 leading-relaxed whitespace-pre-line">
-                        {c.content}
-                      </p>
-                      <div className="flex items-center gap-4 text-sm">
-                        <button className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors">
-                          <ThumbsUp className="w-4 h-4" />
-                          <span className="font-medium">{c.likes}</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  {idx < comments.length - 1 && <Separator />}
-                </div>
-              ))}
-              {comments.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  아직 댓글이 없습니다.
-                </p>
-              )}
+  {comments.map((c, idx) => {
+    const r = commentReactions[c.id]; // ✅ 여기서 JS 코드로 선언!
+
+    return (
+      <div key={c.id}>
+        <div className="flex gap-4 py-4">
+          <Avatar className="w-12 h-12 border-2 border-primary/20">
+            <AvatarFallback className="bg-primary/10 text-primary font-bold">
+              {c.authorInitial}
+            </AvatarFallback>
+          </Avatar>
+
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="font-bold">{c.authorName}</span>
+              <span className="text-sm text-muted-foreground">{c.date}</span>
             </div>
+
+            <p className="text-sm text-foreground mb-3 leading-relaxed whitespace-pre-line">
+              {c.content}
+            </p>
+
+            {/* 👍/👎 버튼 영역 */}
+            {/* 좋아요/싫어요 + 대댓글 수 영역 */}
+{/* 좋아요/싫어요 영역 */}
+<div className="flex items-center gap-2 justify-end mt-2">
+
+  {/* 👍 좋아요 */}
+  <button
+    type="button"
+    onClick={() => handleCommentLike(c.id)}
+    className="flex items-center gap-1 px-2 py-1 rounded-full border bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
+  >
+    <ThumbsUp className="w-3 h-3" />
+    <span
+      className={`text-xs font-medium ${
+        r?.myReaction === 'LIKE' ? 'text-blue-500' : ''
+      }`}
+    >
+      {r?.likeCount ?? 0}
+    </span>
+  </button>
+
+  {/* 👎 싫어요 */}
+  <button
+    type="button"
+    onClick={() => handleCommentDislike(c.id)}
+    className="flex items-center gap-1 px-2 py-1 rounded-full border bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
+  >
+    <ThumbsUp className="w-3 h-3 rotate-180" />
+    <span
+      className={`text-xs font-medium ${
+        r?.myReaction === 'DISLIKE' ? 'text-blue-500' : ''
+      }`}
+    >
+      {r?.dislikeCount ?? 0}
+    </span>
+  </button>
+
+</div>
+
+          </div>
+        </div>
+
+        {idx < comments.length - 1 && <Separator />}
+      </div>
+    );
+  })}
+
+  {comments.length === 0 && (
+    <p className="text-sm text-muted-foreground text-center py-4">
+      아직 댓글이 없습니다.
+    </p>
+  )}
+</div>
+
           </div>
         </section>
       </main>

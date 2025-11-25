@@ -84,9 +84,9 @@ export default function TrendingPage() {
 
   if (loading) {
     return (
-      <main className="w-full max-w-7xl mx-auto flex p-6 gap-6 items-start">
-        <AppSidebar />
-        <section className="flex-1 flex items-center justify-center">
+      <main className="w-full flex p-6 gap-6 items-start">
+      <AppSidebar />
+      <section className="flex-1 flex flex-col gap-12">
           <div className="text-center text-muted-foreground py-8">
             불러오는 중...
           </div>
@@ -101,20 +101,23 @@ export default function TrendingPage() {
   const pagePosts = formattedPosts.slice(start, start + PAGE_SIZE);
 
   return (
-    <main className="w-full max-w-7xl mx-auto flex p-6 gap-6 items-start">
+    <main className="w-full flex p-6 gap-6 items-start">
       <AppSidebar />
-      <section className="flex-1 flex flex-col gap-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-orange-500 to-red-500 flex items-center justify-center">
-            <TrendingUp className="w-5 h-5 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900">
-            인기 게시글
-          </h2>
-        </div>
-        <p className="text-gray-600">
-          좋아요 수가 많은 인기 게시글을 확인해보세요.
-        </p>
+      <section className="flex-1 flex flex-col gap-12">
+        <div>
+  <div className="flex items-center gap-3 mb-1">
+    <div className="w-8 h-8 rounded-lg bg-linear-to-br from-orange-500 to-red-500 flex items-center justify-center">
+      <TrendingUp className="w-5 h-5 text-white" />
+    </div>
+    <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+      인기 게시글
+    </h2>
+  </div>
+
+  <p className="mt-1 text-gray-600">
+    가장 주목받고 있는 댓글을 보세요
+  </p>
+</div>
 
         {pagePosts.length > 0 ? (
           <>

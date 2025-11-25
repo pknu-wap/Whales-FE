@@ -12,7 +12,7 @@ import {
   getMyComments,
 } from '@/services/api';
 
-import RookieBadge from '@/assets/Rookie Ver.2.svg';
+import RookieBadge from '@/assets/rookie.svg';
 import EditFieldIcon from '@/assets/글쓰기 수정.svg';
 import EditProfileIcon from '@/assets/프로필 수정.svg';
 
@@ -342,10 +342,9 @@ export default function MyPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="w-full max-w-7xl mx-auto flex p-6 gap-6">
-        <AppSidebar />
-
-        <section className="flex-1 flex flex-col gap-6">
+      <main className="className=w-full max-w-7xl mx-auto flex p-6 gap-6 items-start">
+      <AppSidebar />
+      <section className="flex-1 flex flex-col gap-12">
           {/* 상단 프로필 영역 */}
           <Card className="w-full rounded-[24px] border border-[#d0ddff] shadow-sm bg-[#eef3ff]">
             <CardContent className="flex items-center justify-between py-7 px-9">
