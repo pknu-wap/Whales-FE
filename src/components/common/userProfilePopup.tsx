@@ -1,4 +1,6 @@
 import { X, MessageCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
 interface UserProfilePopupProps {
   isOpen: boolean;
   onClose: () => void;
@@ -40,6 +42,26 @@ export function UserProfilePopup({
         >
           <X className="h-5 w-5" />
         </button>
+
+        {/* 아바타 */}
+        <div className="flex flex-col items-center gap-5">
+          <div className="flex items-center justify-center">
+            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white text-3xl font-semibold text-slate-900 ring-[10px] ring-[#e0c9ff]">
+              {initial}
+            </div>
+          </div>
+
+          {/* 닉네임 / 소개 */}
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="text-2xl font-extrabold text-slate-900">
+              {nickname}
+            </div>
+            {bio && (
+              <p className="text-sm text-slate-600">
+                {bio}
+              </p>
+            )}
+          </div>
 
       </div>
     </div>
