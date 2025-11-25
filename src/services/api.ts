@@ -446,29 +446,3 @@ export const dislikeComment = async (commentId: string) => {
   const res = await api.post(`/comments/${commentId}/dislike`);
   return res.data;
 };
-
-// 신고 타입 정의
-export type ReportReason =
-  | 'SPAM'
-  | 'ABUSE'
-  | 'HATE'
-  | 'ILLEGAL'
-  | 'SEXUAL'
-  | 'VIOLENCE'
-  | 'MISINFORMATION'
-  | 'OTHER';
-
-export interface ReportRequestBody {
-  reason: ReportReason;
-  detail: string;
-}
-
-// 게시글 신고하기 API
-export async function reportPost(postId: string, data: ReportRequestBody) {
-  await api.post(`/reports/posts/${postId}`, data);
-}
-
-// 댓글 신고하기 API
-export async function reportComment(commentId: string, data: ReportRequestBody) {
-  await api.post(`/reports/comments/${commentId}`, data);
-}
