@@ -1,6 +1,6 @@
 // src/components/common/TopicCard.tsx
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Badge } from '@/components/ui/badge';
@@ -8,41 +8,91 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ThumbsUp, MessageCircle } from 'lucide-react';
 import { getPostReactions, getPostComments } from '@/services/api';
+import { UserProfilePopup } from '@/components/common/UserProfilePopup';
 
-// ✅ 프로필 테두리 색 유틸 함수 추가
+// 등급 뱃지 (학사모) – UserProfilePopup에서 쓰는 svg와 동일하게 import
+import RookieBadge from '@/assets/Rookie Ver.2.svg';
+import MemberBadge from '@/assets/Member Ver.2.svg';
+import ExpertBadge from '@/assets/Expert Ver.2.svg';
+import WhalesBadge from '@/assets/Whales Ver.2.svg';
+
+// ✅ 닉네임 색상 → 프로필 테두리
 const getProfileBorderClass = (color?: string) => {
-  if (!color) return 'border-gray-300'; // 기본: 흰색/기본 회원
+  if (!color) return 'border-gray-300';
 
   switch (color.toLowerCase()) {
-    case 'white': // 신규 / 기본
+    case 'white':
     case 'gray':
       return 'border-gray-300';
 
-    case 'black': // 활동 중 / 검증 전
+    case 'black':
       return 'border-neutral-800';
 
-    case 'green': // 초록 - 신뢰 회원
+    case 'green':
     case 'emerald':
       return 'border-emerald-400';
 
-    case 'blue': // 파랑 - 검증된 / 모범 회원
+    case 'blue':
       return 'border-blue-400';
 
-    case 'purple': // 보라 - 상위 기여자 / 우수 멤버
+    case 'purple':
       return 'border-purple-400';
 
-    case 'gold': // 금색 - 레전드 / 명예 등급
+    case 'gold':
     case 'yellow':
       return 'border-yellow-400';
 
-    case 'orange': // 주황 - 주의 회원
+    case 'orange':
       return 'border-orange-400';
 
-    case 'red': // 빨강색 - 경고 회원
+    case 'red':
       return 'border-red-400';
 
     default:
       return 'border-gray-300';
+  }
+};
+
+// ✅ 닉네임 색상 → 등급(Tier)
+type Tier = 'ROOKIE' | 'MEMBER' | 'EXPERT' | 'WHALES' | 'WARN' | 'UNKNOWN';
+
+const getTierByColor = (color?: string): Tier => {
+  if (!color) return 'ROOKIE';
+
+  switch (color.toLowerCase()) {
+    case 'white':
+    case 'gray':
+      return 'ROOKIE';
+    case 'black':
+    case 'green':
+    case 'emerald':
+      return 'MEMBER';
+    case 'blue':
+    case 'purple':
+      return 'EXPERT';
+    case 'gold':
+    case 'yellow':
+      return 'WHALES';
+    case 'orange':
+    case 'red':
+      return 'WARN';
+    default:
+      return 'UNKNOWN';
+  }
+};
+
+const getTierInfo = (tier: Tier) => {
+  switch (tier) {
+    case 'ROOKIE':
+      return { label: 'Rookie', img: RookieBadge };
+    case 'MEMBER':
+      return { label: 'Member', img: MemberBadge };
+    case 'EXPERT':
+      return { label: 'Expert', img: ExpertBadge };
+    case 'WHALES':
+      return { label: 'Whales', img: WhalesBadge };
+    default:
+      return null;
   }
 };
 
@@ -51,11 +101,10 @@ interface Tag {
   name: string;
 }
 
-// ✅ 작성자에 색 정보 필드 추가 (백엔드에서 내려준다고 가정)
 interface Author {
   id: string;
   displayName: string;
-  nicknameColor?: string; // 🔹 여기에 색 정보
+  nicknameColor?: string;
 }
 
 interface TopicCardProps {
@@ -66,7 +115,6 @@ interface TopicCardProps {
   date: string;
   tags: Tag[] | string[];
   isHot?: boolean;
-  // (마이페이지 등에서 이미 내려주는 경우를 위한 옵션)
   reactions?: {
     likeCount?: number;
     dislikeCount?: number;
@@ -98,11 +146,9 @@ export function TopicCard({
     typeof tag === 'string' ? tag : tag.name,
   );
 
-  // ✅ 작성자 프로필 색 (문자열 author일 땐 색 없음)
   const authorColor =
     typeof author === 'string' ? undefined : author.nicknameColor;
 
-  // 기본값은 props -> 없으면 0
   const [reactions, setReactions] = useState<ReactionSummary>({
     likeCount: initialReactions?.likeCount ?? 0,
     dislikeCount: initialReactions?.dislikeCount ?? 0,
@@ -113,12 +159,14 @@ export function TopicCard({
     initialReactions?.commentCount ?? 0,
   );
 
+  // ✅ 프로필 팝업 on/off
+  const [showProfilePopup, setShowProfilePopup] = useState(false);
+
   useEffect(() => {
     let cancelled = false;
 
     const fetchCounts = async () => {
       try {
-        // ✅ 이 엔드포인트는 Auth: No 이므로 로그인 상관 없음
         const r = await getPostReactions(id);
 
         if (!cancelled) {
@@ -129,7 +177,6 @@ export function TopicCard({
           });
         }
 
-        // 댓글 수를 props로 안 받은 경우에만 서버에서 조회
         if (!initialReactions?.commentCount) {
           const comments = await getPostComments(id);
           if (!cancelled) {
@@ -139,7 +186,6 @@ export function TopicCard({
       } catch (e) {
         console.error('리액션/댓글 카운트 로드 실패:', e);
         if (!cancelled) {
-          // 실패해도 최소한 0으로 표시
           setReactions((prev) => ({
             likeCount: prev.likeCount ?? 0,
             dislikeCount: prev.dislikeCount ?? 0,
@@ -156,39 +202,101 @@ export function TopicCard({
     return () => {
       cancelled = true;
     };
-  }, [id]); // ✅ 로그인 여부 같은 건 의존성에 넣지 않음
+  }, [id]);
 
   const previewContent =
     content.length > 30 ? content.substring(0, 30) + '...' : content;
 
+  const tier = getTierByColor(authorColor);
+  const tierInfo = getTierInfo(tier);
+
+  const handleAvatarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    setShowProfilePopup((prev) => !prev);
+  };
+
+  const handleCloseProfile = () => {
+    setShowProfilePopup(false);
+  };
+
   return (
     <Card
-      className="group hover:shadow-lg transition-all duration-300 cursor-pointer border-border bg-gradient-to-b from-card to-secondary/30
+      className="group hover:shadow-lg transition-all duration-300 cursor-pointer border-border bg-white
                  w-full h-60 flex flex-col"
       onClick={() => navigate(`/post/${id}`)}
     >
       <CardHeader className="pb-3">
-        <div className="flex items-center gap-3 mb-3">
-          {/* ✅ 여기서 프로필 테두리 색 동적 적용 */}
-          <Avatar
-            className={`
-              w-10 h-10 rounded-full
-              border-[5px] ${getProfileBorderClass(authorColor)}  /* ✅ 테두리 색 동적 적용 */
-              bg-white text-gray-900 font-bold
-              shadow-sm group-hover:bg-gray-50
-            `}
+        <div className="flex items-start gap-3 mb-3">
+          {/* 아바타 + 프로필 팝업 */}
+          <div
+            className="relative"
+            onMouseLeave={handleCloseProfile}
           >
-            <AvatarFallback className="text-sm font-semibold">
-              {displayAuthor[0]}
-            </AvatarFallback>
-          </Avatar>
+            <Avatar
+              className={`
+                w-12 h-12 rounded-full
+                border-[5px] ${getProfileBorderClass(authorColor)}
+                bg-white text-gray-900 font-bold
+                shadow-sm group-hover:bg-gray-50
+              `}
+              onClick={handleAvatarClick}
+            >
+              <AvatarFallback className="text-sm font-semibold">
+                {displayAuthor[0]}
+              </AvatarFallback>
+            </Avatar>
 
-
-          <div className="flex-1">
-            <p className="font-semibold text-sm">{displayAuthor}</p>
-            <p className="text-xs text-muted-foreground">{date}</p>
+            {showProfilePopup && (
+              <div
+                className="absolute left-0 top-12 z-30"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <UserProfilePopup
+                  name={displayAuthor}
+                  initial={displayAuthor[0]}
+                  nicknameColor={authorColor}
+                  onClose={handleCloseProfile}
+                />
+              </div>
+            )}
           </div>
+
+          {/* 닉네임 / 등급 / 날짜 */}
+          <div className="flex-1">
+            {/* 1줄: 닉네임 */}
+            <p className="font-semibold text-sm">{displayAuthor}</p>
+
+            {/* 2줄: 뱃지(아이콘 + Expert) + 날짜 */}
+            <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+              {/* 등급 아이콘 + 텍스트 */}
+              {tierInfo && (
+                <div className="inline-flex items-center gap-1">
+                  {/* 🔹 아이콘을 고정 박스에 넣어서, SVG 바뀌어도 전체 레이아웃 고정 */}
+                  <div className="w-16 h-7 flex items-center justify-center">
+                    <img
+                      src={tierInfo.img}
+                      alt={tierInfo.label}
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+
+                  {/* Expert / Member 등 텍스트 */}
+                  {/* <span className="text-[11px] text-[#2563EB] font-medium">
+          {tierInfo.label}
+        </span> */}
+                </div>
+              )}
+
+              {/* 날짜 – 아이콘/텍스트와 항상 일정한 간격(gap-3) */}
+              <span className="text-[11px] text-muted-foreground">
+                {date}
+              </span>
+            </div>
+          </div>
+
         </div>
+
+        {/* 제목 – 이미지처럼 굵은 한 줄/두 줄 */}
         <h3 className="font-bold text-lg leading-tight group-hover:text-primary transition-colors line-clamp-2">
           {title}
         </h3>
@@ -196,36 +304,40 @@ export function TopicCard({
 
       <CardContent className="flex-1 flex flex-col pt-0">
         <div className="flex-1 flex flex-col">
+          {/* 태그 영역 */}
           <div className="flex items-center gap-2 mb-3 overflow-x-auto whitespace-nowrap">
             {displayTags.map((tagName, index) => (
-              <Badge key={index} variant="outline" className="shrink-0">
+              <Badge
+                key={index}
+                variant="outline"
+                className="shrink-0 bg-[#C3D7FF] border-none text-xs px-3 py-1"
+              >
                 {tagName}
               </Badge>
             ))}
           </div>
 
+          {/* 내용 프리뷰 */}
           <p className="text-sm text-muted-foreground">
             {previewContent}
           </p>
         </div>
 
+        {/* 하단: 좋아요/싫어요/댓글 – 필요 없으면 이 div 통째로 지우면 됨 */}
         <div
           className="mt-4 flex justify-end gap-3 text-xs"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* 좋아요 */}
           <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600">
             <ThumbsUp className="w-4 h-4 text-gray-700" />
             <span className="font-medium">{reactions.likeCount}</span>
           </div>
 
-          {/* 싫어요 */}
           <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600">
             <ThumbsUp className="w-4 h-4 rotate-180 text-gray-700" />
             <span className="font-medium">{reactions.dislikeCount}</span>
           </div>
 
-          {/* 댓글 */}
           <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600">
             <MessageCircle className="w-4 h-4 text-gray-700" />
             <span className="font-medium">{commentCount}</span>

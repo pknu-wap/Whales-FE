@@ -237,7 +237,7 @@ function AppHeader() {
   }
 
   return (
-    <header className="w-full border-b border-gray-200 bg-gray-100 shadow-sm sticky top-0 z-50">
+    <header className="w-full border-b border-gray-200 bg-gray-100 shadow-sm fixed left-0 top-0 z-50">
       {/* ✅ 전체 폭 1080px + 좌/우 정렬 */}
       <div className="max-w-[1300px] mx-auto px-6 py-3 flex items-center justify-between gap-6">
         {/* 로고 - 항상 왼쪽 */}
@@ -261,7 +261,7 @@ function AppHeader() {
                 className={
                   'flex w-full items-center bg-[#E5F1FF] border border-[#7BA4F5] px-4 py-1 ' +
                   (showHistory
-                    ? 'rounded-t-xl rounded-b-none border-b-0'
+                    ? 'rounded-t-xl rounded-b-none border-b-transparent'
                     : 'rounded-xl')
                 }
               >
