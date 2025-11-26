@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api, { loginWithGoogle } from '@/services/api';
+import { loginWithGoogle } from '@/services/api';
 import useAuthStore from '@/stores/authStore';
 
 export default function AuthCallback() {
