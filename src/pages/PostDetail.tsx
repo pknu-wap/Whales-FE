@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { AppSidebar } from '../components/common';
+import { AppSidebar } from '@/components/common';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -47,7 +47,7 @@ interface CommentData {
   id: string;
   authorName: string;
   authorInitial: string;
-  authorNicknameColor?: string; // ⭐ 추가
+  authorNicknameColor?: string;
   date: string;
   content: string;
   likes: number;
@@ -245,7 +245,7 @@ export default function PostDetail() {
                 id: it.id,
                 authorName: cAuthorName,
                 authorInitial: cAuthorName.charAt(0),
-                authorNicknameColor: it?.author?.nicknameColor ?? undefined, // ⭐ 댓글에도 색 정보 저장
+                authorNicknameColor: it?.author?.nicknameColor ?? undefined,
                 date: it.createdAt
                   ? new Date(it.createdAt).toLocaleDateString('ko-KR')
                   : '-',
@@ -270,10 +270,13 @@ export default function PostDetail() {
   if (loading) {
     return (
       <div>
-        <main className="w-full flex p-6 gap-6 items-start">
+        {/* ✅ 수정: p-6 px-6 pb-6 pt-24 형태로 분리하여 충돌 방지 */}
+        <main className="w-full flex px-6 pb-6 pt-24 gap-6 items-start">
           <AppSidebar />
-          <section className="flex-1 flex flex-col gap-12">
-            <p className="text-muted-foreground">불러오는 중…</p>
+          <section className="flex-1 flex flex-col gap-6">
+            <div className="text-center text-muted-foreground py-8">
+              불러오는 중...
+            </div>
           </section>
         </main>
       </div>
@@ -283,7 +286,8 @@ export default function PostDetail() {
   if (!postData) {
     return (
       <div>
-        <main className="w-full flex p-6 gap-6 items-start">
+         {/* ✅ 수정: p-6 px-6 pb-6 pt-24 형태로 분리 */}
+        <main className="w-full flex px-6 pb-6 pt-24 gap-6 items-start">
           <AppSidebar />
           <section className="flex-1 flex flex-col gap-12">
             <p className="text-muted-foreground">게시글을 찾을 수 없습니다.</p>
@@ -312,7 +316,7 @@ export default function PostDetail() {
         id: newComment.id,
         authorName,
         authorInitial: authorName.charAt(0),
-        authorNicknameColor: newComment?.author?.nicknameColor ?? undefined, // ⭐ 새 댓글에도 색 정보
+        authorNicknameColor: newComment?.author?.nicknameColor ?? undefined,
         date: new Date(newComment.createdAt).toLocaleDateString('ko-KR'),
         content: newComment.body ?? '',
         likes: newComment.reactions?.likeCount ?? 0,
@@ -397,17 +401,11 @@ export default function PostDetail() {
 
   return (
     <div>
-      <main className="w-full flex p-6 gap-6 items-start">
+       {/* ✅ 수정: px-6 pb-6 pt-24 (충돌 방지 명시적 작성) */}
+      <main className="w-full flex px-6 pb-6 pt-24 gap-6 items-start">
         <AppSidebar />
-        <section className="flex-1 flex flex-col gap-12">
-          <Button
-            variant="ghost"
-            className="w-fit gap-2"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="w-4 h-4" />
-            목록으로
-          </Button>
+        <section className="flex-1 flex flex-col gap-6">
+          
 
           {/* 본문 */}
           <div className="bg-card rounded-lg border border-border p-8">
@@ -538,64 +536,64 @@ export default function PostDetail() {
           </div>
 
           {/* 댓글 작성 */}
-<div className="bg-card rounded-lg border border-border p-6">
-  <h3 className="font-bold text-lg mb-4">댓글 작성</h3>
+          <div className="bg-card rounded-lg border border-border p-6">
+            <h3 className="font-bold text-lg mb-4">댓글 작성</h3>
 
-  <div className="flex items-start gap-4">
-    {/* ⭐ 내 프로필 아바타 + 팝업 */}
-    <div className="relative">
-      <Avatar
-        onClick={() => setActiveCommentProfileId('me')}
-        className={`
-          w-12 h-12 rounded-full cursor-pointer
-          border-[5px] ${getProfileBorderClass(myColor)}
-          bg-white text-gray-900 font-bold
-          shadow-sm hover:bg-gray-50 transition
-        `}
-      >
-        <AvatarFallback className="bg-primary/10 text-primary font-bold">
-          {myInitial}
-        </AvatarFallback>
-      </Avatar>
+            <div className="flex items-start gap-4">
+              {/* ⭐ 내 프로필 아바타 + 팝업 */}
+              <div className="relative">
+                <Avatar
+                  onClick={() => setActiveCommentProfileId('me')}
+                  className={`
+                    w-12 h-12 rounded-full cursor-pointer
+                    border-[5px] ${getProfileBorderClass(myColor)}
+                    bg-white text-gray-900 font-bold
+                    shadow-sm hover:bg-gray-50 transition
+                  `}
+                >
+                  <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                    {myInitial}
+                  </AvatarFallback>
+                </Avatar>
 
-      {/* 내 프로필 팝업 */}
-      {activeCommentProfileId === 'me' && (
-        <UserProfilePopup
-          className="absolute left-0 top-14 z-20"
-          name={myName}
-          initial={myInitial}
-          nicknameColor={myColor}
-          onClose={() => setActiveCommentProfileId(null)}
-        />
-      )}
-    </div>
+                {/* 내 프로필 팝업 */}
+                {activeCommentProfileId === 'me' && (
+                  <UserProfilePopup
+                    className="absolute left-0 top-14 z-20"
+                    name={myName}
+                    initial={myInitial}
+                    nicknameColor={myColor}
+                    onClose={() => setActiveCommentProfileId(null)}
+                  />
+                )}
+              </div>
 
-    {/* 입력창 */}
-    <div className="flex-1 flex flex-col gap-3">
-      <Textarea
-        placeholder={`댓글을 입력하세요...`}
-        value={commentInput}
-        onChange={(e) => setCommentInput(e.target.value)}
-        className="min-h-[100px] resize-none bg-gray-100 border-0 rounded-md focus:ring-0 focus:outline-none"
-      />
+              {/* 입력창 */}
+              <div className="flex-1 flex flex-col gap-3">
+                <Textarea
+                  placeholder={`댓글을 입력하세요...`}
+                  value={commentInput}
+                  onChange={(e) => setCommentInput(e.target.value)}
+                  className="min-h-[100px] resize-none bg-gray-100 border-0 rounded-md focus:ring-0 focus:outline-none"
+                />
 
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={handleCommentSubmit}
-          disabled={!commentInput.trim()}
-          className="inline-flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <img
-            src={writeCommentIcon}
-            alt="댓글 작성"
-            className="w-30 h-30"
-          />
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleCommentSubmit}
+                    disabled={!commentInput.trim()}
+                    className="inline-flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <img
+                      src={writeCommentIcon}
+                      alt="댓글 작성"
+                      className="w-30 h-30"
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
 
 
           {/* 댓글 목록 */}
