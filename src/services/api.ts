@@ -89,13 +89,21 @@ export const getMyProfile = async () => {
 };
 
 // PUT /me - 내 프로필 수정
-export const updateMyProfile = async (data: {
-  displayName?: string;
-  avatarUrl?: string;
-}) => {
+// services/api.ts
+export interface UpdateMyProfilePayload {
+  displayName: string;
+  avatarUrl: string;
+  bio: string;
+}
+
+export const updateMyProfile = async (data: UpdateMyProfilePayload) => {
+  console.log('[updateMyProfile] payload', data); // 🔍 디버깅용
   const response = await api.put('/me', data);
   return response.data;
 };
+
+
+
 
 // ========================================
 // 🔗 Posts API

@@ -1,3 +1,5 @@
+// src/pages/MyPage.tsx
+
 import { useState, useEffect } from 'react';
 import { AppSidebar } from '@/components/common';
 import { Button } from '@/components/ui/button';
@@ -10,7 +12,8 @@ import {
   getMyScraps,
   getPosts,
   getMyComments,
-  getPost,              // ⭐ 추가: postId로 게시글 불러오기
+  getPost,              // postId로 게시글 불러오기
+  updateMyProfile,      // ✅ 프로필 수정 API
 } from '@/services/api';
 
 import RookieBadge from '@/assets/Rookie Ver.2.svg';
@@ -85,6 +88,7 @@ interface Profile {
   plan?: string;
   intro?: string;
   trustLevel?: TrustLevel;
+  avatarUrl?: string;
   [key: string]: unknown;
 }
 
@@ -142,7 +146,6 @@ const getTrustRingClass = (trustLevel?: TrustLevel): string => {
     case 'danger':
       return 'border-[#ef4444] bg-white';
     default:
-      // 기본값은 파란색으로 두었음
       return 'border-[#2563eb] bg-white';
   }
 };
@@ -167,7 +170,7 @@ export default function MyPage() {
   const [myComments, setMyComments] = useState<MyComment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(true);
 
-  // ⭐ 내가 댓글 단 게시물 목록 (TopicCard로 보여줄 것)
+  // 내가 댓글 단 게시물 목록
   const [myCommentPosts, setMyCommentPosts] = useState<PostItem[]>([]);
 
   // 프로필 인라인 편집 모드 상태
@@ -175,17 +178,22 @@ export default function MyPage() {
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
 
+  // 저장 중 여부
+  const [profileSaving, setProfileSaving] = useState(false);
+
   // 프로필 정보 불러오기
   useEffect(() => {
     setProfileLoading(true);
     getMyProfile()
-      .then((data: Profile) => {
-        // 서버에서 오는 값들을 화면용 문자열로 정규화
+      .then((data: Profile | any) => {
         const normalized: Profile = {
           ...data,
-          nicknameColor: normalizeValue(data.nicknameColor),
+          avatarUrl: data.avatarUrl ?? '',
+          // 백엔드가 badgeColor 로 줄 수도 있으니 둘 다 대응
+          nicknameColor: (data as any).nicknameColor ?? (data as any).badgeColor,
           major: normalizeValue(data.major),
-          bio: normalizeValue(data.bio),
+          // bio 는 그대로 둔다 (나중에 그대로 서버에 보낼 값)
+          bio: typeof data.bio === 'string' ? data.bio : '',
           plan: normalizeValue(data.plan),
           intro: normalizeValue(data.intro),
         };
@@ -203,81 +211,70 @@ export default function MyPage() {
 
   // 화면에 보여줄 소개 문구 (없으면 기본 문구)
   const profileBio =
-    profile && profile.bio && profile.bio !== '-'
+    profile && profile.bio && profile.bio.trim().length > 0
       ? profile.bio
       : '소개 문구가 없습니다.';
 
   // 프로필 데이터가 바뀔 때 인라인 편집 인풋 초기값 동기화
   useEffect(() => {
-    setEditName(profileName);
-    setEditBio(profileBio);
-  }, [profileName, profileBio]);
+    setEditName(
+      (profile?.displayName && profile.displayName !== '-'
+        ? profile.displayName
+        : profile?.nickname) || '',
+    );
+    setEditBio(profile?.bio || '');
+  }, [profileName, profile?.bio]); // profileName 바뀔 때도 같이 동기화
 
-  // 내가 쓴 글 목록 불러오기
-// 내가 쓴 글 목록 불러오기 (내 글만 필터링)
-useEffect(() => {
-  // 아직 프로필을 못 불러왔으면 그냥 전체 글도 안 불러옴
-  if (!profile) return;
+  // 내가 쓴 글 목록 불러오기 (내 글만 필터링)
+  useEffect(() => {
+    if (!profile) return;
 
-  setPostsLoading(true);
+    setPostsLoading(true);
 
-  getPosts()
-    .then((data: PostItem[]) => {
-      // 1) 태그 정규화
-      const normalizedPosts: PostItem[] = data.map((p) => ({
-        ...p,
-        tags: normalizeTags(p.tags),
-      }));
+    getPosts()
+      .then((data: PostItem[]) => {
+        const normalizedPosts: PostItem[] = data.map((p) => ({
+          ...p,
+          tags: normalizeTags(p.tags),
+        }));
 
-      // 2) 내 이름 (displayName 우선, 없으면 nickname)
-      const myName =
-        profile.displayName ||
-        profile.nickname ||
-        '';
+        const myName = profile.displayName || profile.nickname || '';
 
-      // 3) 작성자 "이름" 기준으로 내 글만 필터링
-      const onlyMyPosts = normalizedPosts.filter((post) => {
-        const rawAuthor = post.author as any;
+        const onlyMyPosts = normalizedPosts.filter((post) => {
+          const rawAuthor = post.author as any;
 
-        // ✅ 리스트 응답에 자주 있는 authorName / writerName 도 같이 본다
-        const authorNameField =
-          typeof (post as any).authorName === 'string'
-            ? (post as any).authorName
-            : typeof (post as any).writerName === 'string'
-            ? (post as any).writerName
-            : undefined;
+          const authorNameField =
+            typeof (post as any).authorName === 'string'
+              ? (post as any).authorName
+              : typeof (post as any).writerName === 'string'
+              ? (post as any).writerName
+              : undefined;
 
-        // author가 문자열인 경우
-        if (typeof rawAuthor === 'string') {
-          return rawAuthor === myName;
-        }
+          if (typeof rawAuthor === 'string') {
+            return rawAuthor === myName;
+          }
 
-        // authorName 필드가 있는 경우
-        if (authorNameField) {
-          return authorNameField === myName;
-        }
+          if (authorNameField) {
+            return authorNameField === myName;
+          }
 
-        // author가 객체인 경우
-        if (rawAuthor && typeof rawAuthor === 'object') {
-          const displayName =
-            rawAuthor.displayName ??
-            rawAuthor.nickname ??
-            rawAuthor.name;
-          if (!displayName) return false;
+          if (rawAuthor && typeof rawAuthor === 'object') {
+            const displayName =
+              rawAuthor.displayName ??
+              rawAuthor.nickname ??
+              rawAuthor.name;
+            if (!displayName) return false;
 
-          return displayName === myName;
-        }
+            return displayName === myName;
+          }
 
-        // 어떤 경우에도 매칭 안 되면 내 글이 아님
-        return false;
-      });
+          return false;
+        });
 
-      setMyPosts(onlyMyPosts);
-    })
-    .finally(() => setPostsLoading(false));
-}, [profile]);
-
-
+        setMyPosts(onlyMyPosts);
+      })
+      .finally(() => setPostsLoading(false));
+  }, [profile]);
 
   // 스크랩한 글 목록 불러오기
   useEffect(() => {
@@ -293,16 +290,14 @@ useEffect(() => {
       .finally(() => setScrapsLoading(false));
   }, []);
 
-  // ⭐ 내가 쓴 댓글 + 그 댓글이 달린 게시물 목록 불러오기
+  // 내가 쓴 댓글 + 그 댓글이 달린 게시물 목록 불러오기
   useEffect(() => {
     const fetchCommentsAndPosts = async () => {
       setCommentsLoading(true);
       try {
-        // 1) 내 댓글 목록
         const comments = await getMyComments();
         setMyComments(comments);
 
-        // 2) postId만 모아서 중복 제거
         const postIds = Array.from(
           new Set(
             comments
@@ -316,10 +311,8 @@ useEffect(() => {
           return;
         }
 
-        // 3) 각 postId에 대한 게시글 데이터 가져오기
         const posts = await Promise.all(postIds.map((pid) => getPost(pid)));
 
-        // 4) TopicCard에서 쓰기 좋은 PostItem 형태로 정규화
         const normalizedCommentPosts: PostItem[] = posts.map((p: any) => ({
           ...p,
           tags: normalizeTags(p.tags),
@@ -336,7 +329,7 @@ useEffect(() => {
 
   // 각 탭별 카운트
   const postsCount = myPosts.length;
-  const commentsCount = myComments.length;  // 🔸 카운트는 "내 댓글 개수"
+  const commentsCount = myComments.length;
   const scrapCount = myScraps.length;
 
   // 프로필 이니셜
@@ -346,67 +339,93 @@ useEffect(() => {
   // 등급에 따른 아바타 테두리 클래스
   const gradeRingClass = getTrustRingClass(profile?.trustLevel);
 
-  // 프로필 수정 버튼 토글 + 저장 로직
-  const handleToggleEditProfile = () => {
-    if (isEditingProfile) {
-      // TODO: API 붙이면 여기서 PATCH 호출해서 프로필 업데이트
+  // ✅ 프로필 수정 버튼 토글 + 서버 저장
+  const handleToggleEditProfile = async () => {
+    // 저장 중이면 중복 클릭 방지
+    if (profileSaving) return;
+
+    // 아직 편집 모드가 아니면 → 편집 모드 ON만
+    if (!isEditingProfile) {
+      setIsEditingProfile(true);
+      return;
+    }
+
+    const trimmedName = editName.trim();
+    const trimmedBio = editBio.trim();
+
+    if (!trimmedName) {
+      alert('이름을 입력해주세요.');
+      return;
+    }
+
+    try {
+      setProfileSaving(true);
+
+      // 서버가 기대하는 형식으로 전송
+      await updateMyProfile({
+        displayName: trimmedName,
+        avatarUrl: profile?.avatarUrl ?? '',
+        bio: trimmedBio,
+      });
+
+      // 프론트 상태 동기화
       setProfile((prev) =>
         prev
           ? {
               ...prev,
-              displayName: editName,
-              bio: editBio,
+              displayName: trimmedName,
+              nickname: trimmedName,
+              bio: trimmedBio,
             }
           : prev,
       );
+
+      setIsEditingProfile(false);
+    } catch (e: any) {
+      console.error('프로필 수정 실패:', e);
+      console.error('서버 응답:', e?.response?.data);
+      alert('프로필 수정 중 오류가 발생했습니다.');
+    } finally {
+      setProfileSaving(false);
     }
-    setIsEditingProfile((prev) => !prev);
   };
 
   // TopicCard에 내려줄 author 정보 정규화
-  // TopicCard에 내려줄 author 정보 정규화
-const getPostAuthor = (
-  post: PostItem,
-): string | { id: string; displayName: string } => {
-  const rawAuthor = post.author;
+  const getPostAuthor = (
+    post: PostItem,
+  ): string | { id: string; displayName: string } => {
+    const rawAuthor = post.author;
 
-  // 1️⃣ post.author 가 있는 경우 (단건 조회 getPost 응답 등)
-  if (rawAuthor) {
-    // 문자열이면 그대로 사용
-    if (typeof rawAuthor === 'string') {
-      return rawAuthor;
+    if (rawAuthor) {
+      if (typeof rawAuthor === 'string') {
+        return rawAuthor;
+      }
+
+      const id = rawAuthor.id ?? rawAuthor.userId ?? '';
+      const displayName =
+        rawAuthor.displayName ??
+        rawAuthor.nickname ??
+        '작성자';
+
+      return {
+        id: String(id),
+        displayName,
+      };
     }
 
-    // 객체이면 id + displayName 구성
-    const id = rawAuthor.id ?? rawAuthor.userId ?? '';
-    const displayName =
-      rawAuthor.displayName ??
-      rawAuthor.nickname ??
-      '작성자';
+    const authorName =
+      (post as any).authorName ??
+      (post as any).writerName ??
+      (post as any).author_nickname;
 
-    return {
-      id: String(id),
-      displayName,
-    };
-  }
+    if (typeof authorName === 'string' && authorName.trim().length > 0) {
+      return authorName;
+    }
 
-  // 2️⃣ post.author 는 없고 authorName 만 있는 경우 (getPosts, getMyScraps 응답)
-  const authorName =
-    (post as any).authorName ??
-    (post as any).writerName ??
-    (post as any).author_nickname;
+    return '작성자';
+  };
 
-  if (typeof authorName === 'string' && authorName.trim().length > 0) {
-    // TopicCard 는 author 가 string 이어도 되니까 그대로 넘김
-    return authorName;
-  }
-
-  // 3️⃣ 진짜 아무 정보도 없으면 마지막 fallback
-  return '작성자';
-};
-
-
-  // 공통 글 카드 렌더러 (내 글 + 스크랩 + 내가 댓글 단 글)
+  // 공통 글 카드 렌더러
   const renderPostCard = (post: PostItem) => {
     const rawContent =
       (post.content as string | undefined) ??
@@ -430,14 +449,13 @@ const getPostAuthor = (
     );
   };
 
-  // ⭐ 댓글 탭에서 쓸 카드: 사실 renderPostCard 재사용
   const renderCommentCard = (post: PostItem) => renderPostCard(post);
 
   return (
     <div className="min-h-screen bg-background">
       <main className="w-full flex p-6 gap-6 items-start">
-      <AppSidebar />
-      <section className="flex-1 flex flex-col gap-12">
+        <AppSidebar />
+        <section className="flex-1 flex flex-col gap-12">
           {/* 상단 프로필 영역 */}
           <Card className="w-full rounded-[24px] border border-[#d0ddff] shadow-sm bg-[#eef3ff]">
             <CardContent className="flex items-center justify-between py-7 px-9">
@@ -521,7 +539,7 @@ const getPostAuthor = (
                     </div>
                   </div>
 
-                  {/* 프로필 수정 토글 버튼 */}
+                  {/* 프로필 수정 토글 버튼 (UI 그대로) */}
                   <Button
                     type="button"
                     onClick={handleToggleEditProfile}
@@ -591,7 +609,7 @@ const getPostAuthor = (
                   )}
                 </TabsContent>
 
-                {/* 내가 댓글 쓴 글 탭 – ⭐ 이제 "댓글 내용"이 아니라 내가 댓글 단 게시물 TopicCard */}
+                {/* 내가 댓글 쓴 글 탭 */}
                 <TabsContent value="comments" className="mt-2">
                   {commentsLoading ? (
                     <div className="text-center py-16 text-slate-400">
@@ -632,3 +650,4 @@ const getPostAuthor = (
     </div>
   );
 }
+
