@@ -23,7 +23,7 @@ export default function AuthCallback() {
         // 로컬:   http://localhost:5173/auth/callback
         // 배포:   https://네-넷리파이-도메인/auth/callback
         const redirectUri =
-          'http://localhost:5173/auth/callback';
+          'https://whales-team6.netlify.app/auth/callback';
 
         // ✅ 여기서 api는 이미 baseURL = 'http://3.27.115.110:8080/api' 사용
         const response = await api.post('http://3.27.115.110:8080/api/auth/login/google', {
