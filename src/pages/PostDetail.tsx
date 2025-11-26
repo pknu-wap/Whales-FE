@@ -7,8 +7,17 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { ThumbsUp, MessageCircle, ArrowLeft, MoreVertical } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { getPost, getPostComments, createComment } from '@/services/api';
-import { togglePostLike, togglePostDislike, togglePostScrap, getIsScraped } from '@/services/api';
+import {
+  getPost,
+  getPostComments,
+  createComment,
+  togglePostLike,
+  togglePostDislike,
+  togglePostScrap,
+  getIsScraped,
+  getCommentReactions,
+  getMyProfile,
+} from '@/services/api';
 import scrapIcon from '@/assets/scrap.svg';
 import reportIcon from '@/assets/report.svg';
 import writeCommentIcon from '@/assets/writecomment.svg';
@@ -108,25 +117,39 @@ export default function PostDetail() {
   }));
 };
 
-const handleCommentLike = async (commentId: string) => {
-  try {
-    if (!accessToken) return alert('로그인이 필요합니다.');
-    await likeComment(commentId);
-    await refreshCommentReaction(commentId);
-  } catch (e) {
-    console.error('댓글 좋아요 실패:', e);
-  }
-};
+  // 내 프로필 정보
+  const [myProfile, setMyProfile] = useState<{
+    displayName: string;
+    initial: string;
+  } | null>(null);
 
-const handleCommentDislike = async (commentId: string) => {
-  try {
-    if (!accessToken) return alert('로그인이 필요합니다.');
-    await dislikeComment(commentId);
-    await refreshCommentReaction(commentId);
-  } catch (e) {
-    console.error('댓글 싫어요 실패:', e);
-  }
-};
+  // 프로필 팝업 상태
+  const [isPostProfileOpen, setIsPostProfileOpen] = useState(false);
+  const [openCommentProfileId, setOpenCommentProfileId] = useState<string | null>(null);
+  const [isMyProfileOpen, setIsMyProfileOpen] = useState(false);
+
+  // 내 프로필 불러오기
+  useEffect(() => {
+    const fetchMyProfile = async () => {
+      try {
+        const me = await getMyProfile();
+        const name: string =
+          me?.displayName ?? me?.nickname ?? me?.name ?? '나';
+
+        setMyProfile({
+          displayName: name,
+          initial: name.charAt(0),
+        });
+      } catch (e) {
+        console.error('내 프로필 불러오기 실패:', e);
+      }
+    };
+
+    fetchMyProfile();
+  }, []);
+
+  useEffect(() => {
+    if (!comments || comments.length === 0) return;
 
 
   // const handleTagClick = (tag: string) => {
@@ -403,42 +426,51 @@ const handleCommentDislike = async (commentId: string) => {
           {/* 본문 */}
           <div className="bg-card rounded-lg border border-border p-8">
             <div className="flex items-start justify-between mb-6">
-          {/* 왼쪽: 프로필 + 팝업 */}
-<div className="relative flex items-center gap-3">
-  {/* 아바타 */}
-  <Avatar
-    onClick={() => setShowProfilePopup((v) => !v)}
-    className={`
-      w-14 h-14 rounded-full cursor-pointer
-      border-[5px] ${getProfileBorderClass(postData.authorNicknameColor)}
-      bg-white text-gray-900 font-bold
-      shadow-sm hover:bg-gray-50 transition
-    `}
-  >
-    <AvatarFallback className="text-lg font-semibold">
-      {postData.authorInitial}
-    </AvatarFallback>
-  </Avatar>
+              {/* 왼쪽: 프로필 + 작은 팝업 */}
+              <div className="relative flex items-center gap-3">
+                {/* 아바타 - 클릭 시 팝업 열기 */}
+                <Avatar
+                  className="w-14 h-14 border-2 border-primary/20 cursor-pointer"
+                  onClick={() => setIsPostProfileOpen((prev) => !prev)}
+                >
+                  <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
+                    {postData.authorInitial}
+                  </AvatarFallback>
+                </Avatar>
 
-  {/* 이름 + 날짜 */}
-  <div>
-    <div className="flex items-center gap-2 mb-1">
-      <p className="font-bold text-lg">{postData.authorName}</p>
-    </div>
-    <p className="text-sm text-muted-foreground">{postData.date}</p>
-  </div>
+                {/* 닉네임/날짜 */}
+                <div>
+                  {/* 닉네임 - 클릭 시 팝업 열기 */}
+                  <button
+                    type="button"
+                    className="block text-left text-base font-semibold hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsPostProfileOpen((prev) => !prev);
+                    }}
+                  >
+                    {postData.authorName}
+                  </button>
+                  <p className="text-xs text-muted-foreground">
+                    {postData.date}
+                  </p>
+                </div>
 
-  {/* 프로필 팝업 */}
-  {showProfilePopup && (
-    <UserProfilePopup
-      className="absolute left-0 top-16" // 위치는 필요하면 조정
-      name={postData.authorName}
-      initial={postData.authorInitial}
-      nicknameColor={postData.authorNicknameColor}
-      onClose={() => setShowProfilePopup(false)}
-    />
-  )}
-</div>
+                {/* 닉네임 아래에 작게 뜨는 팝업 */}
+                <ProfileMiniPopup
+                  isOpen={isPostProfileOpen}
+                  displayName={postData.authorName}
+                  initial={postData.authorInitial}
+                  onClose={() => setIsPostProfileOpen(false)}
+                  onChatClick={() => {
+                    setIsPostProfileOpen(false);
+                    navigate('/chat');
+                  }}
+                />
+              </div>
+              <p className="text-sm text-muted-foreground">{postData.date}</p>
+            </div>
+          </div>
 
   {/* 오른쪽: 스크랩/신고 메뉴 */}
   <div className="relative">
@@ -529,47 +561,40 @@ const handleCommentDislike = async (commentId: string) => {
           </div>
           </div>
 
-         {/* 댓글 작성 */}
-<div className="bg-card rounded-lg border border-border p-6">
-  <h3 className="font-bold text-lg mb-4">댓글 작성</h3>
+          {/* 댓글 작성 */}
+          <div className="bg-card rounded-lg border border-border p-6">
+            <h3 className="font-bold text-lg mb-4">댓글 작성</h3>
 
-  {/* 아바타 + 입력 영역 한 줄 정렬 */}
-  <div className="flex items-start gap-4">
-    {/* 아바타 */}
-    <Avatar className="w-12 h-12 border-2 border-primary/20">
-      <AvatarFallback className="bg-primary/10 text-primary font-bold">
-        나
-      </AvatarFallback>
-    </Avatar>
+            {/* 아바타 + 입력 영역 한 줄 정렬 */}
+            <div className="flex items-start gap-4">
+              {/* 아바타 */}
+              <div className="relative">
+                <Avatar
+                  className="w-12 h-12 border-2 border-primary/20 cursor-pointer"
+                  onClick={() => setIsMyProfileOpen((prev) => !prev)}
+                >
+                  <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                    {myProfile?.initial ?? '나'}
+                  </AvatarFallback>
+                </Avatar>
 
-    {/* 입력창 + 버튼 */}
-    <div className="flex-1 flex flex-col gap-3">
-      <Textarea
-        placeholder="댓글을 입력하세요..."
-        value={commentInput}
-        onChange={(e) => setCommentInput(e.target.value)}
-        className="min-h-[100px] resize-none bg-gray-100 border-0 rounded-md focus:ring-0 focus:outline-none"
-      />
+                {/* 닉네임은 따로 텍스트만 표시 */}
+                <div className="mt-1 text-xs font-semibold text-slate-900">
+                  {myProfile?.displayName ?? '나'}
+                </div>
 
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={handleCommentSubmit}
-          disabled={!commentInput.trim()}
-          className="inline-flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <img
-            src={writeCommentIcon}
-            alt="댓글 작성"
-            className="w-30 h-30"
-          />
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
+                {/* 댓글 작성자(나) 프로필 팝업 */}
+                <ProfileMiniPopup
+                  isOpen={isMyProfileOpen}
+                  displayName={myProfile?.displayName ?? '나'}
+                  initial={myProfile?.initial ?? '나'}
+                  onClose={() => setIsMyProfileOpen(false)}
+                  onChatClick={() => {
+                    setIsMyProfileOpen(false);
+                    navigate('/chat');
+                  }}
+                />
+              </div>
 
 
           {/* 댓글 목록 */}
