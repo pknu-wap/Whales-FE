@@ -16,6 +16,7 @@ import {
   togglePostScrap,
   getIsScraped,
   getCommentReactions,
+  getMyProfile,
 } from '@/services/api';
 import scrapIcon from '@/assets/scrap.svg';
 import reportIcon from '@/assets/report.svg';
@@ -131,10 +132,36 @@ export default function PostDetail() {
   const [isScraped, setIsScraped] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  // 내 프로필 정보
+  const [myProfile, setMyProfile] = useState<{
+    displayName: string;
+    initial: string;
+  } | null>(null);
+
   // 프로필 팝업 상태
   const [isPostProfileOpen, setIsPostProfileOpen] = useState(false);
   const [openCommentProfileId, setOpenCommentProfileId] = useState<string | null>(null);
   const [isMyProfileOpen, setIsMyProfileOpen] = useState(false);
+
+  // 내 프로필 불러오기
+  useEffect(() => {
+    const fetchMyProfile = async () => {
+      try {
+        const me = await getMyProfile();
+        const name: string =
+          me?.displayName ?? me?.nickname ?? me?.name ?? '나';
+
+        setMyProfile({
+          displayName: name,
+          initial: name.charAt(0),
+        });
+      } catch (e) {
+        console.error('내 프로필 불러오기 실패:', e);
+      }
+    };
+
+    fetchMyProfile();
+  }, []);
 
   useEffect(() => {
     if (!comments || comments.length === 0) return;
@@ -489,7 +516,7 @@ export default function PostDetail() {
                 {/* 아바타 - 클릭 시 팝업 열기 */}
                 <Avatar
                   className="w-14 h-14 border-2 border-primary/20 cursor-pointer"
-                  onClick={() => setIsProfileOpen((prev) => !prev)}
+                  onClick={() => setIsPostProfileOpen((prev) => !prev)}
                 >
                   <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
                     {postData.authorInitial}
@@ -633,20 +660,20 @@ export default function PostDetail() {
                   onClick={() => setIsMyProfileOpen((prev) => !prev)}
                 >
                   <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                    나
+                    {myProfile?.initial ?? '나'}
                   </AvatarFallback>
                 </Avatar>
 
                 {/* 닉네임은 따로 텍스트만 표시 */}
                 <div className="mt-1 text-xs font-semibold text-slate-900">
-                  나
+                  {myProfile?.displayName ?? '나'}
                 </div>
 
                 {/* 댓글 작성자(나) 프로필 팝업 */}
                 <ProfileMiniPopup
                   isOpen={isMyProfileOpen}
-                  displayName="나"
-                  initial="나"
+                  displayName={myProfile?.displayName ?? '나'}
+                  initial={myProfile?.initial ?? '나'}
                   onClose={() => setIsMyProfileOpen(false)}
                   onChatClick={() => {
                     setIsMyProfileOpen(false);
