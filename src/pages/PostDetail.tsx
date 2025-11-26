@@ -5,20 +5,22 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { ThumbsUp, MessageCircle, ArrowLeft, MoreVertical } from 'lucide-react';
+import { ThumbsUp, MessageCircle, ArrowLeft, MoreVertical, X } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { getPost, getPostComments, createComment } from '@/services/api';
-import { togglePostLike, togglePostDislike, togglePostScrap, getIsScraped } from '@/services/api';
+import {
+  getPost,
+  getPostComments,
+  createComment,
+  togglePostLike,
+  togglePostDislike,
+  togglePostScrap,
+  getIsScraped,
+  getCommentReactions,
+} from '@/services/api';
 import scrapIcon from '@/assets/scrap.svg';
 import reportIcon from '@/assets/report.svg';
 import writeCommentIcon from '@/assets/writecomment.svg';
-import {
-  getCommentReactions,
-  likeComment,
-  dislikeComment,
-} from '@/services/api';
-import useAuthStore from '@/stores/authStore';
-
+import RookieBadge from '@/assets/rookie.svg';
 
 type ReactionSummary = {
   likeCount: number;
@@ -47,6 +49,72 @@ interface CommentData {
   likes: number;
 }
 
+interface ProfileMiniPopupProps {
+  isOpen: boolean;
+  displayName: string;
+  initial: string;
+  onClose: () => void;
+  onChatClick: () => void;
+}
+
+function ProfileMiniPopup({
+  isOpen,
+  displayName,
+  initial,
+  onClose,
+  onChatClick,
+}: ProfileMiniPopupProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="absolute left-0 top-full z-20 mt-2 w-56 rounded-2xl border border-[#c9d8ff] bg-[#eaf2ff] px-4 py-4 shadow-md"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* 상단 X 버튼 */}
+      <button
+        type="button"
+        className="ml-auto mb-1 flex h-5 w-5 items-center justify-center text-slate-500 hover:text-slate-700"
+        onClick={onClose}
+        aria-label="프로필 닫기"
+      >
+        <X className="h-4 w-4" />
+      </button>
+
+      <div className="flex flex-col items-center gap-3">
+        {/* 작은 아바타 */}
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl font-semibold text-slate-900 ring-[11px] ring-[#D89BFF] mb-4">
+          {initial}
+        </div>
+
+        <div className="flex flex-col items-center gap-1 text-center">
+          <div className="text-xl font-extrabold text-slate-900">
+            {displayName}
+          </div>
+          <p className="text-xs text-slate-600">
+            자기소개를 준비 중입니다.
+          </p>
+        </div>
+
+        <img
+          src={RookieBadge}
+          alt="Rookie 등급 배지"
+          className="h-6 w-auto"
+        />
+
+        <Button
+          size="sm"
+          className="mt-2 flex h-9 w-full items-center justify-center gap-1 rounded-[12px] text-xs font-semibold bg-[#2f6bff] hover:bg-[#2557d4]"
+          onClick={onChatClick}
+        >
+          <MessageCircle className="h-4 w-4" />
+          <span>채팅하기</span>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -54,83 +122,53 @@ export default function PostDetail() {
   const [postData, setPostData] = useState<PostData | null>(null);
   const [comments, setComments] = useState<CommentData[]>([]);
   const [commentReactions, setCommentReactions] = useState<
-  Record<string, { likeCount: number; dislikeCount: number; myReaction: 'LIKE' | 'DISLIKE' | null }>
->({});
-  const { accessToken } = useAuthStore();
+    Record<string, { likeCount: number; dislikeCount: number; myReaction: 'LIKE' | 'DISLIKE' | null }>
+  >({});
   const [commentInput, setCommentInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
   const [isScraped, setIsScraped] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // ⬅ 추가
-  const refreshCommentReaction = async (commentId: string) => {
-  const r = await getCommentReactions(commentId);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  setCommentReactions((prev) => ({
-    ...prev,
-    [commentId]: {
-      likeCount: r.likeCount ?? 0,
-      dislikeCount: r.dislikeCount ?? 0,
-      myReaction: r.myReaction ?? null,
-    },
-  }));
-};
+  // 프로필 팝업 상태
+  const [isPostProfileOpen, setIsPostProfileOpen] = useState(false);
+  const [openCommentProfileId, setOpenCommentProfileId] = useState<string | null>(null);
+  const [isMyProfileOpen, setIsMyProfileOpen] = useState(false);
 
-const handleCommentLike = async (commentId: string) => {
-  try {
-    if (!accessToken) return alert('로그인이 필요합니다.');
-    await likeComment(commentId);
-    await refreshCommentReaction(commentId);
-  } catch (e) {
-    console.error('댓글 좋아요 실패:', e);
-  }
-};
-
-const handleCommentDislike = async (commentId: string) => {
-  try {
-    if (!accessToken) return alert('로그인이 필요합니다.');
-    await dislikeComment(commentId);
-    await refreshCommentReaction(commentId);
-  } catch (e) {
-    console.error('댓글 싫어요 실패:', e);
-  }
-};
-
-
-  // const handleTagClick = (tag: string) => {
-  //   navigate(`/search?tag=${encodeURIComponent(tag)}`)
-  // }
   useEffect(() => {
-  if (!comments || comments.length === 0) return;
+    if (!comments || comments.length === 0) return;
 
-  const fetchReactions = async () => {
-    try {
-      const entries = await Promise.all(
-        comments.map(async (c) => {
-          const r = await getCommentReactions(c.id);
-          return [
-            c.id,
-            {
-              likeCount: r.likeCount ?? 0,
-              dislikeCount: r.dislikeCount ?? 0,
-              myReaction: r.myReaction ?? null,
-            },
-          ] as const;
-        }),
-      );
+    const fetchReactions = async () => {
+      try {
+        const entries = await Promise.all(
+          comments.map(async (c) => {
+            const r = await getCommentReactions(c.id);
+            return [
+              c.id,
+              {
+                likeCount: r.likeCount ?? 0,
+                dislikeCount: r.dislikeCount ?? 0,
+                myReaction: r.myReaction ?? null,
+              },
+            ] as const;
+          }),
+        );
 
-      const map: typeof commentReactions = {};
-      for (const [id, data] of entries) map[id] = data;
+        const map: typeof commentReactions = {};
+        for (const [cid, data] of entries) {
+          map[cid] = data;
+        }
 
-      setCommentReactions(map);
-    } catch (e) {
-      console.error('댓글 리액션 로드 실패:', e);
-    }
-  };
+        setCommentReactions(map);
+      } catch (e) {
+        console.error('댓글 리액션 로드 실패:', e);
+      }
+    };
 
-  fetchReactions();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [comments]);
+    fetchReactions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [comments]);
 
   useEffect(() => {
     if (!id) {
@@ -153,7 +191,9 @@ const handleCommentDislike = async (commentId: string) => {
 
         // 태그는 문자열 배열로 정규화 (백엔드가 {id,name} 형태일 수 있음)
         const normalizedTags: string[] = Array.isArray(p?.tags)
-          ? p.tags.map((t: any) => (typeof t === 'string' ? t : t?.name)).filter(Boolean)
+          ? p.tags
+              .map((t: any) => (typeof t === 'string' ? t : t?.name))
+              .filter(Boolean)
           : [];
 
         // 리액션 요약에서 좋아요 수 추출
@@ -173,7 +213,6 @@ const handleCommentDislike = async (commentId: string) => {
           tags: normalizedTags,
           reactions,
         };
-        // 기존 setPostData(post); 바로 아래에 추가
         setPostData(post);
 
         // myReaction 초기값 적용
@@ -218,6 +257,7 @@ const handleCommentDislike = async (commentId: string) => {
           : [];
         setComments(mapped);
       } catch (e) {
+        console.error(e);
         setPostData(null);
         setComments([]);
       } finally {
@@ -233,8 +273,8 @@ const handleCommentDislike = async (commentId: string) => {
     return (
       <div>
         <main className="w-full flex p-6 gap-6 items-start">
-      <AppSidebar />
-      <section className="flex-1 flex flex-col gap-12">
+          <AppSidebar />
+          <section className="flex-1 flex flex-col gap-12">
             <p className="text-muted-foreground">불러오는 중…</p>
           </section>
         </main>
@@ -245,9 +285,9 @@ const handleCommentDislike = async (commentId: string) => {
   if (!postData) {
     return (
       <div>
-      <main className="w-full flex p-6 gap-6 items-start">
-      <AppSidebar />
-      <section className="flex-1 flex flex-col gap-12">
+        <main className="w-full flex p-6 gap-6 items-start">
+          <AppSidebar />
+          <section className="flex-1 flex flex-col gap-12">
             <p className="text-muted-foreground">
               게시글을 찾을 수 없습니다.
             </p>
@@ -270,11 +310,10 @@ const handleCommentDislike = async (commentId: string) => {
     try {
       const newComment = await createComment(id, commentInput);
       // 응답 데이터 구조에 따라 매핑
-      const mapped = {
+      const mapped: CommentData = {
         id: newComment.id,
         authorName: newComment.author?.displayName ?? '나',
-        authorInitial:
-          newComment.author?.displayName?.charAt(0) ?? '나',
+        authorInitial: newComment.author?.displayName?.charAt(0) ?? '나',
         date: new Date(newComment.createdAt).toLocaleDateString('ko-KR'),
         content: newComment.body ?? '',
         likes: newComment.reactions?.likeCount ?? 0,
@@ -293,12 +332,18 @@ const handleCommentDislike = async (commentId: string) => {
       await togglePostLike(id);
       setPostData((prev) => {
         if (!prev) return prev;
-        const reactions = { ...prev.reactions };
-        let likeCount = reactions.likeCount ?? 0;
-        let dislikeCount = reactions.dislikeCount ?? 0;
+
+        const prevReactions: ReactionSummary = prev.reactions ?? {
+          likeCount: prev.likes,
+          dislikeCount: 0,
+          myReaction: null,
+        };
+
+        let { likeCount, dislikeCount, myReaction } = prevReactions;
 
         if (isLiked) {
           likeCount = Math.max(0, likeCount - 1);
+          myReaction = null;
           setIsLiked(false);
         } else {
           likeCount += 1;
@@ -307,8 +352,14 @@ const handleCommentDislike = async (commentId: string) => {
             dislikeCount = Math.max(0, dislikeCount - 1);
             setIsDisliked(false);
           }
+          myReaction = 'LIKE';
         }
-        return { ...prev, likes: likeCount, reactions: { ...reactions, likeCount, dislikeCount } };
+
+        return {
+          ...prev,
+          likes: likeCount,
+          reactions: { likeCount, dislikeCount, myReaction },
+        };
       });
     } catch (e) {
       console.error('좋아요 실패:', e);
@@ -321,12 +372,18 @@ const handleCommentDislike = async (commentId: string) => {
       await togglePostDislike(id);
       setPostData((prev) => {
         if (!prev) return prev;
-        const reactions = { ...prev.reactions };
-        let likeCount = reactions.likeCount ?? 0;
-        let dislikeCount = reactions.dislikeCount ?? 0;
+
+        const prevReactions: ReactionSummary = prev.reactions ?? {
+          likeCount: prev.likes,
+          dislikeCount: 0,
+          myReaction: null,
+        };
+
+        let { likeCount, dislikeCount, myReaction } = prevReactions;
 
         if (isDisliked) {
           dislikeCount = Math.max(0, dislikeCount - 1);
+          myReaction = null;
           setIsDisliked(false);
         } else {
           dislikeCount += 1;
@@ -335,8 +392,13 @@ const handleCommentDislike = async (commentId: string) => {
             likeCount = Math.max(0, likeCount - 1);
             setIsLiked(false);
           }
+          myReaction = 'DISLIKE';
         }
-        return { ...prev, reactions: { ...reactions, likeCount, dislikeCount } };
+
+        return {
+          ...prev,
+          reactions: { likeCount, dislikeCount, myReaction },
+        };
       });
     } catch (e) {
       console.error('싫어요 실패:', e);
@@ -347,18 +409,74 @@ const handleCommentDislike = async (commentId: string) => {
     if (!id) return;
     try {
       await togglePostScrap(id);
-      setIsScraped(!isScraped);
+      setIsScraped((prev) => !prev);
     } catch (e) {
       console.error('스크랩 실패:', e);
     }
   };
 
+  // 댓글 좋아요
+  const handleCommentLike = (commentId: string) => {
+    setCommentReactions((prev) => {
+      const current =
+        prev[commentId] ?? { likeCount: 0, dislikeCount: 0, myReaction: null };
+
+      let { likeCount, dislikeCount, myReaction } = current;
+
+      if (myReaction === 'LIKE') {
+        likeCount = Math.max(0, likeCount - 1);
+        myReaction = null;
+      } else {
+        likeCount += 1;
+        if (myReaction === 'DISLIKE') {
+          dislikeCount = Math.max(0, dislikeCount - 1);
+        }
+        myReaction = 'LIKE';
+      }
+
+      return {
+        ...prev,
+        [commentId]: { likeCount, dislikeCount, myReaction },
+      };
+    });
+  };
+
+  // 댓글 싫어요
+  const handleCommentDislike = (commentId: string) => {
+    setCommentReactions((prev) => {
+      const current =
+        prev[commentId] ?? { likeCount: 0, dislikeCount: 0, myReaction: null };
+
+      let { likeCount, dislikeCount, myReaction } = current;
+
+      if (myReaction === 'DISLIKE') {
+        dislikeCount = Math.max(0, dislikeCount - 1);
+        myReaction = null;
+      } else {
+        dislikeCount += 1;
+        if (myReaction === 'LIKE') {
+          likeCount = Math.max(0, likeCount - 1);
+        }
+        myReaction = 'DISLIKE';
+      }
+
+      return {
+        ...prev,
+        [commentId]: { likeCount, dislikeCount, myReaction },
+      };
+    });
+  };
+
   return (
     <div>
       <main className="w-full flex p-6 gap-6 items-start">
-      <AppSidebar />
-      <section className="flex-1 flex flex-col gap-12">
-          <Button variant="ghost" className="w-fit gap-2" onClick={() => navigate(-1)}>
+        <AppSidebar />
+        <section className="flex-1 flex flex-col gap-12">
+          <Button
+            variant="ghost"
+            className="w-fit gap-2"
+            onClick={() => navigate(-1)}
+          >
             <ArrowLeft className="w-4 h-4" />
             목록으로
           </Button>
@@ -366,68 +484,102 @@ const handleCommentDislike = async (commentId: string) => {
           {/* 본문 */}
           <div className="bg-card rounded-lg border border-border p-8">
             <div className="flex items-start justify-between mb-6">
-          {/* 왼쪽: 프로필 */}
-          <div className="flex items-center gap-3">
-            <Avatar className="w-14 h-14 border-2 border-primary/20">
-              <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
-                {postData.authorInitial}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <p className="font-bold text-lg">{postData.authorName}</p>
+              {/* 왼쪽: 프로필 + 작은 팝업 */}
+              <div className="relative flex items-center gap-3">
+                {/* 아바타 - 클릭 시 팝업 열기 */}
+                <Avatar
+                  className="w-14 h-14 border-2 border-primary/20 cursor-pointer"
+                  onClick={() => setIsProfileOpen((prev) => !prev)}
+                >
+                  <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
+                    {postData.authorInitial}
+                  </AvatarFallback>
+                </Avatar>
+
+                {/* 닉네임/날짜 */}
+                <div>
+                  {/* 닉네임 - 클릭 시 팝업 열기 */}
+                  <button
+                    type="button"
+                    className="block text-left text-base font-semibold hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsPostProfileOpen((prev) => !prev);
+                    }}
+                  >
+                    {postData.authorName}
+                  </button>
+                  <p className="text-xs text-muted-foreground">
+                    {postData.date}
+                  </p>
+                </div>
+
+                {/* 닉네임 아래에 작게 뜨는 팝업 */}
+                <ProfileMiniPopup
+                  isOpen={isPostProfileOpen}
+                  displayName={postData.authorName}
+                  initial={postData.authorInitial}
+                  onClose={() => setIsPostProfileOpen(false)}
+                  onChatClick={() => {
+                    setIsPostProfileOpen(false);
+                    navigate('/chat');
+                  }}
+                />
               </div>
-              <p className="text-sm text-muted-foreground">{postData.date}</p>
+
+              {/* 오른쪽: 스크랩/신고 메뉴 */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsMenuOpen((prev) => !prev)}
+                  className="p-2 rounded-full hover:bg-muted transition"
+                >
+                  <MoreVertical className="w-5 h-5 text-muted-foreground" />
+                </button>
+
+                {isMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-32 bg-gray-100 border border-border rounded-lg shadow-lg py-1 text-sm z-10">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleScrap();
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 hover:bg-blue-200 transition"
+                    >
+                      <img src={scrapIcon} alt="스크랩" className="w-4 h-4" />
+                      <span>{isScraped ? '스크랩 취소' : '스크랩'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigate(`/report/post/${id}`);
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 hover:bg-blue-200 transition"
+                    >
+                      <img
+                        src={reportIcon}
+                        alt="신고하기"
+                        className="w-4 h-4"
+                      />
+                      <span>신고하기</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
-  {/* 오른쪽: 스크랩/신고 메뉴 */}
-  <div className="relative">
-    <button
-      type="button"
-      onClick={() => setIsMenuOpen((prev) => !prev)}
-      className="p-2 rounded-full hover:bg-muted transition"
-    >
-      <MoreVertical className="w-5 h-5 text-muted-foreground" />
-    </button>
-
-    {isMenuOpen && (
-      <div className="absolute right-0 mt-2 w-32 bg-gray-100 border border-border rounded-lg shadow-lg py-1 text-sm z-10">
-        <button
-          type="button"
-          onClick={() => {
-            handleScrap();
-            setIsMenuOpen(false);
-          }}
-          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-blue-200 transition"
-        >
-          <img src={scrapIcon} alt="스크랩" className="w-4 h-4" />
-          <span>{isScraped ? '스크랩 취소' : '스크랩'}</span>
-        </button>
-        <button
-  type="button"
-  onClick={() => {
-    navigate(`/report/post/${id}`);  // 🔥 여기서 신고 페이지로 이동
-    setIsMenuOpen(false);
-  }}
-  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-blue-200 transition"
->
-  <img src={reportIcon} alt="신고하기" className="w-4 h-4" />
-  <span>신고하기</span>
-</button>
-
-      </div>
-    )}
-</div>
-
-            </div>
-
-            <h1 className="text-2xl font-bold mb-6 leading-tight">{postData.title}</h1>
+            <h1 className="text-2xl font-bold mb-6 leading-tight">
+              {postData.title}
+            </h1>
 
             {/* 태그 */}
             <div className="flex flex-wrap gap-2 mb-6">
               {postData.tags.map((tag) => (
-                <Badge key={tag} variant="outline">{tag}</Badge>
+                <Badge key={tag} variant="outline">
+                  {tag}
+                </Badge>
               ))}
             </div>
 
@@ -436,163 +588,216 @@ const handleCommentDislike = async (commentId: string) => {
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-4 border-t">
-            {/* 좋아요 */}
-            <button
-              onClick={handleLike}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-muted transition ${
-                isLiked ? 'text-blue-500' : 'text-muted-foreground'
-              }`}
-            >
-              <ThumbsUp className="w-4 h-4 text-black" />
-              <span className="font-medium">{postData.likes}</span>
-            </button>
+              {/* 좋아요 */}
+              <button
+                onClick={handleLike}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-muted transition ${
+                  isLiked ? 'text-blue-500' : 'text-muted-foreground'
+                }`}
+              >
+                <ThumbsUp className="w-4 h-4 text-black" />
+                <span className="font-medium">{postData.likes}</span>
+              </button>
 
-            {/* 싫어요 */}
-            <button
-              onClick={handleDislike}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-muted transition ${
-                isDisliked ? 'text-blue-500' : 'text-muted-foreground'
-              }`}
-            >
-              <ThumbsUp className="w-4 h-4 rotate-180 text-black" />
-              <span className="font-medium">
-                {postData.reactions?.dislikeCount ?? 0}
-              </span>
-            </button>
+              {/* 싫어요 */}
+              <button
+                onClick={handleDislike}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-muted transition ${
+                  isDisliked ? 'text-blue-500' : 'text-muted-foreground'
+                }`}
+              >
+                <ThumbsUp className="w-4 h-4 rotate-180 text-black" />
+                <span className="font-medium">
+                  {postData.reactions?.dislikeCount ?? 0}
+                </span>
+              </button>
 
-            {/* 댓글 */}
-            <button
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-muted text-muted-foreground transition hover:bg-muted/80"
-            >
-              <MessageCircle className="w-4 h-4 text-black" />
-              <span className="font-medium">{comments.length}</span>
-            </button>
-          </div>
+              {/* 댓글 */}
+              <button className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-muted text-muted-foreground transition hover:bg-muted/80">
+                <MessageCircle className="w-4 h-4 text-black" />
+                <span className="font-medium">{comments.length}</span>
+              </button>
+            </div>
           </div>
 
-         {/* 댓글 작성 */}
-<div className="bg-card rounded-lg border border-border p-6">
-  <h3 className="font-bold text-lg mb-4">댓글 작성</h3>
+          {/* 댓글 작성 */}
+          <div className="bg-card rounded-lg border border-border p-6">
+            <h3 className="font-bold text-lg mb-4">댓글 작성</h3>
 
-  {/* 아바타 + 입력 영역 한 줄 정렬 */}
-  <div className="flex items-start gap-4">
-    {/* 아바타 */}
-    <Avatar className="w-12 h-12 border-2 border-primary/20">
-      <AvatarFallback className="bg-primary/10 text-primary font-bold">
-        나
-      </AvatarFallback>
-    </Avatar>
+            {/* 아바타 + 입력 영역 한 줄 정렬 */}
+            <div className="flex items-start gap-4">
+              {/* 아바타 */}
+              <div className="relative">
+                <Avatar
+                  className="w-12 h-12 border-2 border-primary/20 cursor-pointer"
+                  onClick={() => setIsMyProfileOpen((prev) => !prev)}
+                >
+                  <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                    나
+                  </AvatarFallback>
+                </Avatar>
 
-    {/* 입력창 + 버튼 */}
-    <div className="flex-1 flex flex-col gap-3">
-      <Textarea
-        placeholder="댓글을 입력하세요..."
-        value={commentInput}
-        onChange={(e) => setCommentInput(e.target.value)}
-        className="min-h-[100px] resize-none bg-gray-100 border-0 rounded-md focus:ring-0 focus:outline-none"
-      />
+                {/* 닉네임은 따로 텍스트만 표시 */}
+                <div className="mt-1 text-xs font-semibold text-slate-900">
+                  나
+                </div>
 
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={handleCommentSubmit}
-          disabled={!commentInput.trim()}
-          className="inline-flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <img
-            src={writeCommentIcon}
-            alt="댓글 작성"
-            className="w-30 h-30"
-          />
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
+                {/* 댓글 작성자(나) 프로필 팝업 */}
+                <ProfileMiniPopup
+                  isOpen={isMyProfileOpen}
+                  displayName="나"
+                  initial="나"
+                  onClose={() => setIsMyProfileOpen(false)}
+                  onChatClick={() => {
+                    setIsMyProfileOpen(false);
+                    navigate('/chat');
+                  }}
+                />
+              </div>
 
+              {/* 입력창 + 버튼 */}
+              <div className="flex-1 flex flex-col gap-3">
+                <Textarea
+                  placeholder="댓글을 입력하세요..."
+                  value={commentInput}
+                  onChange={(e) => setCommentInput(e.target.value)}
+                  className="min-h-[100px] resize-none bg-gray-100 border-0 rounded-md focus:ring-0 focus:outline-none"
+                />
 
-
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleCommentSubmit}
+                    disabled={!commentInput.trim()}
+                    className="inline-flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <img
+                      src={writeCommentIcon}
+                      alt="댓글 작성"
+                      className="w-30 h-30"
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* 댓글 목록 */}
           <div className="bg-card rounded-lg border border-border p-6">
-            <h3 className="font-bold text-lg mb-6">댓글 {comments.length}개</h3>
+            <h3 className="font-bold text-lg mb-6">
+              댓글 {comments.length}개
+            </h3>
             <div className="flex flex-col">
-  {comments.map((c, idx) => {
-    const r = commentReactions[c.id]; // ✅ 여기서 JS 코드로 선언!
+              {comments.map((c, idx) => {
+                const r = commentReactions[c.id];
 
-    return (
-      <div key={c.id}>
-        <div className="flex gap-4 py-4">
-          <Avatar className="w-12 h-12 border-2 border-primary/20">
-            <AvatarFallback className="bg-primary/10 text-primary font-bold">
-              {c.authorInitial}
-            </AvatarFallback>
-          </Avatar>
+                const isCommentProfileOpen = openCommentProfileId === c.id;
 
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="font-bold">{c.authorName}</span>
-              <span className="text-sm text-muted-foreground">{c.date}</span>
+                return (
+                  <div key={c.id} className="relative">
+                    <div className="flex gap-4 py-4">
+                      <div className="relative">
+                        <Avatar
+                          className="w-12 h-12 border-2 border-primary/20 cursor-pointer"
+                          onClick={() =>
+                            setOpenCommentProfileId((prev) =>
+                              prev === c.id ? null : c.id,
+                            )
+                          }
+                        >
+                          <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                            {c.authorInitial}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        {/* 닉네임 - 클릭 시 팝업 열기 */}
+                        <button
+                          type="button"
+                          className="mt-1 block text-left text-xs font-semibold text-slate-900 hover:underline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenCommentProfileId((prev) =>
+                              prev === c.id ? null : c.id,
+                            );
+                          }}
+                        >
+                          {c.authorName}
+                        </button>
+
+                        {/* 댓글 작성자 프로필 팝업 */}
+                        <ProfileMiniPopup
+                          isOpen={isCommentProfileOpen}
+                          displayName={c.authorName}
+                          initial={c.authorInitial}
+                          onClose={() => setOpenCommentProfileId(null)}
+                          onChatClick={() => {
+                            setOpenCommentProfileId(null);
+                            navigate('/chat');
+                          }}
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-sm text-muted-foreground">
+                            {c.date}
+                          </span>
+                        </div>
+
+                        <p className="text-sm text-foreground mb-3 leading-relaxed whitespace-pre-line">
+                          {c.content}
+                        </p>
+
+                        {/* 좋아요/싫어요 영역 */}
+                        <div className="flex items-center gap-2 justify-end mt-2">
+                          {/* 좋아요 */}
+                          <button
+                            type="button"
+                            onClick={() => handleCommentLike(c.id)}
+                            className="flex items-center gap-1 px-2 py-1 rounded-full border bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
+                          >
+                            <ThumbsUp className="w-3 h-3" />
+                            <span
+                              className={`text-xs font-medium ${
+                                r?.myReaction === 'LIKE' ? 'text-blue-500' : ''
+                              }`}
+                            >
+                              {r?.likeCount ?? 0}
+                            </span>
+                          </button>
+
+                          {/* 싫어요 */}
+                          <button
+                            type="button"
+                            onClick={() => handleCommentDislike(c.id)}
+                            className="flex items-center gap-1 px-2 py-1 rounded-full border bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
+                          >
+                            <ThumbsUp className="w-3 h-3 rotate-180" />
+                            <span
+                              className={`text-xs font-medium ${
+                                r?.myReaction === 'DISLIKE'
+                                  ? 'text-blue-500'
+                                  : ''
+                              }`}
+                            >
+                              {r?.dislikeCount ?? 0}
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {idx < comments.length - 1 && <Separator />}
+                  </div>
+                );
+              })}
+
+              {comments.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  아직 댓글이 없습니다.
+                </p>
+              )}
             </div>
-
-            <p className="text-sm text-foreground mb-3 leading-relaxed whitespace-pre-line">
-              {c.content}
-            </p>
-
-            {/* 👍/👎 버튼 영역 */}
-            {/* 좋아요/싫어요 + 대댓글 수 영역 */}
-{/* 좋아요/싫어요 영역 */}
-<div className="flex items-center gap-2 justify-end mt-2">
-
-  {/* 👍 좋아요 */}
-  <button
-    type="button"
-    onClick={() => handleCommentLike(c.id)}
-    className="flex items-center gap-1 px-2 py-1 rounded-full border bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
-  >
-    <ThumbsUp className="w-3 h-3" />
-    <span
-      className={`text-xs font-medium ${
-        r?.myReaction === 'LIKE' ? 'text-blue-500' : ''
-      }`}
-    >
-      {r?.likeCount ?? 0}
-    </span>
-  </button>
-
-  {/* 👎 싫어요 */}
-  <button
-    type="button"
-    onClick={() => handleCommentDislike(c.id)}
-    className="flex items-center gap-1 px-2 py-1 rounded-full border bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
-  >
-    <ThumbsUp className="w-3 h-3 rotate-180" />
-    <span
-      className={`text-xs font-medium ${
-        r?.myReaction === 'DISLIKE' ? 'text-blue-500' : ''
-      }`}
-    >
-      {r?.dislikeCount ?? 0}
-    </span>
-  </button>
-
-</div>
-
-          </div>
-        </div>
-
-        {idx < comments.length - 1 && <Separator />}
-      </div>
-    );
-  })}
-
-  {comments.length === 0 && (
-    <p className="text-sm text-muted-foreground text-center py-4">
-      아직 댓글이 없습니다.
-    </p>
-  )}
-</div>
-
           </div>
         </section>
       </main>
