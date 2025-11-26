@@ -94,7 +94,7 @@ export default function PostDetail() {
       { likeCount: number; dislikeCount: number; myReaction: 'LIKE' | 'DISLIKE' | null }
     >
   >({});
-  const { accessToken } = useAuthStore();
+  const { accessToken, user } = useAuthStore();
   const [commentInput, setCommentInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
@@ -102,6 +102,13 @@ export default function PostDetail() {
   const [isScraped, setIsScraped] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
+  const myName =
+    user?.displayName ??
+    user?.nickname ??
+    '나';
+
+  const myInitial = myName.charAt(0);
+  const myColor = user?.nicknameColor;
 
   // ⭐ 댓글용 프로필 팝업: 현재 열려 있는 댓글 id
   const [activeCommentProfileId, setActiveCommentProfileId] = useState<string | null>(null);
@@ -531,48 +538,65 @@ export default function PostDetail() {
           </div>
 
           {/* 댓글 작성 */}
-          <div className="bg-card rounded-lg border border-border p-6">
-            <h3 className="font-bold text-lg mb-4">댓글 작성</h3>
+<div className="bg-card rounded-lg border border-border p-6">
+  <h3 className="font-bold text-lg mb-4">댓글 작성</h3>
 
-            <div className="flex items-start gap-4">
-              {/* 나 아바타 - 기본 테두리 색 적용 */}
-              <Avatar
-                className={`
-                  w-12 h-12 rounded-full
-                  border-[5px] ${getProfileBorderClass()}
-                  bg-white text-gray-900 font-bold
-                `}
-              >
-                <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                  나
-                </AvatarFallback>
-              </Avatar>
+  <div className="flex items-start gap-4">
+    {/* ⭐ 내 프로필 아바타 + 팝업 */}
+    <div className="relative">
+      <Avatar
+        onClick={() => setActiveCommentProfileId('me')}
+        className={`
+          w-12 h-12 rounded-full cursor-pointer
+          border-[5px] ${getProfileBorderClass(myColor)}
+          bg-white text-gray-900 font-bold
+          shadow-sm hover:bg-gray-50 transition
+        `}
+      >
+        <AvatarFallback className="bg-primary/10 text-primary font-bold">
+          {myInitial}
+        </AvatarFallback>
+      </Avatar>
 
-              <div className="flex-1 flex flex-col gap-3">
-                <Textarea
-                  placeholder="댓글을 입력하세요..."
-                  value={commentInput}
-                  onChange={(e) => setCommentInput(e.target.value)}
-                  className="min-h-[100px] resize-none bg-gray-100 border-0 rounded-md focus:ring-0 focus:outline-none"
-                />
+      {/* 내 프로필 팝업 */}
+      {activeCommentProfileId === 'me' && (
+        <UserProfilePopup
+          className="absolute left-0 top-14 z-20"
+          name={myName}
+          initial={myInitial}
+          nicknameColor={myColor}
+          onClose={() => setActiveCommentProfileId(null)}
+        />
+      )}
+    </div>
 
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={handleCommentSubmit}
-                    disabled={!commentInput.trim()}
-                    className="inline-flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    <img
-                      src={writeCommentIcon}
-                      alt="댓글 작성"
-                      className="w-30 h-30"
-                    />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+    {/* 입력창 */}
+    <div className="flex-1 flex flex-col gap-3">
+      <Textarea
+        placeholder={`댓글을 입력하세요...`}
+        value={commentInput}
+        onChange={(e) => setCommentInput(e.target.value)}
+        className="min-h-[100px] resize-none bg-gray-100 border-0 rounded-md focus:ring-0 focus:outline-none"
+      />
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={handleCommentSubmit}
+          disabled={!commentInput.trim()}
+          className="inline-flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <img
+            src={writeCommentIcon}
+            alt="댓글 작성"
+            className="w-30 h-30"
+          />
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
           {/* 댓글 목록 */}
           <div className="bg-card rounded-lg border border-border p-6">
