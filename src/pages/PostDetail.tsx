@@ -18,8 +18,7 @@ import {
   dislikeComment,
 } from '@/services/api';
 import useAuthStore from '@/stores/authStore';
-import { UserProfilePopup } from '@/components/common/UserProfilePopup';
-
+import { UserProfilePopup } from '@/components/common';
 
 type ReactionSummary = {
   likeCount: number;
@@ -31,6 +30,7 @@ interface PostData {
   id: string;
   authorName: string;
   authorInitial: string;
+  authorNicknameColor?: string;
   date: string;
   title: string;
   content: string;
@@ -76,19 +76,7 @@ const getProfileBorderClass = (color?: string) => {
   }
 };
 
-// PostData 타입에 색 필드 하나 추가
-interface PostData {
-  id: string;
-  authorName: string;
-  authorInitial: string;
-  authorNicknameColor?: string; // ✅ 추가
-  date: string;
-  title: string;
-  content: string;
-  likes: number;
-  tags: string[];
-  reactions?: ReactionSummary;
-}
+
 
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>();
