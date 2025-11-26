@@ -13,7 +13,7 @@ import {
   getPost,              // ⭐ 추가: postId로 게시글 불러오기
 } from '@/services/api';
 
-import RookieBadge from '@/assets/rookie.svg';
+import RookieBadge from '@/assets/Rookie Ver.2.svg';
 import EditFieldIcon from '@/assets/글쓰기 수정.svg';
 import EditProfileIcon from '@/assets/프로필 수정.svg';
 
