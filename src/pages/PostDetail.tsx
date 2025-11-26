@@ -18,7 +18,7 @@ import {
   dislikeComment,
 } from '@/services/api';
 import useAuthStore from '@/stores/authStore';
-import { UserProfilePopup } from '@/components/common';
+import { UserProfilePopup } from '@/components/common/UserProfilePopup.tsx';
 
 type ReactionSummary = {
   likeCount: number;
