@@ -127,7 +127,7 @@ export default function SearchPage() {
 
   return (
     <div>
-      <main className="w-full flex p-6 gap-6 items-start">
+      <main className="w-full flex px-6 pb-6 pt-24 gap-6 items-start">
       <AppSidebar />
       <section className="flex-1 flex flex-col gap-12">
           <h1 className="text-2xl font-bold">{titleText}</h1>
