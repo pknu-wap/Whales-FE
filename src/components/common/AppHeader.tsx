@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Button, Input } from '../ui';
-import { Search, LogIn, PenSquare, Clock, LogOut } from 'lucide-react';
+import { Search, LogIn, PenSquare, Clock, LogOut, X } from 'lucide-react';
 import useAuthStore from '../../stores/authStore';
 // import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
@@ -20,6 +20,8 @@ import {
   getUnreadNotifications,
   markNotificationRead,
   markAllNotificationsRead,
+  deleteAllSearchHistory,       // 🔴 추가
+  deleteSearchHistoryItem,
 } from '@/services/api';
 
 function AppHeader() {
@@ -127,6 +129,26 @@ function AppHeader() {
   const keywordParts = query.trim().length
     ? query.trim().split(/\s+/).filter(Boolean)
     : [];
+
+  const handleDeleteHistoryItem = async (id: string) => {
+    try {
+      await deleteSearchHistoryItem(id);
+      setHistory((prev) => prev.filter((h) => h.id !== id));
+    } catch (err) {
+      console.error('검색 기록 단일 삭제 실패', err);
+    }
+  };
+
+  // 🔴 검색 기록 전체 삭제
+  const handleClearAllHistory = async () => {
+    try {
+      await deleteAllSearchHistory();
+      setHistory([]);
+    } catch (err) {
+      console.error('검색 기록 전체 삭제 실패', err);
+    }
+  };
+
 
   // ✅ 닉네임 색상 Tailwind 변환
   // 프로필 동그라미 테두리 색 (회원 등급용)
@@ -315,6 +337,20 @@ function AppHeader() {
                     </div>
                   )}
 
+                  {/* 🔴 헤더: 최근 검색 기록 + 전체 삭제 버튼 */}
+                  <div className="px-4 pt-1 pb-1 flex items-center justify-between text-[11px] text-[#4B6FBF]">
+                    <span className="font-semibold">최근 검색 기록</span>
+                    {history.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleClearAllHistory}
+                        className="text-[11px] text-[#7BA4F5] hover:text-[#1D4ED8] hover:underline"
+                      >
+                        전체 삭제
+                      </button>
+                    )}
+                  </div>
+
                   {/* 구분선 */}
                   <div className="mx-4 mt-1 mb-1 h-px bg-[#7BA4F5]" />
 
@@ -329,15 +365,31 @@ function AppHeader() {
                         <li
                           key={item.id}
                           className="
-                          flex items-center gap-2 px-4 py-2
-                          text-xs sm:text-sm text-[#4B6FBF]
-                          hover:bg-[#D7E6FF] cursor-pointer
-                        "
+          flex items-center px-4 py-2
+          text-xs sm:text-sm text-[#4B6FBF]
+          hover:bg-[#D7E6FF] cursor-pointer
+        "
                           onMouseDown={(e) => e.preventDefault()}
                           onClick={() => handleClickHistoryItem(item.keyword)}
                         >
-                          <Clock className="shrink-0 w-3 h-3 sm:w-4 sm:h-4 opacity-70" />
-                          <span className="truncate">{item.keyword}</span>
+                          {/* 왼쪽: 시계 + 키워드 (flex-1로 영역 차지) */}
+                          <div className="flex items-center gap-2 flex-1">
+                            <Clock className="shrink-0 w-3 h-3 sm:w-4 sm:h-4 opacity-70" />
+                            <span className="truncate">{item.keyword}</span>
+                          </div>
+
+                          {/* 오른쪽: X 버튼 (오른쪽 정렬) */}
+                          <button
+                            type="button"
+                            className="p-1 rounded-full hover:bg-[#C7DBFF]"
+                            onMouseDown={(e) => e.preventDefault()} // blur 방지
+                            onClick={(e) => {
+                              e.stopPropagation();          // 검색 실행 막기
+                              handleDeleteHistoryItem(item.id);
+                            }}
+                          >
+                            <X className="w-3 h-3 text-[#7BA4F5]" />
+                          </button>
                         </li>
                       ))
                     )}
@@ -468,8 +520,8 @@ function AppHeader() {
       flex items-center justify-center
       w-10 h-10 rounded-full
       border-[5px] ${getProfileBorderClass(
-        user?.nicknameColor
-      )}  /* ✅ 테두리 색 동적 적용 */
+                      user?.nicknameColor
+                    )}  /* ✅ 테두리 색 동적 적용 */
       bg-white text-gray-900 font-black text-[1.3rem]
       shadow-sm hover:bg-gray-50
     `}
@@ -477,8 +529,8 @@ function AppHeader() {
                     {user?.displayName
                       ? user.displayName[0]
                       : user?.email
-                      ? user.email[0].toUpperCase()
-                      : '유'}
+                        ? user.email[0].toUpperCase()
+                        : '유'}
                   </button>
 
                   {isProfileMenuOpen && (

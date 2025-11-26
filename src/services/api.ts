@@ -357,6 +357,16 @@ export const getSearchHistory = async (): Promise<SearchHistoryItem[]> => {
   return res.data;
 };
 
+// 🔴 DELETE /api/search/history - 검색 기록 전체 삭제
+export const deleteAllSearchHistory = async (): Promise<void> => {
+  await api.delete("/search/history");
+};
+
+// 🔴 DELETE /api/search/history/{historyId} - 검색 기록 단일 삭제
+export const deleteSearchHistoryItem = async (historyId: string): Promise<void> => {
+  await api.delete(`/search/history/${historyId}`);
+};
+
 // GET /api/search?keyword=... - 검색 + 검색기록 자동 저장
 // (기존 /posts/search 를 건드리지 않기 위해 이름 다르게)
 export const searchPostsByKeyword = async (keyword: string) => {
