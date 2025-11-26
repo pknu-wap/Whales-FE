@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ThumbsUp, MessageCircle } from 'lucide-react';
 import { getPostReactions, getPostComments } from '@/services/api';
+import { UserProfilePopup } from '@/components/common';
+
 
 // ✅ 프로필 테두리 색 유틸 함수 추가
 const getProfileBorderClass = (color?: string) => {
@@ -97,6 +99,7 @@ export function TopicCard({
   const displayTags = tags.map((tag) =>
     typeof tag === 'string' ? tag : tag.name,
   );
+  const [showProfilePopup, setShowProfilePopup] = useState(false);
 
   // ✅ 작성자 프로필 색 (문자열 author일 땐 색 없음)
   const authorColor =
@@ -169,26 +172,47 @@ export function TopicCard({
     >
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3 mb-3">
-          {/* ✅ 여기서 프로필 테두리 색 동적 적용 */}
+        {/* ✅ 프로필 + 팝업 래퍼 */}
+        <div className="relative">
           <Avatar
             className={`
-              w-10 h-10 rounded-full
-              border-[5px] ${getProfileBorderClass(authorColor)}  /* ✅ 테두리 색 동적 적용 */
+              w-10 h-10 rounded-full cursor-pointer
+              border-[5px] ${getProfileBorderClass(authorColor)}
               bg-white text-gray-900 font-bold
               shadow-sm group-hover:bg-gray-50
             `}
+            onClick={(e) => {
+              e.stopPropagation();          // 카드 클릭으로 글 상세로 넘어가지 않게 막기
+              setShowProfilePopup((v) => !v);
+            }}
           >
             <AvatarFallback className="text-sm font-semibold">
               {displayAuthor[0]}
             </AvatarFallback>
           </Avatar>
 
-
-          <div className="flex-1">
-            <p className="font-semibold text-sm">{displayAuthor}</p>
-            <p className="text-xs text-muted-foreground">{date}</p>
-          </div>
+          {/* 🔥 아바타 클릭 시 뜨는 팝업 */}
+              {showProfilePopup && (
+                <div
+                  className="absolute left-0 top-12 z-20"
+                  onClick={(e) => e.stopPropagation()}   // ✅ 팝업 내부 클릭은 카드로 안 올라가게 막기
+                >
+                  <UserProfilePopup
+                    className="" // 필요하면 여기다 width, padding 등 스타일 추가
+                    name={displayAuthor}
+                    initial={displayAuthor[0]}
+                    nicknameColor={authorColor}
+                    onClose={() => setShowProfilePopup(false)}
+                  />
+                </div>
+              )}
         </div>
+
+        <div className="flex-1">
+          <p className="font-semibold text-sm">{displayAuthor}</p>
+          <p className="text-xs text-muted-foreground">{date}</p>
+        </div>
+      </div>
         <h3 className="font-bold text-lg leading-tight group-hover:text-primary transition-colors line-clamp-2">
           {title}
         </h3>
