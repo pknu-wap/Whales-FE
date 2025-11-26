@@ -302,7 +302,7 @@ const handleCommentDislike = async (commentId: string) => {
             </p>
             <Button
               variant="ghost"
-              className="mt-4 gap-2"
+              className="mt-4 gap-2 mr-auto"
               onClick={() => navigate(-1)}
             >
               <ArrowLeft className="w-4 h-4" />
