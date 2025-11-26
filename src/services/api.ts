@@ -1,60 +1,53 @@
 import axios from 'axios';
 import useAuthStore from '@/stores/authStore';
 
-// API 기본 URL 설정
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
-
+// 프론트는 항상 Netlify → /api → EC2 로 proxy됨
+const API_BASE_URL = '/api';
 
 // axios 인스턴스 생성
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true, // ✅ 이거 추가: refresh 쿠키 보내려면 필수
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,   // cookie(RefreshToken) 자동 전송
 });
 
-// 🔗 백엔드 연결: 요청 인터셉터 (Bearer 토큰 자동 추가)
-// 🔒 보안: Zustand store에서 토큰 가져오기 (localStorage 대신)
+// =========================
+// 요청 인터셉터 (Bearer 자동 추가)
+// =========================
 api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().accessToken;
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (err) => Promise.reject(err)
 );
 
-// 🔗 백엔드 연결: 응답 인터셉터 (에러 처리)
-// 🔗 백엔드 연결: 응답 인터셉터 (AccessToken 자동 재발급)
+// =========================
+// 응답 인터셉터 (401 → 자동 재발급)
+// =========================
 api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (!error.response || !error.config) return Promise.reject(error);
+  (res) => res,
+  async (err) => {
+    const original = err.config;
 
-    const original = error.config;
-
-    // ★ Access Token 만료 → 401 처리 (재시도 플래그로 무한루프 방지)
-    if (error.response.status === 401 && !original._retry) {
+    if (err.response?.status === 401 && !original._retry) {
       original._retry = true;
+
       try {
-        const refreshResponse = await axios.post(
+        const refreshRes = await axios.post(
           `${API_BASE_URL}/auth/refresh`,
           {},
-          { withCredentials: true } // 쿠키 포함
+          { withCredentials: true }
         );
 
-        const { accessToken, user } = refreshResponse.data;
-
-        // 2) Zustand에 Access Token & User 갱신
+        const { accessToken, user } = refreshRes.data;
         useAuthStore.getState().setAuth(accessToken, user);
 
-        // 기존 요청 재전송
         original.headers.Authorization = `Bearer ${accessToken}`;
         return api(original);
       } catch (refreshError) {
@@ -64,18 +57,17 @@ api.interceptors.response.use(
       }
     }
 
-    return Promise.reject(error);
+    return Promise.reject(err);
   }
 );
 
-// ========================================
-// 🔗 Auth API
-// ========================================
+// =========================
+// Auth API
+// =========================
 
-// POST /auth/login/google - OAuth2 구글 로그인
 export const loginWithGoogle = async (code: string, redirectUri: string) => {
-  const response = await api.post('/auth/login/google', { code, redirectUri });
-  return response.data;
+  const res = await api.post('/auth/login/google', { code, redirectUri });
+  return res.data;
 };
 
 // ========================================

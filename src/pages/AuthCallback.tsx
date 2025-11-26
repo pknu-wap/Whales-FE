@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '@/services/api';
+import api, { loginWithGoogle } from '@/services/api';
 import useAuthStore from '@/stores/authStore';
 
 export default function AuthCallback() {
@@ -8,8 +8,7 @@ export default function AuthCallback() {
   const { setAuth } = useAuthStore();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      console.log('AuthCallback component mounted');
+    const handle = async () => {
       const code = new URL(window.location.href).searchParams.get('code');
 
       if (!code) {
@@ -19,34 +18,21 @@ export default function AuthCallback() {
       }
 
       try {
-        // ✅ redirectUri: 프론트 주소 기반
-        // 로컬:   http://localhost:5173/auth/callback
-        // 배포:   https://네-넷리파이-도메인/auth/callback
-        const redirectUri =
-          'https://whales-team6.netlify.app/auth/callback';
+        const redirectUri = window.location.origin + '/auth/callback';
 
-        // ✅ 여기서 api는 이미 baseURL = 'http://3.27.115.110:8080/api' 사용
-        const response = await api.post('http://3.27.115.110:8080/api/auth/login/google', {
-          code,
-          redirectUri,
-        });
+        // Netlify proxy 로 API를 호출
+        const data = await loginWithGoogle(code, redirectUri);
 
-        const { accessToken, user } = response.data;
-
-        if (!accessToken) {
-          throw new Error('Access token이 응답에 없습니다.');
-        }
-
-        setAuth(accessToken, user);
+        setAuth(data.accessToken, data.user);
         navigate('/');
       } catch (err) {
-        console.error('로그인 중 오류 발생:', err);
-        alert('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+        console.error('Google 로그인 실패:', err);
+        alert('로그인 중 오류가 발생했습니다.');
         navigate('/login');
       }
     };
 
-    handleCallback();
+    handle();
   }, [navigate, setAuth]);
 
   return <p className="text-center mt-10">로그인 중입니다…</p>;
