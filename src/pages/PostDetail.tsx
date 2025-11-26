@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { ThumbsUp, MessageCircle, ArrowLeft, MoreVertical } from 'lucide-react';
+import { ThumbsUp, MessageCircle, ArrowLeft, MoreVertical, X } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import {
   getPost,
@@ -49,6 +49,72 @@ interface CommentData {
   likes: number;
 }
 
+interface ProfileMiniPopupProps {
+  isOpen: boolean;
+  displayName: string;
+  initial: string;
+  onClose: () => void;
+  onChatClick: () => void;
+}
+
+function ProfileMiniPopup({
+  isOpen,
+  displayName,
+  initial,
+  onClose,
+  onChatClick,
+}: ProfileMiniPopupProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="absolute left-0 top-full z-20 mt-2 w-56 rounded-2xl border border-[#c9d8ff] bg-[#eaf2ff] px-4 py-4 shadow-md"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* 상단 X 버튼 */}
+      <button
+        type="button"
+        className="ml-auto mb-1 flex h-5 w-5 items-center justify-center text-slate-500 hover:text-slate-700"
+        onClick={onClose}
+        aria-label="프로필 닫기"
+      >
+        <X className="h-4 w-4" />
+      </button>
+
+      <div className="flex flex-col items-center gap-3">
+        {/* 작은 아바타 */}
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl font-semibold text-slate-900 ring-[11px] ring-[#D89BFF] mb-4">
+          {initial}
+        </div>
+
+        <div className="flex flex-col items-center gap-1 text-center">
+          <div className="text-xl font-extrabold text-slate-900">
+            {displayName}
+          </div>
+          <p className="text-xs text-slate-600">
+            자기소개를 준비 중입니다.
+          </p>
+        </div>
+
+        <img
+          src={RookieBadge}
+          alt="Rookie 등급 배지"
+          className="h-6 w-auto"
+        />
+
+        <Button
+          size="sm"
+          className="mt-2 flex h-9 w-full items-center justify-center gap-1 rounded-[12px] text-xs font-semibold bg-[#2f6bff] hover:bg-[#2557d4]"
+          onClick={onChatClick}
+        >
+          <MessageCircle className="h-4 w-4" />
+          <span>채팅하기</span>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -64,11 +130,11 @@ export default function PostDetail() {
   const [isDisliked, setIsDisliked] = useState(false);
   const [isScraped, setIsScraped] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // const handleTagClick = (tag: string) => {
-  //   navigate(`/search?tag=${encodeURIComponent(tag)}`)
-  // }
+  // 프로필 팝업 상태
+  const [isPostProfileOpen, setIsPostProfileOpen] = useState(false);
+  const [openCommentProfileId, setOpenCommentProfileId] = useState<string | null>(null);
+  const [isMyProfileOpen, setIsMyProfileOpen] = useState(false);
 
   useEffect(() => {
     if (!comments || comments.length === 0) return;
@@ -90,7 +156,9 @@ export default function PostDetail() {
         );
 
         const map: typeof commentReactions = {};
-        for (const [id, data] of entries) map[id] = data;
+        for (const [cid, data] of entries) {
+          map[cid] = data;
+        }
 
         setCommentReactions(map);
       } catch (e) {
@@ -430,67 +498,33 @@ export default function PostDetail() {
 
                 {/* 닉네임/날짜 */}
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <button
-                      type="button"
-                      className="font-bold text-lg text-left hover:underline"
-                      onClick={() =>
-                        setIsProfileOpen((prev) => !prev)
-                      }
-                    >
-                      {postData.authorName}
-                    </button>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
+                  {/* 닉네임 - 클릭 시 팝업 열기 */}
+                  <button
+                    type="button"
+                    className="block text-left text-base font-semibold hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsPostProfileOpen((prev) => !prev);
+                    }}
+                  >
+                    {postData.authorName}
+                  </button>
+                  <p className="text-xs text-muted-foreground">
                     {postData.date}
                   </p>
                 </div>
 
                 {/* 닉네임 아래에 작게 뜨는 팝업 */}
-                {isProfileOpen && (
-                  <div className="absolute left-0 top-full z-20 mt-2 w-56 rounded-2xl border border-[#c9d8ff] bg-[#eaf2ff] px-4 py-4 shadow-md">
-                    {/* 상단 X 버튼 */}
-                    <button
-                      type="button"
-                      className="ml-auto mb-1 flex h-5 w-5 items-center justify-center text-slate-500 hover:text-slate-700"
-                      onClick={() => setIsProfileOpen(false)}
-                      aria-label="프로필 닫기"
-                    >
-                      <span className="text-base leading-none">×</span>
-                    </button>
-
-                    <div className="flex flex-col items-center gap-3">
-                      {/* 작은 아바타 */}
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl font-semibold text-slate-900 ring-[11px] ring-[#D89BFF] mb-4">
-                        {postData.authorInitial}
-                      </div>
-
-                      <div className="flex flex-col items-center gap-1 text-center">
-                        <div className="text-xl font-extrabold text-slate-900">
-                          {postData.authorName}
-                        </div>
-                        <p className="text-xs text-slate-600">
-                          자기소개를 준비 중입니다.
-                        </p>
-                      </div>
-
-                      <img
-                        src={RookieBadge}
-                        alt="Rookie 등급 배지"
-                        className="h-6 w-auto"
-                      />
-
-                      <Button
-                        size="sm"
-                        className="mt-2 flex h-9 w-full items-center justify-center gap-1 rounded-[12px] text-xs font-semibold bg-[#2f6bff] hover:bg-[#2557d4]"
-                        onClick={() => navigate('/chat')}
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                        <span>채팅하기</span>
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                <ProfileMiniPopup
+                  isOpen={isPostProfileOpen}
+                  displayName={postData.authorName}
+                  initial={postData.authorInitial}
+                  onClose={() => setIsPostProfileOpen(false)}
+                  onChatClick={() => {
+                    setIsPostProfileOpen(false);
+                    navigate('/chat');
+                  }}
+                />
               </div>
 
               {/* 오른쪽: 스크랩/신고 메뉴 */}
@@ -593,11 +627,33 @@ export default function PostDetail() {
             {/* 아바타 + 입력 영역 한 줄 정렬 */}
             <div className="flex items-start gap-4">
               {/* 아바타 */}
-              <Avatar className="w-12 h-12 border-2 border-primary/20">
-                <AvatarFallback className="bg-primary/10 text-primary font-bold">
+              <div className="relative">
+                <Avatar
+                  className="w-12 h-12 border-2 border-primary/20 cursor-pointer"
+                  onClick={() => setIsMyProfileOpen((prev) => !prev)}
+                >
+                  <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                    나
+                  </AvatarFallback>
+                </Avatar>
+
+                {/* 닉네임은 따로 텍스트만 표시 */}
+                <div className="mt-1 text-xs font-semibold text-slate-900">
                   나
-                </AvatarFallback>
-              </Avatar>
+                </div>
+
+                {/* 댓글 작성자(나) 프로필 팝업 */}
+                <ProfileMiniPopup
+                  isOpen={isMyProfileOpen}
+                  displayName="나"
+                  initial="나"
+                  onClose={() => setIsMyProfileOpen(false)}
+                  onChatClick={() => {
+                    setIsMyProfileOpen(false);
+                    navigate('/chat');
+                  }}
+                />
+              </div>
 
               {/* 입력창 + 버튼 */}
               <div className="flex-1 flex flex-col gap-3">
@@ -635,18 +691,54 @@ export default function PostDetail() {
               {comments.map((c, idx) => {
                 const r = commentReactions[c.id];
 
+                const isCommentProfileOpen = openCommentProfileId === c.id;
+
                 return (
-                  <div key={c.id}>
+                  <div key={c.id} className="relative">
                     <div className="flex gap-4 py-4">
-                      <Avatar className="w-12 h-12 border-2 border-primary/20">
-                        <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                          {c.authorInitial}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="relative">
+                        <Avatar
+                          className="w-12 h-12 border-2 border-primary/20 cursor-pointer"
+                          onClick={() =>
+                            setOpenCommentProfileId((prev) =>
+                              prev === c.id ? null : c.id,
+                            )
+                          }
+                        >
+                          <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                            {c.authorInitial}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        {/* 닉네임 - 클릭 시 팝업 열기 */}
+                        <button
+                          type="button"
+                          className="mt-1 block text-left text-xs font-semibold text-slate-900 hover:underline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenCommentProfileId((prev) =>
+                              prev === c.id ? null : c.id,
+                            );
+                          }}
+                        >
+                          {c.authorName}
+                        </button>
+
+                        {/* 댓글 작성자 프로필 팝업 */}
+                        <ProfileMiniPopup
+                          isOpen={isCommentProfileOpen}
+                          displayName={c.authorName}
+                          initial={c.authorInitial}
+                          onClose={() => setOpenCommentProfileId(null)}
+                          onChatClick={() => {
+                            setOpenCommentProfileId(null);
+                            navigate('/chat');
+                          }}
+                        />
+                      </div>
 
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="font-bold">{c.authorName}</span>
                           <span className="text-sm text-muted-foreground">
                             {c.date}
                           </span>
@@ -658,7 +750,7 @@ export default function PostDetail() {
 
                         {/* 좋아요/싫어요 영역 */}
                         <div className="flex items-center gap-2 justify-end mt-2">
-                          {/* 👍 좋아요 */}
+                          {/* 좋아요 */}
                           <button
                             type="button"
                             onClick={() => handleCommentLike(c.id)}
@@ -667,16 +759,14 @@ export default function PostDetail() {
                             <ThumbsUp className="w-3 h-3" />
                             <span
                               className={`text-xs font-medium ${
-                                r?.myReaction === 'LIKE'
-                                  ? 'text-blue-500'
-                                  : ''
+                                r?.myReaction === 'LIKE' ? 'text-blue-500' : ''
                               }`}
                             >
                               {r?.likeCount ?? 0}
                             </span>
                           </button>
 
-                          {/* 👎 싫어요 */}
+                          {/* 싫어요 */}
                           <button
                             type="button"
                             onClick={() => handleCommentDislike(c.id)}
