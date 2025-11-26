@@ -8,9 +8,9 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ThumbsUp, MessageCircle } from 'lucide-react';
 import { getPostReactions, getPostComments } from '@/services/api';
-import { UserProfilePopup } from '@/components/common/UserProfilePopup';
+import { UserProfilePopup } from '@/components/common/UserProfilePopup'; 
 
-// 등급 뱃지 (학사모) – UserProfilePopup에서 쓰는 svg와 동일하게 import
+// 등급 뱃지 (학사모) import
 import RookieBadge from '@/assets/Rookie Ver.2.svg';
 import MemberBadge from '@/assets/Member Ver.2.svg';
 import ExpertBadge from '@/assets/Expert Ver.2.svg';
@@ -24,30 +24,22 @@ const getProfileBorderClass = (color?: string) => {
     case 'white':
     case 'gray':
       return 'border-gray-300';
-
     case 'black':
       return 'border-neutral-800';
-
     case 'green':
     case 'emerald':
       return 'border-emerald-400';
-
     case 'blue':
       return 'border-blue-400';
-
     case 'purple':
       return 'border-purple-400';
-
     case 'gold':
     case 'yellow':
       return 'border-yellow-400';
-
     case 'orange':
       return 'border-orange-400';
-
     case 'red':
       return 'border-red-400';
-
     default:
       return 'border-gray-300';
   }
@@ -145,10 +137,11 @@ export function TopicCard({
   const displayTags = tags.map((tag) =>
     typeof tag === 'string' ? tag : tag.name,
   );
-
+  
   const authorColor =
     typeof author === 'string' ? undefined : author.nicknameColor;
 
+  // ✅ 리액션 상태 관리
   const [reactions, setReactions] = useState<ReactionSummary>({
     likeCount: initialReactions?.likeCount ?? 0,
     dislikeCount: initialReactions?.dislikeCount ?? 0,
@@ -159,7 +152,7 @@ export function TopicCard({
     initialReactions?.commentCount ?? 0,
   );
 
-  // ✅ 프로필 팝업 on/off
+  // ✅ 프로필 팝업 상태 (중복 제거됨)
   const [showProfilePopup, setShowProfilePopup] = useState(false);
 
   useEffect(() => {
@@ -202,7 +195,7 @@ export function TopicCard({
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, initialReactions]);
 
   const previewContent =
     content.length > 30 ? content.substring(0, 30) + '...' : content;
@@ -210,8 +203,9 @@ export function TopicCard({
   const tier = getTierByColor(authorColor);
   const tierInfo = getTierInfo(tier);
 
+  // 프로필 클릭 핸들러 (이벤트 전파 방지 포함)
   const handleAvatarClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
+    e.stopPropagation(); // 카드 이동 방지
     setShowProfilePopup((prev) => !prev);
   };
 
@@ -230,11 +224,11 @@ export function TopicCard({
           {/* 아바타 + 프로필 팝업 */}
           <div
             className="relative"
-            onMouseLeave={handleCloseProfile}
+            onMouseLeave={handleCloseProfile} // 마우스 나가면 닫기 기능 유지 (HEAD)
           >
             <Avatar
               className={`
-                w-12 h-12 rounded-full
+                w-12 h-12 rounded-full cursor-pointer
                 border-[5px] ${getProfileBorderClass(authorColor)}
                 bg-white text-gray-900 font-bold
                 shadow-sm group-hover:bg-gray-50
@@ -266,12 +260,11 @@ export function TopicCard({
             {/* 1줄: 닉네임 */}
             <p className="font-semibold text-sm">{displayAuthor}</p>
 
-            {/* 2줄: 뱃지(아이콘 + Expert) + 날짜 */}
+            {/* 2줄: 뱃지(아이콘) + 날짜 */}
             <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-              {/* 등급 아이콘 + 텍스트 */}
+              {/* 등급 아이콘 */}
               {tierInfo && (
                 <div className="inline-flex items-center gap-1">
-                  {/* 🔹 아이콘을 고정 박스에 넣어서, SVG 바뀌어도 전체 레이아웃 고정 */}
                   <div className="w-16 h-7 flex items-center justify-center">
                     <img
                       src={tierInfo.img}
@@ -279,24 +272,18 @@ export function TopicCard({
                       className="max-w-full max-h-full object-contain"
                     />
                   </div>
-
-                  {/* Expert / Member 등 텍스트 */}
-                  {/* <span className="text-[11px] text-[#2563EB] font-medium">
-          {tierInfo.label}
-        </span> */}
                 </div>
               )}
 
-              {/* 날짜 – 아이콘/텍스트와 항상 일정한 간격(gap-3) */}
+              {/* 날짜 */}
               <span className="text-[11px] text-muted-foreground">
                 {date}
               </span>
             </div>
           </div>
-
         </div>
 
-        {/* 제목 – 이미지처럼 굵은 한 줄/두 줄 */}
+        {/* 제목 */}
         <h3 className="font-bold text-lg leading-tight group-hover:text-primary transition-colors line-clamp-2">
           {title}
         </h3>
@@ -323,7 +310,7 @@ export function TopicCard({
           </p>
         </div>
 
-        {/* 하단: 좋아요/싫어요/댓글 – 필요 없으면 이 div 통째로 지우면 됨 */}
+        {/* 하단: 좋아요/싫어요/댓글 */}
         <div
           className="mt-4 flex justify-end gap-3 text-xs"
           onClick={(e) => e.stopPropagation()}
