@@ -78,10 +78,13 @@ function App() {
   // 🔹 로딩 화면
   if (loading) {
     return (
-      <main className="w-full flex p-6 gap-6 items-start">
-      <AppSidebar />
-      <section className="flex-1 flex flex-col gap-12">
-          <p className="text-muted-foreground">불러오는 중...</p>
+      // ✅ 수정됨: pt-24를 추가하여 헤더 높이만큼 내용을 아래로 밀어줌
+      <main className="w-full flex p-6 gap-6 items-start pt-24">
+        <AppSidebar />
+        <section className="flex-1 flex flex-col gap-12">
+          <div className="text-center text-muted-foreground py-8">
+            불러오는 중...
+          </div>
         </section>
       </main>
     );
@@ -109,7 +112,10 @@ function App() {
 
   // 🔹 실제 화면
   return (
-    <main className="w-full flex p-6 gap-6 items-start">
+    // ✅ 수정됨: pt-24 (padding-top: 6rem) 추가
+    // 헤더 높이가 보통 h-14(3.5rem) ~ h-16(4rem) 정도이므로,
+    // 기존 패딩(p-6)과 겹치지 않게 넉넉히 pt-24나 pt-28 정도를 주면 자연스럽습니다.
+    <main className="w-full flex p-6 gap-6 items-start pt-24">
       <AppSidebar />
       <section className="flex-1 flex flex-col gap-12">
         {/* HOT 토픽 */}

@@ -84,10 +84,10 @@ export default function TrendingPage() {
 
   if (loading) {
     return (
-      <main className="w-full flex p-6 gap-6 items-start">
+      <main className="w-full flex p-6 gap-6 items-start pt-24">
       <AppSidebar />
       <section className="flex-1 flex flex-col gap-12">
-          <div className="text-center text-muted-foreground py-8">
+          <div className="text-center text-muted-foreground py-8 ">
             불러오는 중...
           </div>
         </section>
@@ -101,9 +101,9 @@ export default function TrendingPage() {
   const pagePosts = formattedPosts.slice(start, start + PAGE_SIZE);
 
   return (
-    <main className="w-full flex p-6 gap-6 items-start">
+    <main className="w-full flex p-6 gap-6 items-start pt-24">
       <AppSidebar />
-      <section className="flex-1 flex flex-col gap-12">
+      <section className="flex-1 flex flex-col gap-6">
         <div>
   <div className="flex items-center gap-3 mb-1">
     <div className="w-8 h-8 rounded-lg bg-linear-to-br from-orange-500 to-red-500 flex items-center justify-center">
