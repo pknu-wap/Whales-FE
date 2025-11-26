@@ -237,7 +237,7 @@ function AppHeader() {
   }
 
   return (
-    <header className="w-full border-b border-gray-200 bg-white shadow-sm sticky top-0 z-50">
+    <header className="w-full border-b border-gray-200 bg-gray-100 shadow-sm sticky top-0 z-50">
       {/* ✅ 전체 폭 1080px + 좌/우 정렬 */}
       <div className="max-w-[1300px] mx-auto px-6 py-3 flex items-center justify-between gap-6">
         {/* 로고 - 항상 왼쪽 */}
@@ -470,7 +470,7 @@ function AppHeader() {
       border-[5px] ${getProfileBorderClass(
         user?.nicknameColor
       )}  /* ✅ 테두리 색 동적 적용 */
-      bg-white text-gray-900 font-bold
+      bg-white text-gray-900 font-black text-[1.3rem]
       shadow-sm hover:bg-gray-50
     `}
                   >

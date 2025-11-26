@@ -18,7 +18,7 @@ import {
   dislikeComment,
 } from '@/services/api';
 import useAuthStore from '@/stores/authStore';
-
+import { UserProfilePopup } from '@/components/common';
 
 type ReactionSummary = {
   likeCount: number;
@@ -30,6 +30,7 @@ interface PostData {
   id: string;
   authorName: string;
   authorInitial: string;
+  authorNicknameColor?: string;
   date: string;
   title: string;
   content: string;
@@ -47,6 +48,36 @@ interface CommentData {
   likes: number;
 }
 
+const getProfileBorderClass = (color?: string) => {
+  if (!color) return 'border-gray-300';
+
+  switch (color.toLowerCase()) {
+    case 'white':
+    case 'gray':
+      return 'border-gray-300';
+    case 'black':
+      return 'border-neutral-800';
+    case 'green':
+    case 'emerald':
+      return 'border-emerald-400';
+    case 'blue':
+      return 'border-blue-400';
+    case 'purple':
+      return 'border-purple-400';
+    case 'gold':
+    case 'yellow':
+      return 'border-yellow-400';
+    case 'orange':
+      return 'border-orange-400';
+    case 'red':
+      return 'border-red-400';
+    default:
+      return 'border-gray-300';
+  }
+};
+
+
+
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -63,6 +94,7 @@ export default function PostDetail() {
   const [isDisliked, setIsDisliked] = useState(false);
   const [isScraped, setIsScraped] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false); // ⬅ 추가
+  const [showProfilePopup, setShowProfilePopup] = useState(false);
   const refreshCommentReaction = async (commentId: string) => {
   const r = await getCommentReactions(commentId);
 
@@ -151,6 +183,10 @@ const handleCommentDislike = async (commentId: string) => {
           '작성자';
         const authorInitial = authorName.charAt(0);
 
+        const authorNicknameColor: string | undefined =
+  p?.author?.nicknameColor ?? undefined;
+
+
         // 태그는 문자열 배열로 정규화 (백엔드가 {id,name} 형태일 수 있음)
         const normalizedTags: string[] = Array.isArray(p?.tags)
           ? p.tags.map((t: any) => (typeof t === 'string' ? t : t?.name)).filter(Boolean)
@@ -164,6 +200,7 @@ const handleCommentDislike = async (commentId: string) => {
           id: p.id,
           authorName,
           authorInitial,
+          authorNicknameColor,
           date: p.createdAt
             ? new Date(p.createdAt).toLocaleDateString('ko-KR')
             : '-',
@@ -253,7 +290,7 @@ const handleCommentDislike = async (commentId: string) => {
             </p>
             <Button
               variant="ghost"
-              className="mt-4 gap-2"
+              className="mt-4 gap-2 mr-auto"
               onClick={() => navigate(-1)}
             >
               <ArrowLeft className="w-4 h-4" />
@@ -366,20 +403,42 @@ const handleCommentDislike = async (commentId: string) => {
           {/* 본문 */}
           <div className="bg-card rounded-lg border border-border p-8">
             <div className="flex items-start justify-between mb-6">
-          {/* 왼쪽: 프로필 */}
-          <div className="flex items-center gap-3">
-            <Avatar className="w-14 h-14 border-2 border-primary/20">
-              <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
-                {postData.authorInitial}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <p className="font-bold text-lg">{postData.authorName}</p>
-              </div>
-              <p className="text-sm text-muted-foreground">{postData.date}</p>
-            </div>
-          </div>
+          {/* 왼쪽: 프로필 + 팝업 */}
+<div className="relative flex items-center gap-3">
+  {/* 아바타 */}
+  <Avatar
+    onClick={() => setShowProfilePopup((v) => !v)}
+    className={`
+      w-14 h-14 rounded-full cursor-pointer
+      border-[5px] ${getProfileBorderClass(postData.authorNicknameColor)}
+      bg-white text-gray-900 font-bold
+      shadow-sm hover:bg-gray-50 transition
+    `}
+  >
+    <AvatarFallback className="text-lg font-semibold">
+      {postData.authorInitial}
+    </AvatarFallback>
+  </Avatar>
+
+  {/* 이름 + 날짜 */}
+  <div>
+    <div className="flex items-center gap-2 mb-1">
+      <p className="font-bold text-lg">{postData.authorName}</p>
+    </div>
+    <p className="text-sm text-muted-foreground">{postData.date}</p>
+  </div>
+
+  {/* 프로필 팝업 */}
+  {showProfilePopup && (
+    <UserProfilePopup
+      className="absolute left-0 top-16" // 위치는 필요하면 조정
+      name={postData.authorName}
+      initial={postData.authorInitial}
+      nicknameColor={postData.authorNicknameColor}
+      onClose={() => setShowProfilePopup(false)}
+    />
+  )}
+</div>
 
   {/* 오른쪽: 스크랩/신고 메뉴 */}
   <div className="relative">
