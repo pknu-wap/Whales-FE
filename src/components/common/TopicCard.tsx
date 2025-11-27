@@ -308,7 +308,6 @@ export function TopicCard({
           <p className="text-sm text-muted-foreground">
             {previewContent}
           </p>
-        </div>
 
         {/* 하단: 좋아요/싫어요/댓글 */}
         <div

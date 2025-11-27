@@ -126,24 +126,24 @@ const formatDate = (value?: string) => {
 const getTrustRingClass = (trustLevel?: TrustLevel): string => {
   switch (trustLevel) {
     case 'basic':
-      return 'border-[#e5e7eb] bg-white';
+      return 'border-[#D7D7D7] bg-white';
     case 'active':
-      return 'border-[#4b5563] bg-white';
+      return 'border-[#7C7C7C] bg-white';
     case 'trusted':
-      return 'border-[#22c55e] bg-white';
+      return 'border-[#74E3C0] bg-white';
     case 'model':
-      return 'border-[#2563eb] bg-white';
+      return 'border-[#4584FF] bg-white';
     case 'top':
-      return 'border-[#a855f7] bg-white';
+      return 'border-[#D89BFF] bg-white';
     case 'legend':
-      return 'border-[#facc15] bg-white';
+      return 'border-[#FFCF4A] bg-white';
     case 'warning':
-      return 'border-[#f97316] bg-white';
+      return 'border-[#FF9335] bg-white';
     case 'danger':
-      return 'border-[#ef4444] bg-white';
+      return 'border-[#FF5757] bg-white';
     default:
-      // 기본값은 파란색으로 두었음
-      return 'border-[#2563eb] bg-white';
+      // 기본값
+      return 'border-[#D7D7D7] bg-white';
   }
 };
 
