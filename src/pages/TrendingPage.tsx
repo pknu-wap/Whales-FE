@@ -62,24 +62,20 @@ export default function TrendingPage() {
     title: post.title,
     content: post.content,
     author:
-      typeof post.author === "object"
-        ? post.author?.name || "익명"
-        : post.author || post.authorName || "닉네임",
+      typeof post.author === 'object'
+        ? post.author?.name || '익명'
+        : post.author || post.authorName || '익명',
     date: post.createdAt
-      ? new Date(post.createdAt)
-          .toLocaleDateString("ko-KR", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-          })
-          .replace(/\. /g, ".")
-          .replace(".", "")
-      : "",
+      ? new Date(post.createdAt).toLocaleDateString('ko-KR', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        })
+      : '',
     createdAt: post.createdAt,
     tags: Array.isArray(post.tags)
-      ? post.tags.map((t) => (typeof t === "object" ? t.name : t))
+      ? post.tags.map((tag) => (typeof tag === 'object' ? tag.name : tag))
       : [],
-    reactions: post.reactions,
   });
 
   if (loading) {

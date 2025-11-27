@@ -102,6 +102,7 @@ export default function PostDetail() {
   const [isScraped, setIsScraped] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
+
   const myName =
     user?.displayName ??
     user?.nickname ??
@@ -267,6 +268,14 @@ export default function PostDetail() {
     fetchData();
   }, [id]);
 
+  // 🔔 로그인 안 한 상태에서 글 데이터를 못 불러온 경우: 알림 + 로그인 페이지로 이동
+  useEffect(() => {
+    if (!loading && !postData && !accessToken) {
+      alert('로그인해야 볼 수 있습니다.');
+      navigate('/login');
+    }
+  }, [loading, postData, accessToken, navigate]);
+
   if (loading) {
     return (
       <div>
@@ -283,10 +292,19 @@ export default function PostDetail() {
     );
   }
 
+  // 여기까지 왔는데 postData가 없고, accessToken도 없으면
+  // 위 useEffect에서 이미 alert + /login 이동을 진행 중이므로 아무것도 렌더하지 않음
   if (!postData) {
+    // 1) 비로그인 상태 → alert + 로그인 페이지 이동
+    if (!accessToken) {
+      alert('로그인해야 볼 수 있습니다.');
+      navigate('/login');
+      return null;
+    }
+
+    // 2) 로그인은 되어 있는데 글이 실제로 없는 경우 → 404 UI
     return (
       <div>
-         {/* ✅ 수정: p-6 px-6 pb-6 pt-24 형태로 분리 */}
         <main className="w-full flex px-6 pb-6 pt-24 gap-6 items-start">
           <AppSidebar />
           <section className="flex-1 flex flex-col gap-12">
@@ -399,14 +417,13 @@ export default function PostDetail() {
     }
   };
 
+  // 여기부터는 postData가 확실히 있는 상태
   return (
     <div>
-       {/* ✅ 수정: px-6 pb-6 pt-24 (충돌 방지 명시적 작성) */}
+      {/* ✅ 수정: px-6 pb-6 pt-24 (충돌 방지 명시적 작성) */}
       <main className="w-full flex px-6 pb-6 pt-24 gap-6 items-start">
         <AppSidebar />
         <section className="flex-1 flex flex-col gap-6">
-          
-
           {/* 본문 */}
           <div className="bg-card rounded-lg border border-border p-8">
             <div className="flex items-start justify-between mb-6">
@@ -594,7 +611,6 @@ export default function PostDetail() {
               </div>
             </div>
           </div>
-
 
           {/* 댓글 목록 */}
           <div className="bg-card rounded-lg border border-border p-6">
