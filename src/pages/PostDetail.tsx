@@ -5,7 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { ThumbsUp, MessageCircle, ArrowLeft, MoreVertical } from 'lucide-react';
+import {
+  ThumbsUp,
+  MessageCircle,
+  ArrowLeft,
+  MoreVertical,
+} from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { getPost, getPostComments, createComment } from '@/services/api';
 import {
@@ -22,6 +27,12 @@ import reportIcon from '@/assets/report.svg';
 import writeCommentIcon from '@/assets/writecomment.svg';
 import useAuthStore from '@/stores/authStore';
 import { UserProfilePopup } from '@/components/common';
+
+// 등급 뱃지 (학사모)
+import RookieBadge from '@/assets/Rookie Ver.2.svg';
+import MemberBadge from '@/assets/Member Ver.2.svg';
+import ExpertBadge from '@/assets/Expert Ver.2.svg';
+import WhalesBadge from '@/assets/Whales Ver.2.svg';
 
 type ReactionSummary = {
   likeCount: number;
@@ -42,7 +53,6 @@ interface PostData {
   reactions?: ReactionSummary;
 }
 
-// ⭐ 댓글에도 닉네임 색 정보 추가
 interface CommentData {
   id: string;
   authorName: string;
@@ -53,7 +63,51 @@ interface CommentData {
   likes: number;
 }
 
-// 프로필 테두리 색 결정 함수 (공통)
+// ✅ TopicCard와 맞춘 Tier 타입 / 헬퍼
+
+type Tier = 'ROOKIE' | 'MEMBER' | 'EXPERT' | 'WHALES' | 'WARN' | 'UNKNOWN';
+
+const getTierByColor = (color?: string): Tier => {
+  if (!color) return 'ROOKIE';
+
+  switch (color.toLowerCase()) {
+    case 'white':
+    case 'gray':
+      return 'ROOKIE';
+    case 'black':
+    case 'green':
+    case 'emerald':
+      return 'MEMBER';
+    case 'blue':
+    case 'purple':
+      return 'EXPERT';
+    case 'gold':
+    case 'yellow':
+      return 'WHALES';
+    case 'orange':
+    case 'red':
+      return 'WARN';
+    default:
+      return 'UNKNOWN';
+  }
+};
+
+const getTierInfo = (tier: Tier) => {
+  switch (tier) {
+    case 'ROOKIE':
+      return { label: 'Rookie', img: RookieBadge };
+    case 'MEMBER':
+      return { label: 'Member', img: MemberBadge };
+    case 'EXPERT':
+      return { label: 'Expert', img: ExpertBadge };
+    case 'WHALES':
+      return { label: 'Whales', img: WhalesBadge };
+    default:
+      return null;
+  }
+};
+
+// 공통 테두리 색 함수 (TopicCard와 동일)
 const getProfileBorderClass = (color?: string) => {
   if (!color) return 'border-gray-300';
 
@@ -74,7 +128,6 @@ const getProfileBorderClass = (color?: string) => {
     case 'yellow':
       return 'border-yellow-400';
     case 'orange':
-      return 'border-orange-400';
     case 'red':
       return 'border-red-400';
     default:
@@ -91,7 +144,11 @@ export default function PostDetail() {
   const [commentReactions, setCommentReactions] = useState<
     Record<
       string,
-      { likeCount: number; dislikeCount: number; myReaction: 'LIKE' | 'DISLIKE' | null }
+      {
+        likeCount: number;
+        dislikeCount: number;
+        myReaction: 'LIKE' | 'DISLIKE' | null;
+      }
     >
   >({});
   const { accessToken, user } = useAuthStore();
@@ -107,12 +164,15 @@ export default function PostDetail() {
     user?.displayName ??
     user?.nickname ??
     '나';
-
   const myInitial = myName.charAt(0);
-  const myColor = user?.nicknameColor;
 
-  // ⭐ 댓글용 프로필 팝업: 현재 열려 있는 댓글 id
-  const [activeCommentProfileId, setActiveCommentProfileId] = useState<string | null>(null);
+  // ✅ 내 닉네임 테두리: nicknameColor || badgeColor
+  const myColor: string | undefined =
+    (user as any)?.nicknameColor || (user as any)?.badgeColor;
+
+  const [activeCommentProfileId, setActiveCommentProfileId] = useState<
+    string | null
+  >(null);
 
   const refreshCommentReaction = async (commentId: string) => {
     const r = await getCommentReactions(commentId);
@@ -191,10 +251,15 @@ export default function PostDetail() {
         const p = await getPost(id);
 
         const authorName: string =
-          p?.author?.displayName ?? p?.authorName ?? p?.author?.name ?? '작성자';
+          p?.author?.displayName ??
+          p?.authorName ??
+          p?.author?.name ??
+          '작성자';
         const authorInitial = authorName.charAt(0);
 
-        const authorNicknameColor: string | undefined = p?.author?.nicknameColor ?? undefined;
+        // ✅ author.nicknameColor || author.badgeColor
+        const authorNicknameColor: string | undefined =
+          p?.author?.nicknameColor || p?.author?.badgeColor || undefined;
 
         const normalizedTags: string[] = Array.isArray(p?.tags)
           ? p.tags
@@ -210,7 +275,9 @@ export default function PostDetail() {
           authorName,
           authorInitial,
           authorNicknameColor,
-          date: p.createdAt ? new Date(p.createdAt).toLocaleDateString('ko-KR') : '-',
+          date: p.createdAt
+            ? new Date(p.createdAt).toLocaleDateString('ko-KR')
+            : '-',
           title: p.title ?? '',
           content: p.content ?? '',
           likes: likeCount,
@@ -241,12 +308,19 @@ export default function PostDetail() {
         const mapped: CommentData[] = Array.isArray(c)
           ? c.map((it: any) => {
               const cAuthorName: string =
-                it?.author?.displayName ?? it?.authorName ?? it?.author?.name ?? '사용자';
+                it?.author?.displayName ??
+                it?.authorName ??
+                it?.author?.name ??
+                '사용자';
               return {
                 id: it.id,
                 authorName: cAuthorName,
                 authorInitial: cAuthorName.charAt(0),
-                authorNicknameColor: it?.author?.nicknameColor ?? undefined,
+                // ✅ 댓글 작성자도 nicknameColor || badgeColor 사용
+                authorNicknameColor:
+                  it?.author?.nicknameColor ||
+                  it?.author?.badgeColor ||
+                  undefined,
                 date: it.createdAt
                   ? new Date(it.createdAt).toLocaleDateString('ko-KR')
                   : '-',
@@ -268,7 +342,6 @@ export default function PostDetail() {
     fetchData();
   }, [id]);
 
-  // 🔔 로그인 안 한 상태에서 글 데이터를 못 불러온 경우: 알림 + 로그인 페이지로 이동
   useEffect(() => {
     if (!loading && !postData && !accessToken) {
       alert('로그인해야 볼 수 있습니다.');
@@ -279,7 +352,6 @@ export default function PostDetail() {
   if (loading) {
     return (
       <div>
-        {/* ✅ 수정: p-6 px-6 pb-6 pt-24 형태로 분리하여 충돌 방지 */}
         <main className="w-full flex px-6 pb-6 pt-24 gap-6 items-start">
           <AppSidebar />
           <section className="flex-1 flex flex-col gap-6">
@@ -292,17 +364,13 @@ export default function PostDetail() {
     );
   }
 
-  // 여기까지 왔는데 postData가 없고, accessToken도 없으면
-  // 위 useEffect에서 이미 alert + /login 이동을 진행 중이므로 아무것도 렌더하지 않음
   if (!postData) {
-    // 1) 비로그인 상태 → alert + 로그인 페이지 이동
     if (!accessToken) {
       alert('로그인해야 볼 수 있습니다.');
       navigate('/login');
       return null;
     }
 
-    // 2) 로그인은 되어 있는데 글이 실제로 없는 경우 → 404 UI
     return (
       <div>
         <main className="w-full flex px-6 pb-6 pt-24 gap-6 items-start">
@@ -323,6 +391,10 @@ export default function PostDetail() {
     );
   }
 
+  // ✅ TopicCard와 동일한 방식으로 티어/뱃지 계산
+  const tier = getTierByColor(postData.authorNicknameColor);
+  const tierInfo = getTierInfo(tier);
+
   const handleCommentSubmit = async () => {
     if (!commentInput.trim() || !id) return;
     try {
@@ -334,7 +406,11 @@ export default function PostDetail() {
         id: newComment.id,
         authorName,
         authorInitial: authorName.charAt(0),
-        authorNicknameColor: newComment?.author?.nicknameColor ?? undefined,
+        // ✅ 새로 작성된 댓글도 badgeColor 대응
+        authorNicknameColor:
+          newComment?.author?.nicknameColor ||
+          newComment?.author?.badgeColor ||
+          undefined,
         date: new Date(newComment.createdAt).toLocaleDateString('ko-KR'),
         content: newComment.body ?? '',
         likes: newComment.reactions?.likeCount ?? 0,
@@ -353,7 +429,9 @@ export default function PostDetail() {
       await togglePostLike(id);
       setPostData((prev) => {
         if (!prev) return prev;
-        const reactions = { ...(prev.reactions ?? { likeCount: 0, dislikeCount: 0 }) };
+        const reactions = {
+          ...(prev.reactions ?? { likeCount: 0, dislikeCount: 0 }),
+        };
         let likeCount = reactions.likeCount ?? 0;
         let dislikeCount = reactions.dislikeCount ?? 0;
 
@@ -385,7 +463,9 @@ export default function PostDetail() {
       await togglePostDislike(id);
       setPostData((prev) => {
         if (!prev) return prev;
-        const reactions = { ...(prev.reactions ?? { likeCount: 0, dislikeCount: 0 }) };
+        const reactions = {
+          ...(prev.reactions ?? { likeCount: 0, dislikeCount: 0 }),
+        };
         let likeCount = reactions.likeCount ?? 0;
         let dislikeCount = reactions.dislikeCount ?? 0;
 
@@ -417,41 +497,59 @@ export default function PostDetail() {
     }
   };
 
-  // 여기부터는 postData가 확실히 있는 상태
   return (
     <div>
-      {/* ✅ 수정: px-6 pb-6 pt-24 (충돌 방지 명시적 작성) */}
       <main className="w-full flex px-6 pb-6 pt-24 gap-6 items-start">
         <AppSidebar />
         <section className="flex-1 flex flex-col gap-6">
-          {/* 본문 */}
+          {/* 본문 카드 */}
           <div className="bg-card rounded-lg border border-border p-8">
-            <div className="flex items-start justify-between mb-6">
-              {/* 왼쪽: 프로필 + 팝업 */}
-              <div className="relative flex items-center gap-3">
-                {/* 게시글 작성자 아바타 */}
+            {/* ✅ 상단 헤더: TopicCard 스타일과 동일 구조/간격 */}
+            <div className="flex items-start justify-between mb-4">
+              {/* 왼쪽: 프로필 + 닉네임 + 뱃지 + 날짜 */}
+              <div className="relative flex items-start gap-3">
                 <Avatar
                   onClick={() => setShowProfilePopup((v) => !v)}
                   className={`
                     w-14 h-14 rounded-full cursor-pointer
-                    border-[5px] ${getProfileBorderClass(postData.authorNicknameColor)}
+                    border-[5px] ${getProfileBorderClass(
+                      postData.authorNicknameColor,
+                    )}
                     bg-white text-gray-900 font-bold
                     shadow-sm hover:bg-gray-50 transition
                   `}
                 >
-                  <AvatarFallback className="text-lg font-semibold">
+                  <AvatarFallback className="text-sm font-semibold">
                     {postData.authorInitial}
                   </AvatarFallback>
                 </Avatar>
 
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-bold text-lg">{postData.authorName}</p>
+                <div className="flex-1">
+                  {/* 닉네임: TopicCard와 동일 스타일 */}
+                  <p className="font-semibold text-sm">
+                    {postData.authorName}
+                  </p>
+
+                  {/* 뱃지 + 날짜: TopicCard와 동일 레이아웃/글자 크기 */}
+                  <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                    {tierInfo && (
+                      <div className="inline-flex items-center gap-1">
+                        <div className="w-16 h-7 flex items-center justify-center">
+                          <img
+                            src={tierInfo.img}
+                            alt={tierInfo.label}
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    <span className="text-[11px] text-muted-foreground">
+                      {postData.date}
+                    </span>
                   </div>
-                  <p className="text-sm text-muted-foreground">{postData.date}</p>
                 </div>
 
-                {/* 게시글 작성자 프로필 팝업 */}
+                {/* 프로필 팝업 */}
                 {showProfilePopup && (
                   <UserProfilePopup
                     className="absolute left-0 top-16"
@@ -483,7 +581,11 @@ export default function PostDetail() {
                       }}
                       className="w-full flex items-center gap-2 px-3 py-2 hover:bg-blue-200 transition"
                     >
-                      <img src={scrapIcon} alt="스크랩" className="w-4 h-4" />
+                      <img
+                        src={scrapIcon}
+                        alt="스크랩"
+                        className="w-4 h-4"
+                      />
                       <span>{isScraped ? '스크랩 취소' : '스크랩'}</span>
                     </button>
                     <button
@@ -494,7 +596,11 @@ export default function PostDetail() {
                       }}
                       className="w-full flex items-center gap-2 px-3 py-2 hover:bg-blue-200 transition"
                     >
-                      <img src={reportIcon} alt="신고하기" className="w-4 h-4" />
+                      <img
+                        src={reportIcon}
+                        alt="신고하기"
+                        className="w-4 h-4"
+                      />
                       <span>신고하기</span>
                     </button>
                   </div>
@@ -502,25 +608,31 @@ export default function PostDetail() {
               </div>
             </div>
 
-            <h1 className="text-2xl font-bold mb-6 leading-tight">
+            {/* 제목: 디테일 페이지라 조금 더 크게 */}
+            <h1 className="font-bold text-2xl leading-tight mb-4">
               {postData.title}
             </h1>
 
-            {/* 태그 */}
-            <div className="flex flex-wrap gap-2 mb-6">
+            {/* ✅ 태그: TopicCard와 동일 스타일 (색/글자/간격) */}
+            <div className="flex items-center gap-2 mb-4 overflow-x-auto whitespace-nowrap">
               {postData.tags.map((tag) => (
-                <Badge key={tag} variant="outline">
+                <Badge
+                  key={tag}
+                  variant="outline"
+                  className="shrink-0 bg-[#C3D7FF] border-none text-xs px-3 py-1"
+                >
                   {tag}
                 </Badge>
               ))}
             </div>
 
-            <div className="text-base leading-relaxed mb-8 text-foreground whitespace-pre-line">
+            {/* 본문 내용 */}
+            <div className="text-sm text-foreground leading-relaxed mb-8 whitespace-pre-line">
               {postData.content}
             </div>
 
+            {/* 좋아요 / 싫어요 / 댓글 수 */}
             <div className="flex items-center justify-end gap-2 pt-4 border-t">
-              {/* 좋아요 */}
               <button
                 onClick={handleLike}
                 className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-muted transition ${
@@ -531,7 +643,6 @@ export default function PostDetail() {
                 <span className="font-medium">{postData.likes}</span>
               </button>
 
-              {/* 싫어요 */}
               <button
                 onClick={handleDislike}
                 className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-muted transition ${
@@ -544,7 +655,6 @@ export default function PostDetail() {
                 </span>
               </button>
 
-              {/* 댓글 개수 */}
               <button className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-muted text-muted-foreground transition hover:bg-muted/80">
                 <MessageCircle className="w-4 h-4 text-black" />
                 <span className="font-medium">{comments.length}</span>
@@ -557,7 +667,6 @@ export default function PostDetail() {
             <h3 className="font-bold text-lg mb-4">댓글 작성</h3>
 
             <div className="flex items-start gap-4">
-              {/* ⭐ 내 프로필 아바타 + 팝업 */}
               <div className="relative">
                 <Avatar
                   onClick={() => setActiveCommentProfileId('me')}
@@ -573,7 +682,6 @@ export default function PostDetail() {
                   </AvatarFallback>
                 </Avatar>
 
-                {/* 내 프로필 팝업 */}
                 {activeCommentProfileId === 'me' && (
                   <UserProfilePopup
                     className="absolute left-0 top-14 z-20"
@@ -585,10 +693,9 @@ export default function PostDetail() {
                 )}
               </div>
 
-              {/* 입력창 */}
               <div className="flex-1 flex flex-col gap-3">
                 <Textarea
-                  placeholder={`댓글을 입력하세요...`}
+                  placeholder="댓글을 입력하세요..."
                   value={commentInput}
                   onChange={(e) => setCommentInput(e.target.value)}
                   className="min-h-[100px] resize-none bg-gray-100 border-0 rounded-md focus:ring-0 focus:outline-none"
@@ -623,13 +730,13 @@ export default function PostDetail() {
 
                 return (
                   <div key={c.id}>
-                    {/* ⭐ relative로 감싸서 팝업 위치 잡기 */}
                     <div className="relative flex gap-4 py-4">
-                      {/* 댓글 작성자 아바타 + 팝업 */}
                       <Avatar
                         className={`
                           w-12 h-12 rounded-full cursor-pointer
-                          border-[5px] ${getProfileBorderClass(c.authorNicknameColor)}
+                          border-[5px] ${getProfileBorderClass(
+                            c.authorNicknameColor,
+                          )}
                           bg-white text-gray-900 font-bold
                           shadow-sm hover:bg-gray-50 transition
                         `}
@@ -644,7 +751,6 @@ export default function PostDetail() {
                         </AvatarFallback>
                       </Avatar>
 
-                      {/* 댓글 작성자 프로필 팝업 */}
                       {activeCommentProfileId === c.id && (
                         <UserProfilePopup
                           className="absolute left-0 top-14 z-20"
@@ -657,8 +763,10 @@ export default function PostDetail() {
 
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="font-bold">{c.authorName}</span>
-                          <span className="text-sm text-muted-foreground">
+                          <span className="font-bold text-sm">
+                            {c.authorName}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
                             {c.date}
                           </span>
                         </div>
@@ -667,9 +775,7 @@ export default function PostDetail() {
                           {c.content}
                         </p>
 
-                        {/* 댓글 좋아요/싫어요 */}
                         <div className="flex items-center gap-2 justify-end mt-2">
-                          {/* 👍 좋아요 */}
                           <button
                             type="button"
                             onClick={() => handleCommentLike(c.id)}
@@ -687,7 +793,6 @@ export default function PostDetail() {
                             </span>
                           </button>
 
-                          {/* 👎 싫어요 */}
                           <button
                             type="button"
                             onClick={() => handleCommentDislike(c.id)}

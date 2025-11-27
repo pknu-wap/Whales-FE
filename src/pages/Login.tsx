@@ -1,30 +1,16 @@
 import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-
-import WhalesLogo from '@/assets/Whales 로고.svg';
-import GoogleLogo from '@/assets/구글 로고.svg';
-import TermsCheckIcon from '@/assets/동의 체크.svg';
-import TermsCheckBlue from '@/assets/동의 체크blue.svg';
 
 export default function Login() {
   const navigate = useNavigate();
 
-  // 약관 동의 상태
-  const [isAgreed, setIsAgreed] = useState(false);
-
+  // 🔗 백엔드 연결: POST /auth/login/google
   const handleGoogleLogin = () => {
-    if (!isAgreed) {
-      alert('서비스 이용약관에 동의해야 로그인할 수 있습니다.');
-      return;
-    }
 
-    const clientId =
-      '672627774587-ng4kk4ds9kql97v5h82judmhfnt6rmah.apps.googleusercontent.com';
-    // const redirectUri = 'https://whales-team6.netlify.app/auth/callback';
-
-    const redirectUri = 'http://localhost:5173/auth/callback';
-    const scope = 'openid email profile';
+    const clientId = "672627774587-ng4kk4ds9kql97v5h82judmhfnt6rmah.apps.googleusercontent.com";
+    const redirectUri = "http://localhost:5173/auth/callback";
+    const scope = "openid email profile";
 
     const googleAuthUrl =
       `https://accounts.google.com/o/oauth2/v2/auth` +
@@ -38,95 +24,59 @@ export default function Login() {
     window.location.href = googleAuthUrl;
   };
 
-  return (
-    <div className="fixed inset-0 w-full h-full bg-gradient-to-r from-[#0C59FF] to-[#C3E1FF] flex items-center justify-center">
-      {/* 가운데 큰 레이아웃 */}
-      <div className="w-full max-w-5xl flex flex-col items-center gap-24 px-6">
-        {/* 상단 Whales 로고 영역 */}
-        <section className="flex flex-col items-center gap-6">
-        <img
-          src={WhalesLogo}
-          alt="Whales 로고"
-          className="
-            h-16 w-auto cursor-pointer
-            transition-all duration-200
-            hover:opacity-90 hover:scale-105
-          "
-          onClick={() => navigate('/')}
-        />
-          <p className="text-xl text-white font-semibold h-3">
-            신뢰할 수 있는 정보, 편리한 탐색
-          </p>
-          <div
-            className="
-              mt-2
-              w-[300px]
-              h-6
-              rounded-[14px]
-              bg-white/35
-              border border-white/5
-              backdrop-blur-sm
-              flex items-center justify-center
-              text-white text-sm font-medium
-            "
-          >
-            부경대 학생을 위한 웹 커뮤니티
-          </div>
-        </section>
 
-        {/* 로그인 영역 */}
-        <section className="flex flex-col items-start gap-6 w-full max-w-[560px]">
-          <div className="flex flex-col gap-1 text-left">
-            <h2 className="text-3xl font-bold text-white h-10">로그인</h2>
-            <p className="text-base text-white font-normal">
+  return (
+    <div className="w-full min-h-screen bg-background">
+      <main className="w-full h-[calc(100vh-80px)] items-center justify-center flex p-6 gap-6 relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-6 left-6"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <div className="w-[450px] max-w-[90vw] flex flex-col px-6 gap-8">
+          <div className="flex flex-col gap-3">
+            <h1 className="scroll-m-20 text-5xl font-bold tracking-tight">
+              로그인
+            </h1>
+            <p className="text-xl text-muted-foreground">
               구글 로그인으로 바로 시작하기
             </p>
           </div>
-
-          {/* 구글 로그인 버튼 */}
-          <Button
-            type="button"
-            variant="ghost"
-            size="lg"
-            onClick={handleGoogleLogin}
-            className="
-              w-full h-14 rounded-full shadow-lg
-              flex items-center justify-start gap-3 px-6
-              text-base font-medium
-              bg-white text-slate-900
-            "
-          >
-            <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center">
-              <img src={GoogleLogo} alt="Google 로고" className="w-5 h-5" />
-            </div>
-            <span className="flex-1 text-center text-lg pr-10 font-semibold">
+          <div className="grid gap-4">
+            {/* 🔗 백엔드 연결: 구글 OAuth2 로그인 */}
+            <Button
+              type="button"
+              variant="secondary"
+              size="lg"
+              className="gap-2 h-14 text-lg font-medium"
+              onClick={handleGoogleLogin}
+            >
+              <svg className="w-6 h-6" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
               구글 로그인
-            </span>
-          </Button>
-
-          {/* 서비스 이용약관 동의 바 */}
-          <div
-            onClick={() => setIsAgreed(!isAgreed)}
-            className="
-              mt-2 w-full h-11 rounded-[18px]
-              bg-gradient-to-r from-[#FFFFFF73] to-[#FFFFFF1A]
-              border border-white/60
-              flex items-center justify-between
-              px-6 text-sm text-white
-              cursor-pointer select-none
-            "
-          >
-            <span>서비스 이용약관 동의 (필수)</span>
-
-            {/* 체크 상태에 따라 아이콘 변경 */}
-            <img
-              src={isAgreed ? TermsCheckBlue : TermsCheckIcon}
-              alt="동의 체크 아이콘"
-              className="w-5 h-5"
-            />
+            </Button>
           </div>
-        </section>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

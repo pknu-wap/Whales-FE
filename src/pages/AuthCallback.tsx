@@ -5,11 +5,12 @@ import useAuthStore from '@/stores/authStore';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
-  const { setAuth } = useAuthStore();
+  const { setAuth } = useAuthStore(); // ✅ setAccessToken → setAuth
 
   useEffect(() => {
     const handleCallback = async () => {
       console.log('AuthCallback component mounted');
+
       const code = new URL(window.location.href).searchParams.get('code');
 
       if (!code) {
@@ -19,22 +20,13 @@ export default function AuthCallback() {
       }
 
       try {
-        // ✅ redirectUri: 프론트 주소 기반
-        // 로컬:   http://localhost:5173/auth/callback
-        // 배포:   https://네-넷리파이-도메인/auth/callback
-        // 'https://whales-team6.netlify.app/auth/callback'
         const redirectUri = 'http://localhost:5173/auth/callback';
-
-        // ✅ 여기서 api는 이미 baseURL = 'http://3.27.115.110:8080/api' 사용
-        // 로컬: 'http://localhost:8080/api/auth/login/google'
-        // 백엔드  const response = await api.post('http://3.27.115.110:8080/api/auth/login/google'
-        const response = await api.post(
-          'http://localhost:8080/api/auth/login/google',
-          {
-            code,
-            redirectUri,
-          }
-        );
+        // ✅ 공통 api 인스턴스 사용
+        //    (baseURL 이 http://3.27.115.110:8080/api 라고 가정)
+        const response = await api.post('/auth/login/google', {
+          code,
+          redirectUri,
+        });
 
         const { accessToken, user } = response.data;
 
@@ -42,8 +34,13 @@ export default function AuthCallback() {
           throw new Error('Access token이 응답에 없습니다.');
         }
 
+        // ✅ Zustand에 저장 (토큰 + 유저정보)
         setAuth(accessToken, user);
+
+        // ✅ 홈으로 이동
         navigate('/');
+        // 필요하면 새로고침
+        // window.location.reload();
       } catch (err) {
         console.error('로그인 중 오류 발생:', err);
         alert('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');

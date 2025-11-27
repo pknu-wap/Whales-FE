@@ -1,5 +1,3 @@
-// src/components/common/TopicCard.tsx
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,9 +6,9 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ThumbsUp, MessageCircle } from 'lucide-react';
 import { getPostReactions, getPostComments } from '@/services/api';
-import { UserProfilePopup } from '@/components/common/UserProfilePopup'; 
+import { UserProfilePopup } from '@/components/common/UserProfilePopup';
 
-// 등급 뱃지 (학사모) import
+// 등급 뱃지
 import RookieBadge from '@/assets/Rookie Ver.2.svg';
 import MemberBadge from '@/assets/Member Ver.2.svg';
 import ExpertBadge from '@/assets/Expert Ver.2.svg';
@@ -45,9 +43,10 @@ const getProfileBorderClass = (color?: string) => {
   }
 };
 
-// ✅ 닉네임 색상 → 등급(Tier)
-type Tier = 'ROOKIE' | 'MEMBER' | 'EXPERT' | 'WHALES' | 'WARN' | 'UNKNOWN';
+// ✅ 등급(Tier) 타입 – 백엔드 TrustLevel 과 일치
+type Tier = 'ROOKIE' | 'MEMBER' | 'EXPERT' | 'WHALE' | 'WARN' | 'UNKNOWN';
 
+// 색상 → Tier 추론 (trustLevel이 없을 때만 사용)
 const getTierByColor = (color?: string): Tier => {
   if (!color) return 'ROOKIE';
 
@@ -64,7 +63,7 @@ const getTierByColor = (color?: string): Tier => {
       return 'EXPERT';
     case 'gold':
     case 'yellow':
-      return 'WHALES';
+      return 'WHALE';
     case 'orange':
     case 'red':
       return 'WARN';
@@ -81,8 +80,8 @@ const getTierInfo = (tier: Tier) => {
       return { label: 'Member', img: MemberBadge };
     case 'EXPERT':
       return { label: 'Expert', img: ExpertBadge };
-    case 'WHALES':
-      return { label: 'Whales', img: WhalesBadge };
+    case 'WHALE':
+      return { label: 'Whale', img: WhalesBadge };
     default:
       return null;
   }
@@ -93,10 +92,13 @@ interface Tag {
   name: string;
 }
 
+// ✅ author 안에 badgeColor, trustLevel 도 들어올 수 있게 확장
 interface Author {
   id: string;
   displayName: string;
   nicknameColor?: string;
+  badgeColor?: string;
+  trustLevel?: 'ROOKIE' | 'MEMBER' | 'EXPERT' | 'WHALE' | string;
 }
 
 interface TopicCardProps {
@@ -134,14 +136,34 @@ export function TopicCard({
 
   const displayAuthor =
     typeof author === 'string' ? author : author.displayName;
+
   const displayTags = tags.map((tag) =>
     typeof tag === 'string' ? tag : tag.name,
   );
-  
-  const authorColor =
-    typeof author === 'string' ? undefined : author.nicknameColor;
 
-  // ✅ 리액션 상태 관리
+  // ✅ author.nicknameColor || author.badgeColor 로 매핑
+  const authorColor =
+    typeof author === 'string'
+      ? undefined
+      : author.nicknameColor || author.badgeColor;
+
+  const authorTrustLevel =
+    typeof author === 'string' ? undefined : author.trustLevel;
+
+  // ✅ trustLevel 우선, 없으면 색으로 Tier 추론
+  const normalizedTrust =
+    typeof authorTrustLevel === 'string'
+      ? authorTrustLevel.toUpperCase()
+      : undefined;
+
+  const tier: Tier =
+    normalizedTrust &&
+    ['ROOKIE', 'MEMBER', 'EXPERT', 'WHALE'].includes(normalizedTrust)
+      ? (normalizedTrust as Tier)
+      : getTierByColor(authorColor);
+
+  const tierInfo = getTierInfo(tier);
+
   const [reactions, setReactions] = useState<ReactionSummary>({
     likeCount: initialReactions?.likeCount ?? 0,
     dislikeCount: initialReactions?.dislikeCount ?? 0,
@@ -152,7 +174,6 @@ export function TopicCard({
     initialReactions?.commentCount ?? 0,
   );
 
-  // ✅ 프로필 팝업 상태 (중복 제거됨)
   const [showProfilePopup, setShowProfilePopup] = useState(false);
 
   useEffect(() => {
@@ -200,18 +221,12 @@ export function TopicCard({
   const previewContent =
     content.length > 30 ? content.substring(0, 30) + '...' : content;
 
-  const tier = getTierByColor(authorColor);
-  const tierInfo = getTierInfo(tier);
-
-  // 프로필 클릭 핸들러 (이벤트 전파 방지 포함)
   const handleAvatarClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation(); // 카드 이동 방지
+    e.stopPropagation();
     setShowProfilePopup((prev) => !prev);
   };
 
-  const handleCloseProfile = () => {
-    setShowProfilePopup(false);
-  };
+  const handleCloseProfile = () => setShowProfilePopup(false);
 
   return (
     <Card
@@ -221,10 +236,9 @@ export function TopicCard({
     >
       <CardHeader className="pb-3">
         <div className="flex items-start gap-3 mb-3">
-          {/* 아바타 + 프로필 팝업 */}
           <div
             className="relative"
-            onMouseLeave={handleCloseProfile} // 마우스 나가면 닫기 기능 유지 (HEAD)
+            onMouseLeave={handleCloseProfile}
           >
             <Avatar
               className={`
@@ -255,14 +269,10 @@ export function TopicCard({
             )}
           </div>
 
-          {/* 닉네임 / 등급 / 날짜 */}
           <div className="flex-1">
-            {/* 1줄: 닉네임 */}
             <p className="font-semibold text-sm">{displayAuthor}</p>
 
-            {/* 2줄: 뱃지(아이콘) + 날짜 */}
             <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-              {/* 등급 아이콘 */}
               {tierInfo && (
                 <div className="inline-flex items-center gap-1">
                   <div className="w-16 h-7 flex items-center justify-center">
@@ -275,15 +285,11 @@ export function TopicCard({
                 </div>
               )}
 
-              {/* 날짜 */}
-              <span className="text-[11px] text-muted-foreground">
-                {date}
-              </span>
+              <span className="text-[11px] text-muted-foreground">{date}</span>
             </div>
           </div>
         </div>
 
-        {/* 제목 */}
         <h3 className="font-bold text-lg leading-tight group-hover:text-primary transition-colors line-clamp-2">
           {title}
         </h3>
@@ -291,7 +297,6 @@ export function TopicCard({
 
       <CardContent className="flex-1 flex flex-col pt-0">
         <div className="flex-1 flex flex-col">
-          {/* 태그 영역 */}
           <div className="flex items-center gap-2 mb-3 overflow-x-auto whitespace-nowrap">
             {displayTags.map((tagName, index) => (
               <Badge
@@ -304,13 +309,9 @@ export function TopicCard({
             ))}
           </div>
 
-          {/* 내용 프리뷰 */}
-          <p className="text-sm text-muted-foreground">
-            {previewContent}
-          </p>
+          <p className="text-sm text-muted-foreground">{previewContent}</p>
         </div>
 
-        {/* 하단: 좋아요/싫어요/댓글 */}
         <div
           className="mt-4 flex justify-end gap-3 text-xs"
           onClick={(e) => e.stopPropagation()}
