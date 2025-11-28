@@ -80,13 +80,17 @@ export const getMyProfile = async () => {
   return response.data;
 };
 
+// ✅ bio(소개)도 같이 보낼 수 있게 확장
 export const updateMyProfile = async (data: {
   displayName?: string;
   avatarUrl?: string;
+  bio?: string;   // 🔹 추가
 }) => {
   const response = await api.put('/me', data);
   return response.data;
 };
+
+
 
 // ========================================
 // 🔗 Posts API

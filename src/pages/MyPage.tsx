@@ -1,3 +1,4 @@
+// src/pages/MyPage.tsx
 import { useState, useEffect } from 'react';
 import { AppSidebar } from '@/components/common';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import {
   getPosts,
   getMyComments,
   getPost,
+  updateMyProfile, // 🔹 실제 업데이트 API
 } from '@/services/api';
 
 import RookieBadge from '@/assets/Rookie Ver.2.svg';
@@ -174,6 +176,7 @@ export default function MyPage() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
+  const [savingProfile, setSavingProfile] = useState(false); // 🔹 저장 중 표시
 
   // 프로필 불러오기
   useEffect(() => {
@@ -222,10 +225,7 @@ export default function MyPage() {
           tags: normalizeTags(p.tags),
         }));
 
-        const myName =
-          profile.displayName ||
-          profile.nickname ||
-          '';
+        const myName = profile.displayName || profile.nickname || '';
 
         const onlyMyPosts = normalizedPosts.filter((post) => {
           const rawAuthor = post.author as any;
@@ -317,8 +317,24 @@ export default function MyPage() {
 
   const gradeRingClass = getTrustRingClass(profile?.trustLevel);
 
-  const handleToggleEditProfile = () => {
-    if (isEditingProfile) {
+  // 🔹 프로필 수정/저장 토글 + 실제 업데이트
+  const handleToggleEditProfile = async () => {
+    // 편집 모드로 진입
+    if (!isEditingProfile) {
+      setIsEditingProfile(true);
+      return;
+    }
+
+    // 편집 모드에서 다시 누르면 "저장"
+    try {
+      setSavingProfile(true);
+
+      await updateMyProfile({
+        displayName: editName || undefined,
+        bio: editBio || undefined, // 백엔드가 bio 받으면 같이 보냄
+      });
+
+      // 프론트 상태도 동기화
       setProfile((prev) =>
         prev
           ? {
@@ -328,8 +344,16 @@ export default function MyPage() {
             }
           : prev,
       );
+
+      setIsEditingProfile(false);
+    } catch (err: any) {
+      console.error('프로필 업데이트 실패:', err);
+      alert('프로필을 저장하는 데 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      // console.log('status =', err?.response?.status);
+    // console.log('data =', err?.response?.data);
+    } finally {
+      setSavingProfile(false);
     }
-    setIsEditingProfile((prev) => !prev);
   };
 
   // TopicCard 에 넘길 author 정규화
@@ -358,7 +382,6 @@ export default function MyPage() {
       return {
         id: String(id),
         displayName,
-        // ✅ color 정보 그대로 TopicCard 로 전달
         nicknameColor: rawAuthor.nicknameColor ?? undefined,
         badgeColor: rawAuthor.badgeColor ?? undefined,
         trustLevel: rawAuthor.trustLevel ?? undefined,
@@ -489,8 +512,9 @@ export default function MyPage() {
                   <Button
                     type="button"
                     onClick={handleToggleEditProfile}
-                    className="p-0 bg-transparent hover:bg-gray-100 rounded-xl"
-                    aria-label="프로필 수정"
+                    disabled={savingProfile}
+                    className="p-0 bg-transparent hover:bg-gray-100 rounded-xl disabled:opacity-60"
+                    aria-label={isEditingProfile ? '프로필 저장' : '프로필 수정'}
                   >
                     <img
                       src={EditProfileIcon}
@@ -524,7 +548,7 @@ export default function MyPage() {
 
                   <TabsTrigger
                     value="comments"
-                    className="px-5 py-2.5 text-sm font-semibold rounded-[14px] bg-[#f3f4f6] text-slate-700 shadow-[0_1px_2px_rgqa(0,0,0,0.06)] data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white"
+                    className="px-5 py-2.5 text-sm font-semibold rounded-[14px] bg-[#f3f4f6] text-slate-700 shadow-[0_1px_2px_rgba(0,0,0,0.06)] data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white"
                   >
                     내가 댓글 쓴 글 ({commentsCount})
                   </TabsTrigger>
@@ -553,7 +577,7 @@ export default function MyPage() {
                   )}
                 </TabsContent>
 
-                {/* 내가 댓글 쓴 글 탭 – ⭐ 이제 "댓글 내용"이 아니라 내가 댓글 단 게시물 TopicCard */}
+                {/* 내가 댓글 쓴 글 탭 – 댓글이 달린 게시글 TopicCard */}
                 <TabsContent value="comments" className="mt-2">
                   {commentsLoading ? (
                     <div className="text-center py-16 text-slate-400">
