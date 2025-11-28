@@ -526,7 +526,7 @@ export default function MyPage() {
                     value="comments"
                     className="px-5 py-2.5 text-sm font-semibold rounded-[14px] bg-[#f3f4f6] text-slate-700 shadow-[0_1px_2px_rgqa(0,0,0,0.06)] data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white"
                   >
-                    내가 쓴 댓글 ({commentsCount})
+                    내가 댓글 쓴 글 ({commentsCount})
                   </TabsTrigger>
 
                   <TabsTrigger
@@ -553,6 +553,7 @@ export default function MyPage() {
                   )}
                 </TabsContent>
 
+                {/* 내가 댓글 쓴 글 탭 – ⭐ 이제 "댓글 내용"이 아니라 내가 댓글 단 게시물 TopicCard */}
                 <TabsContent value="comments" className="mt-2">
                   {commentsLoading ? (
                     <div className="text-center py-16 text-slate-400">

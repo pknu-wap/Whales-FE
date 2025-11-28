@@ -20,9 +20,11 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().accessToken;
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
   (error) => Promise.reject(error),
@@ -30,23 +32,21 @@ api.interceptors.request.use(
 
 // 응답 인터셉터 – 401 시 refresh 시도
 api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (!error.response || !error.config) return Promise.reject(error);
+  (res) => res,
+  async (err) => {
+    const original = err.config;
 
-    const original = error.config;
-
-    if (error.response.status === 401 && !original._retry) {
+    if (err.response?.status === 401 && !original._retry) {
       original._retry = true;
+
       try {
-        const refreshResponse = await axios.post(
+        const refreshRes = await axios.post(
           `${API_BASE_URL}/auth/refresh`,
           {},
-          { withCredentials: true },
+          { withCredentials: true }
         );
 
-        const { accessToken, user } = refreshResponse.data;
-
+        const { accessToken, user } = refreshRes.data;
         useAuthStore.getState().setAuth(accessToken, user);
 
         original.headers.Authorization = `Bearer ${accessToken}`;
@@ -58,17 +58,17 @@ api.interceptors.response.use(
       }
     }
 
-    return Promise.reject(error);
-  },
+    return Promise.reject(err);
+  }
 );
 
-// ========================================
-// 🔗 Auth API
-// ========================================
+// =========================
+// Auth API
+// =========================
 
 export const loginWithGoogle = async (code: string, redirectUri: string) => {
-  const response = await api.post('/auth/login/google', { code, redirectUri });
-  return response.data;
+  const res = await api.post('/auth/login/google', { code, redirectUri });
+  return res.data;
 };
 
 // ========================================

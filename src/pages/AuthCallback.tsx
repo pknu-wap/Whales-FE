@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '@/services/api';
+import { loginWithGoogle } from '@/services/api';
 import useAuthStore from '@/stores/authStore';
 
 export default function AuthCallback() {
@@ -8,9 +8,7 @@ export default function AuthCallback() {
   const { setAuth } = useAuthStore(); // ✅ setAccessToken → setAuth
 
   useEffect(() => {
-    const handleCallback = async () => {
-      console.log('AuthCallback component mounted');
-
+    const handle = async () => {
       const code = new URL(window.location.href).searchParams.get('code');
 
       if (!code) {
@@ -42,13 +40,13 @@ export default function AuthCallback() {
         // 필요하면 새로고침
         // window.location.reload();
       } catch (err) {
-        console.error('로그인 중 오류 발생:', err);
-        alert('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+        console.error('Google 로그인 실패:', err);
+        alert('로그인 중 오류가 발생했습니다.');
         navigate('/login');
       }
     };
 
-    handleCallback();
+    handle();
   }, [navigate, setAuth]);
 
   return <p className="text-center mt-10">로그인 중입니다…</p>;
