@@ -346,11 +346,9 @@ export default function MyPage() {
       );
 
       setIsEditingProfile(false);
-    } catch (err: any) {
-      console.error('프로필 업데이트 실패:', err);
+    } catch (error) {
+      console.error('프로필 업데이트 실패:', error);
       alert('프로필을 저장하는 데 실패했습니다. 잠시 후 다시 시도해 주세요.');
-      // console.log('status =', err?.response?.status);
-    // console.log('data =', err?.response?.data);
     } finally {
       setSavingProfile(false);
     }
